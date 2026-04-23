@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>养猪场mix图鉴助手</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#ffffff" id="themeColorMeta">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="猪猪图鉴">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+
+<!-- Apply theme before first paint to avoid flash -->
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem("theme");
+    var prefersDark = window.matchMedia &&
+                      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var mode = saved || (prefersDark ? "dark" : "light");
+    document.documentElement.dataset.theme = mode;
+    var meta = document.getElementById("themeColorMeta");
+    if (meta) meta.setAttribute("content", mode === "dark" ? "#0b1220" : "#ffffff");
+  } catch (e) {}
+})();
+</script>
+
+<style>
+  :root {
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --ink: #0f172a;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --accent: #0f172a;
+    --accent-fg: #ffffff;
+    --accent-muted: #475569;
+    --chip-bg: #e2e8f0;
+    --chip-fg: #475569;
+    --card-img-start: #f1f5f9;
+    --card-img-end: #e2e8f0;
+    --shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    --shadow-hover: 0 6px 20px rgba(15, 23, 42, 0.16);
+    --star: #eab308;
+    --star-special: #a855f7;
+    --ok: #16a34a;
+    --warn: #ca8a04;
+    --danger: #dc2626;
+  }
+  [data-theme="dark"] {
+    --bg: #0b1220;
+    --card: #111827;
+    --ink: #e5e7eb;
+    --muted: #94a3b8;
+    --border: #1f2937;
+    --accent: #e5e7eb;
+    --accent-fg: #0f172a;
+    --accent-muted: #cbd5e1;
+    --chip-bg: #1f2937;
+    --chip-fg: #cbd5e1;
+    --card-img-start: #0f172a;
+    --card-img-end: #1e293b;
+    --shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    --shadow-hover: 0 6px 22px rgba(0, 0, 0, 0.65);
+    --star: #facc15;
+    --star-special: #c084fc;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
+                 "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.45;
+    /* reserve space for the bottom tab bar (56px) + safe area */
+    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+  }
+
+  header.top {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--card); color: var(--ink);
+    border-bottom: 1px solid var(--border);
+    padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+  }
+  header h1 {
+    margin: 0; font-size: 17px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  header h1 .count { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: auto; }
+  .theme-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); width: 32px; height: 32px;
+    border-radius: 50%; cursor: pointer; font-size: 15px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0; margin-left: 6px;
+  }
+  .theme-btn:hover { background: var(--chip-bg); color: var(--ink); }
+
+  /* add-pig panel */
+  .add-panel {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+  }
+  .add-row {
+    display: flex; gap: 6px; align-items: stretch;
+  }
+  .add-row .trio { display: flex; gap: 4px; flex: 1; }
+  .add-row input[type="number"] {
+    flex: 1; min-width: 0;
+    font-size: 16px;
+    padding: 8px 4px;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--ink);
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  .add-row input[type="number"]::-webkit-inner-spin-button,
+  .add-row input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .add-row input[type="number"]:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  .add-row .sep {
+    display: flex; align-items: center;
+    color: var(--muted); font-size: 12px;
+  }
+  .add-btn {
+    background: var(--accent);
+    color: var(--accent-fg); border: none; border-radius: 8px;
+    padding: 8px 16px; font-weight: 600; font-size: 14px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .add-btn:active { background: var(--accent-muted); }
+  .add-btn:disabled { opacity: 0.4; cursor: default; }
+  .add-hint {
+    font-size: 11px; color: var(--muted); margin-top: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .add-hint .err { color: var(--danger); font-weight: 500; }
+  .add-hint .ok { color: var(--ok); font-weight: 500; }
+  .add-hint button.ghost {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 8px; font-size: 11px; cursor: pointer;
+  }
+  .add-hint button.ghost:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* filters */
+  .filters { padding: 8px 8px 0; }
+  .filter-row {
+    display: flex; gap: 6px; overflow-x: auto; padding: 4px 4px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-row .label {
+    flex: 0 0 auto;
+    color: var(--muted);
+    font-size: 12px;
+    align-self: center;
+    padding: 0 4px;
+  }
+  .chip {
+    flex: 0 0 auto;
+    background: var(--chip-bg);
+    color: var(--chip-fg);
+    border: 1px solid transparent;
+    border-radius: 16px;
+    padding: 5px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.active { background: var(--accent); color: var(--accent-fg); }
+  .stats-bar {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 6px 8px; font-size: 11px; color: var(--muted);
+  }
+  .search {
+    width: calc(100% - 16px);
+    margin: 4px 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--card);
+    color: var(--ink);
+  }
+  .search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  main { padding: 8px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 900px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (min-width: 1200px) { .grid { grid-template-columns: repeat(6, 1fr); } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    position: relative;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+  }
+  .card:active { transform: scale(0.98); }
+  .card:hover { box-shadow: var(--shadow-hover); border-color: var(--accent-muted); }
+  .card .img {
+    aspect-ratio: 1/1;
+    background: linear-gradient(180deg, var(--card-img-start), var(--card-img-end));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .card .img img { max-width: 86%; max-height: 86%; }
+  .card .body { padding: 8px 10px; }
+  .card .name { font-weight: 600; font-size: 14px; line-height: 1.2; }
+  .card .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .card .stars { color: var(--star); font-size: 11px; letter-spacing: 1px; margin-top: 2px; }
+  .card .stars.special { color: var(--star-special); }
+
+  .card .remove {
+    position: absolute; top: 4px; right: 4px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--danger);
+    font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 2;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .card:hover .remove { opacity: 1; }
+  @media (hover: none) { .card .remove { opacity: 0.9; } }
+
+  .empty {
+    text-align: center; color: var(--muted);
+    padding: 40px 16px 60px;
+  }
+  .empty .big { font-size: 38px; margin-bottom: 8px; }
+  .empty .title { font-size: 16px; color: var(--ink); font-weight: 500; margin-bottom: 6px; }
+  .empty .hint { font-size: 13px; }
+  .empty .arrow { color: var(--accent); font-size: 32px; margin-top: 12px; }
+
+  /* loading */
+  .loading {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 80px 20px; color: var(--muted); font-size: 14px;
+  }
+  .spinner {
+    width: 32px; height: 32px; margin-bottom: 12px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* drawer */
+  .drawer-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+    z-index: 20;
+  }
+  .drawer-bg.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    max-height: 92vh;
+    background: var(--bg); border-top-left-radius: 18px; border-top-right-radius: 18px;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.2);
+    transform: translateY(100%); transition: transform .25s;
+    z-index: 21;
+    overflow-y: auto;
+    padding: 12px 14px max(14px, env(safe-area-inset-bottom));
+  }
+  .drawer.open { transform: translateY(0); }
+  .drawer .handle {
+    width: 40px; height: 4px; background: var(--border);
+    border-radius: 2px; margin: 0 auto 10px;
+  }
+  .drawer h2 { margin: 4px 0 8px; font-size: 18px; }
+  .drawer .hero {
+    display: flex; gap: 12px; align-items: center;
+    background: var(--card); padding: 12px; border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  .drawer .hero img { width: 88px; height: 88px; object-fit: contain; }
+  .drawer .hero .info { flex: 1; }
+  .drawer .hero .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  .section { margin-top: 16px; }
+  .section h3 {
+    font-size: 14px; margin: 0 0 8px;
+    color: var(--ink);
+    border-left: 3px solid var(--accent); padding-left: 8px;
+  }
+  .kv { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 6px; font-size: 13px; }
+  .kv .k { color: var(--muted); font-size: 12px; }
+  .kv .v { font-weight: 500; }
+
+  .recipe {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 10px; margin-bottom: 8px;
+  }
+  .recipe .tag { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .recipe .parents {
+    display: flex; align-items: center; gap: 6px;
+    justify-content: space-around;
+  }
+  .recipe .parent { text-align: center; flex: 1; min-width: 0; }
+  .recipe .parent img { width: 56px; height: 56px; object-fit: contain; }
+  .recipe .parent .pname { font-size: 12px; font-weight: 500; }
+  .recipe .parent .prent { font-size: 10px; color: var(--muted); }
+  .recipe .plus { color: var(--accent); font-size: 18px; font-weight: 700; }
+  .recipe .outcomes {
+    margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);
+    font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .recipe .outcome { background: var(--chip-bg); padding: 3px 8px; border-radius: 8px; color: var(--chip-fg); font-weight: 500; }
+
+  .install-hint {
+    font-size: 11px; color: var(--muted); text-align: center;
+    background: var(--chip-bg); border-radius: 8px; padding: 4px 8px;
+    margin-top: 6px; display: none;
+  }
+  .install-hint.show { display: block; }
+  .install-hint .bttn {
+    background: var(--accent); color: var(--accent-fg); border: none;
+    border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 600;
+    margin-left: 6px; cursor: pointer;
+  }
+
+  /* bottom tab bar */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    height: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: stretch;
+    z-index: 15;
+  }
+  .tabbar .tab {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    background: transparent; border: none;
+    color: var(--muted); font-size: 11px;
+    cursor: pointer; padding: 4px 0;
+    transition: color .15s;
+  }
+  .tabbar .tab .ico { font-size: 20px; line-height: 1; }
+  .tabbar .tab.active { color: var(--accent); font-weight: 600; }
+  [data-theme="dark"] .tabbar .tab.active { color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* add-tab */
+  .add-tab { padding: 12px; }
+  .add-section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; margin-bottom: 12px;
+  }
+  .add-section h3 {
+    margin: 0 0 10px; font-size: 14px;
+    color: var(--ink);
+    border-left: 3px solid var(--accent); padding-left: 8px;
+  }
+  .add-section .hint-line {
+    font-size: 11px; color: var(--muted); margin-top: 8px;
+    min-height: 16px;
+  }
+  .add-section .hint-line .err { color: var(--danger); font-weight: 500; }
+  .add-section .hint-line .ok { color: var(--ok); font-weight: 500; }
+
+  .name-input {
+    width: 100%;
+    padding: 10px 12px; font-size: 14px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--ink);
+  }
+  .name-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .name-results {
+    margin-top: 8px; max-height: 320px; overflow-y: auto;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg);
+    display: none;
+  }
+  .name-results.show { display: block; }
+  .name-results .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .name-results .row:last-child { border-bottom: none; }
+  .name-results .row:hover { background: var(--chip-bg); }
+  .name-results .row img { width: 36px; height: 36px; object-fit: contain; flex: 0 0 auto; }
+  .name-results .row .meta { flex: 1; min-width: 0; }
+  .name-results .row .r-name { font-size: 13px; font-weight: 500; }
+  .name-results .row .r-sub  { font-size: 11px; color: var(--muted); }
+  .name-results .row .r-in   {
+    font-size: 11px; color: var(--ok); font-weight: 500;
+    flex: 0 0 auto; padding-right: 2px;
+  }
+  .name-results .empty-row {
+    text-align: center; padding: 16px; font-size: 12px; color: var(--muted);
+  }
+
+  .batch-ta {
+    width: 100%;
+    min-height: 120px;
+    padding: 10px; font-size: 13px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    resize: vertical;
+  }
+  .batch-ta:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .batch-actions {
+    display: flex; gap: 8px; margin-top: 8px;
+  }
+  .batch-actions .add-btn { flex: 1; }
+  .batch-report {
+    margin-top: 10px; font-size: 12px;
+    max-height: 160px; overflow-y: auto;
+  }
+  .batch-report .line { padding: 2px 0; }
+  .batch-report .line.ok  { color: var(--ok); }
+  .batch-report .line.err { color: var(--danger); }
+  .batch-report .line.dup { color: var(--warn); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: calc(72px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 8px 16px;
+    border-radius: 999px; font-size: 13px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    opacity: 0; transition: opacity .2s, transform .2s;
+    z-index: 30; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>
+    养猪场mix图鉴助手
+    <span class="count" id="count">—</span>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="切换主题" title="切换浅色/深色">☾</button>
+  </h1>
+  <div id="install" class="install-hint">
+    <span id="installText">可安装为桌面 App</span>
+    <button class="bttn" id="installBtn">安装</button>
+  </div>
+</header>
+
+<!-- ========== TAB: 收藏 ========== -->
+<section class="tab-panel active" id="tabCollect" role="tabpanel" aria-labelledby="tabBtnCollect">
+  <div class="filters">
+    <input class="search" id="search" type="search" placeholder="在收藏中搜索名称…">
+    <div class="filter-row" id="colorFilter">
+      <span class="label">颜色</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="肉色">肉色</button>
+      <button class="chip" data-value="灰色">灰色</button>
+      <button class="chip" data-value="米色">米色</button>
+      <button class="chip" data-value="粉红">粉红</button>
+      <button class="chip" data-value="白色">白色</button>
+    </div>
+    <div class="filter-row" id="methodFilter">
+      <span class="label">获得</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="shop">商店进货</button>
+      <button class="chip" data-value="hunt">狩猎</button>
+      <button class="chip" data-value="quest">任务</button>
+      <button class="chip" data-value="breed">配种</button>
+      <button class="chip" data-value="fail">养成失败</button>
+    </div>
+    <div class="filter-row" id="shopRankFilter" style="display:none">
+      <span class="label">进货等级</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="A">A 级 (1000pt)</button>
+      <button class="chip" data-value="B">B 级 (500pt)</button>
+      <button class="chip" data-value="C">C 级 (100pt)</button>
+    </div>
+    <div class="filter-row" id="huntRegionFilter" style="display:none">
+      <span class="label">场所</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="草原">草原</button>
+      <button class="chip" data-value="山林">山林</button>
+      <button class="chip" data-value="日本">日本</button>
+      <button class="chip" data-value="亚洲">亚洲</button>
+      <button class="chip" data-value="欧洲">欧洲</button>
+      <button class="chip" data-value="美洲">美洲</button>
+      <button class="chip" data-value="大洋洲">大洋洲</button>
+    </div>
+    <div class="filter-row" id="huntTicketFilter" style="display:none">
+      <span class="label">券</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="normal">普通券</button>
+      <button class="chip" data-value="rare">稀有券</button>
+    </div>
+    <div class="stats-bar" id="statsBar"></div>
+  </div>
+
+  <main>
+    <div id="body">
+      <div class="loading" id="loadingBox">
+        <div class="spinner"></div>
+        <div>正在加载图鉴数据…</div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ========== TAB: 添加 ========== -->
+<section class="tab-panel" id="tabAdd" role="tabpanel" aria-labelledby="tabBtnAdd">
+  <div class="add-tab">
+    <!-- 按名字 -->
+    <div class="add-section">
+      <h3>按名字添加</h3>
+      <input type="search" class="name-input" id="nameIn"
+             placeholder="输入猪的名字 / 描述 关键字…"
+             autocomplete="off">
+      <div class="name-results" id="nameResults"></div>
+      <div class="hint-line" id="nameMsg">输入至少 1 个字符开始搜索，点击结果即可添加</div>
+    </div>
+
+    <!-- 按图鉴元组 -->
+    <div class="add-section">
+      <h3>按图鉴元组添加</h3>
+      <form class="add-row" id="addForm">
+        <div class="trio">
+          <input type="number" id="bookIn" min="1" max="6" placeholder="图鉴" inputmode="numeric" aria-label="图鉴">
+          <span class="sep">/</span>
+          <input type="number" id="pageIn" min="1" max="7" placeholder="页" inputmode="numeric" aria-label="页">
+          <span class="sep">/</span>
+          <input type="number" id="slotIn" min="1" max="6" placeholder="格" inputmode="numeric" aria-label="格">
+        </div>
+        <button type="submit" class="add-btn" id="addBtn">添加</button>
+      </form>
+      <div class="hint-line" id="addMsg">输入 图鉴 / 页 / 格 三元组（例如 1 / 3 / 6）</div>
+    </div>
+
+    <!-- 批量元组 -->
+    <div class="add-section">
+      <h3>批量元组添加</h3>
+      <textarea class="batch-ta" id="batchIn"
+                placeholder="每行一个三元组，支持 空格 / 逗号 / 斜线 分隔&#10;例如:&#10;1 3 6&#10;2 1 4&#10;3/2/5"></textarea>
+      <div class="batch-actions">
+        <button type="button" class="add-btn" id="batchAddBtn">批量添加</button>
+        <button type="button" class="add-btn" id="batchClearBtn">清空输入</button>
+      </div>
+      <div class="batch-report" id="batchReport"></div>
+    </div>
+
+    <!-- 危险区 -->
+    <div class="add-section">
+      <h3>收藏管理</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span style="font-size:13px;color:var(--muted)" id="manageCount">当前收藏 0 只</span>
+        <button type="button" class="add-btn" id="clearBtn">清空收藏</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== bottom tab bar ========== -->
+<nav class="tabbar" role="tablist">
+  <button type="button" class="tab active" id="tabBtnCollect"
+          role="tab" aria-selected="true" aria-controls="tabCollect" data-tab="collect">
+    <span class="ico">🐽</span>
+    <span>收藏</span>
+  </button>
+  <button type="button" class="tab" id="tabBtnAdd"
+          role="tab" aria-selected="false" aria-controls="tabAdd" data-tab="add">
+    <span class="ico">➕</span>
+    <span>添加</span>
+  </button>
+</nav>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<div class="drawer" id="drawer">
+  <div class="handle"></div>
+  <div id="drawerContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

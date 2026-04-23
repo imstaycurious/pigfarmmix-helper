@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editor / IDE
+.claude/
+.windsurf/
+.vscode/
+.idea/
+.playwright-mcp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scratch / scraped artifacts (if they come back)
+*.tmp
+*.log
