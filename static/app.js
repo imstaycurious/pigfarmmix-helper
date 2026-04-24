@@ -10,6 +10,9 @@
   "use strict";
 
   const STORAGE_KEY = "pig_collection_v1";
+  // 独立于 186 主猪收藏的 "活动猪已有" 勾选。抽屉里 "它能配出的崽"
+  // 如果产出是活动猪，旁边会有一个勾选框让用户标记是否已获得。
+  const STORAGE_KEY_OWNED_EVENT = "pig_owned_event_v1";
   const DATA_URL = "/data/pigs.json";
   const EVENT_DATA_URL = "/data/pigs_event.json";
   // Local front-facing portrait per pig, downloaded by tools/download_portraits.py.
@@ -95,6 +98,7 @@
     eventPigsById: new Map(),      // pNo -> 活动猪详情 (仅用于反向配种索引 + 抽屉产出显示)
     pigsByListKey: new Map(),      // `${book}-${listno}` -> pNo
     collection: loadCollection(),  // array of pNo
+    ownedEventPigs: loadOwnedEventPigs(), // Set<pNo>, 仅针对活动猪
     filter:      { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 收藏 tab
     atlasFilter: { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 全图鉴 tab
   };
@@ -111,6 +115,23 @@
   }
   function saveCollection() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.collection));
+  }
+
+  function loadOwnedEventPigs() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_OWNED_EVENT);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      return new Set(Array.isArray(arr) ? arr.filter(n => Number.isInteger(n)) : []);
+    } catch {
+      return new Set();
+    }
+  }
+  function saveOwnedEventPigs() {
+    localStorage.setItem(
+      STORAGE_KEY_OWNED_EVENT,
+      JSON.stringify(Array.from(state.ownedEventPigs))
+    );
   }
 
   // ----- picky-eating derivation -----
@@ -859,7 +880,13 @@
           const k = o.pigKind || {};
           const isSelf = k.pNo === p.pNo;
           const styleAttr = isSelf ? ' style="background:var(--ok);color:#fff"' : "";
-          return `<span class="outcome"${styleAttr}${linkAttr(k.pNo)}>${escHtml(k.name || "?")} ${o.prob}%</span>`;
+          const chip = `<span class="outcome"${styleAttr}${linkAttr(k.pNo)}>${escHtml(k.name || "?")} ${o.prob}%</span>`;
+          // 活动猪产出 → 附一个 "已有" 勾选; 主猪不管 (用户已有主猪收藏系统)
+          if (k.pNo && state.eventPigsById.has(k.pNo)) {
+            const isOwned = state.ownedEventPigs.has(k.pNo);
+            return chip + `<span class="owned-toggle${isOwned ? " is-on" : ""}" data-owned-pno="${k.pNo}" role="checkbox" aria-checked="${isOwned}" title="标记是否已获得此活动猪">${isOwned ? "☑ 已有" : "☐ 未有"}</span>`;
+          }
+          return chip;
         }).join("");
         parentRecipeHTML.push(`
           <div class="recipe">
@@ -1047,6 +1074,26 @@
   // event pigs, and cross-navigates between them). Attached once; survives
   // drawer innerHTML re-renders because it listens on the container.
   $("#drawerContent").addEventListener("click", e => {
+    // "已有" 勾选优先处理，且不触发导航。
+    const chk = e.target.closest("[data-owned-pno]");
+    if (chk) {
+      e.stopPropagation();
+      const pNo = parseInt(chk.dataset.ownedPno, 10);
+      if (!pNo) return;
+      if (state.ownedEventPigs.has(pNo)) state.ownedEventPigs.delete(pNo);
+      else state.ownedEventPigs.add(pNo);
+      saveOwnedEventPigs();
+      // 同步抽屉里所有指向同一活动猪的勾选，避免一只活动猪在多处出现时状态不一致
+      const nowOwned = state.ownedEventPigs.has(pNo);
+      $("#drawerContent")
+        .querySelectorAll(`[data-owned-pno="${pNo}"]`)
+        .forEach(el => {
+          el.classList.toggle("is-on", nowOwned);
+          el.setAttribute("aria-checked", String(nowOwned));
+          el.textContent = nowOwned ? "☑ 已有" : "☐ 未有";
+        });
+      return;
+    }
     const t = e.target.closest("[data-pno]");
     if (!t) return;
     const target = parseInt(t.dataset.pno, 10);
