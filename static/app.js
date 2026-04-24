@@ -55,6 +55,17 @@
   const HUNT_NORMAL_CODES = new Set([3, 4, 7, 9, 11, 13, 15]);
   const HUNT_RARE_CODES   = new Set([5, 6, 8, 10, 12, 14, 16]);
 
+  // 图鉴 book (1~6) -> 颜色分类。上游 pig.color 字段对图鉴 6 (野猪) 的猪是错的
+  // (都写作 1), 所以统一改按 book 派生 color_text。
+  const BOOK_COLOR_TEXT = {
+    1: "肉色",
+    2: "灰色",
+    3: "米色",
+    4: "粉红",
+    5: "白色",
+    6: "野猪色",
+  };
+
   const BLEED_TYPE_TEXT = {
     1: "猪猪广场交配",
     0: "猪猪广场交配 [不能租借公猪]",
@@ -142,6 +153,10 @@
     if (!bundle || !Array.isArray(bundle.pigs)) throw new Error("数据格式错误");
 
     for (const p of bundle.pigs) {
+      // color_text 的真实分类按图鉴 book (== list.typeno, 1~6) 而非 p.color 字段:
+      // 图鉴 6 (野猪) 里的猪上游 color 字段会被标成 1, 但实际应归为 "野猪色"。
+      const bookColor = BOOK_COLOR_TEXT[p.book];
+      if (bookColor) p.color_text = bookColor;
       state.pigsById.set(p.pNo, p);
       if (p.list && p.list.typeno && p.list.listno) {
         state.pigsByListKey.set(`${p.list.typeno}-${p.list.listno}`, p.pNo);
