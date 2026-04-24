@@ -1293,6 +1293,75 @@
     $("#batchReport").innerHTML = "";
   });
 
+  // ----- export flow -----
+  // Build 图鉴/页/格 lines for the current collection, sorted by book,page,slot.
+  function buildExportText() {
+    const pigs = [];
+    for (const pNo of state.collection) {
+      const p = state.pigsById.get(pNo);
+      if (p && p.book && p.page && p.slot) pigs.push(p);
+    }
+    pigs.sort((a, b) =>
+      (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot));
+    return pigs.map(p => `${p.book}/${p.page}/${p.slot}`).join("\n");
+  }
+
+  async function copyText(txt) {
+    // Prefer async Clipboard API; fall back to execCommand for older / http 环境
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(txt);
+        return true;
+      }
+    } catch { /* fall through */ }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = txt;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
+  function runExport(alsoCopy) {
+    const out = $("#exportOut");
+    const msg = $("#exportMsg");
+    if (!state.dataLoaded) {
+      msg.innerHTML = `<span class="err">数据还没加载好</span>`;
+      return;
+    }
+    const txt = buildExportText();
+    out.value = txt;
+    if (!txt) {
+      msg.innerHTML = `<span class="err">收藏为空，没什么可导出</span>`;
+      return;
+    }
+    const n = txt.split("\n").length;
+    if (alsoCopy) {
+      copyText(txt).then(ok => {
+        if (ok) {
+          msg.innerHTML = `<span class="ok">已复制 ${n} 条到剪贴板</span>`;
+          toast(`已复制 ${n} 条到剪贴板`);
+        } else {
+          out.focus(); out.select();
+          msg.innerHTML = `<span class="err">复制失败，请手动选中上方文本复制</span>`;
+        }
+      });
+    } else {
+      out.focus(); out.select();
+      msg.innerHTML = `<span class="ok">已导出 ${n} 条，点击「复制到剪贴板」或直接选中复制</span>`;
+    }
+  }
+
+  $("#exportBtn").addEventListener("click", () => runExport(false));
+  $("#exportCopyBtn").addEventListener("click", () => runExport(true));
+
   // ----- bootstrap -----
   render(); // initial loading state
   loadData()
