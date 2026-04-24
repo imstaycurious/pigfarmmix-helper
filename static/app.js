@@ -626,10 +626,15 @@
   }
 
   // Each tab has its own method-driven sub-filter visibility (狩猎/商店).
+  // 收藏 tab 用 prefix="" + lower-camel ID (huntRegionFilter ...)
+  // 全图鉴 tab 用 prefix="atlas" + PascalCase (atlasHuntRegionFilter ...)
   function makeMethodSubUpdater(prefix, filterObj) {
-    const regionSel = `#${prefix}HuntRegionFilter`;
-    const ticketSel = `#${prefix}HuntTicketFilter`;
-    const shopSel   = `#${prefix}ShopRankFilter`;
+    const id = (base) => prefix
+      ? prefix + base[0].toUpperCase() + base.slice(1)
+      : base;
+    const regionSel = `#${id("huntRegionFilter")}`;
+    const ticketSel = `#${id("huntTicketFilter")}`;
+    const shopSel   = `#${id("shopRankFilter")}`;
     return function update() {
       const m = filterObj.method;
       const showHunt = m === "hunt", showShop = m === "shop";
