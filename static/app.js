@@ -807,43 +807,62 @@
       if (!byView.has(k)) byView.set(k, []);
       byView.get(k).push(b);
     }
+    // --- A + B = C 等式渲染 helpers -------------------------------------
+    // 每个 .slot 展示 [图 + 名字 + (可选) 借猪费 / 概率 / 已有勾选]; 父母 slot
+    // 若有已知 pNo 会带 data-pno 以支持点击跳转。"任意猪" 没有具体 pNo, 显示
+    // 一个占位空盒。"产出" slot (右侧) 额外附概率; 若为当前猪本身, 加 is-self
+    // 高亮; 活动猪再挂一个 owned-toggle。
+    const renderParentSlot = (info) => {
+      if (!info || info.any) {
+        return `<div class="slot any">` +
+          `<div class="slot-img-placeholder" aria-hidden="true">?</div>` +
+          `<div class="pname">任意猪</div>` +
+          `</div>`;
+      }
+      const img = imgUrl(info.pNo);
+      return `<div class="slot"${linkAttr(info.pNo)}>` +
+        (img ? `<img src="${img}" loading="lazy" alt="${escHtml(info.name || "")}">` : `<div class="slot-img-placeholder" aria-hidden="true">?</div>`) +
+        `<div class="pname">${escHtml(info.name || "?")}</div>` +
+        (info.rent ? `<div class="prent">借 ${info.rent}pt</div>` : "") +
+        `</div>`;
+    };
+    const renderOutcomeSlot = (k, prob, { isSelf = false } = {}) => {
+      const img = imgUrl(k.pNo);
+      let ownedToggle = "";
+      if (k.pNo && state.eventPigsById.has(k.pNo)) {
+        const isOwned = state.ownedEventPigs.has(k.pNo);
+        ownedToggle = `<span class="owned-toggle${isOwned ? " is-on" : ""}" data-owned-pno="${k.pNo}" role="checkbox" aria-checked="${isOwned}" title="标记是否已获得此活动猪">${isOwned ? "☑ 已有" : "☐ 未有"}</span>`;
+      }
+      return `<div class="slot out${isSelf ? " is-self" : ""}"${linkAttr(k.pNo)}>` +
+        (img ? `<img src="${img}" loading="lazy" alt="${escHtml(k.name || "")}">` : `<div class="slot-img-placeholder" aria-hidden="true">?</div>`) +
+        `<div class="pname">${escHtml(k.name || "?")}</div>` +
+        (prob != null ? `<div class="prob">${prob}%</div>` : "") +
+        ownedToggle +
+        `</div>`;
+    };
+
     const recipeHTML = [];
     for (const iv of order) {
       const items = byView.get(String(iv));
       if (!items) continue;
       for (const r of items) {
         const p1 = r.pNo1 || {}, p2 = r.pNo2 || {};
-        const p1Png = imgUrl(p1.pNo);
-        const p2Png = imgUrl(p2.pNo);
-        const partner = r.any
-          ? `<div class="pname" style="color:var(--danger)">任意猪</div>`
-          : `<div class="pname">${escHtml(p2.name || "?")}</div>` +
-            (p2.rent ? `<div class="prent">借 ${p2.rent}pt</div>` : "");
-        const outs = (r.result || []).map(o => {
-          const k = o.pigKind || {};
-          return `<span class="outcome"${linkAttr(k.pNo)}>${escHtml(k.name || "?")} ${o.prob}%</span>`;
-        }).join("");
+        const p1Slot = renderParentSlot({ pNo: p1.pNo, name: p1.name, rent: p1.rent });
+        const p2Slot = renderParentSlot(r.any ? { any: true } : { pNo: p2.pNo, name: p2.name, rent: p2.rent });
         const smTag = (iv === 3 || iv === 4 || iv === -3 || iv === -4) && r.result && r.result[0]
           ? ` · 系统图 #${r.result[0].orderNo} x${r.result[0].pigKind && r.result[0].pigKind.rare === 6 ? 10 : r.result[0].pigKind && r.result[0].pigKind.rare}`
           : "";
-        recipeHTML.push(`
-          <div class="recipe">
-            <div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}${smTag}</div>
-            <div class="parents">
-              <div class="parent"${linkAttr(p1.pNo)}>
-                ${p1Png ? `<img src="${p1Png}" loading="lazy">` : ""}
-                <div class="pname">${escHtml(p1.name || "?")}</div>
-                ${p1.rent ? `<div class="prent">借 ${p1.rent}pt</div>` : ""}
-              </div>
-              <div class="plus">+</div>
-              <div class="parent"${r.any ? "" : linkAttr(p2.pNo)}>
-                ${p2Png && !r.any ? `<img src="${p2Png}" loading="lazy">` : ""}
-                ${partner}
-              </div>
-            </div>
-            <div class="outcomes">${outs}</div>
-          </div>
-        `);
+        // 每个产出单独一行 A + B = C
+        const equations = (r.result || []).map(o => {
+          const outSlot = renderOutcomeSlot(o.pigKind || {}, o.prob);
+          return `<div class="equation">${p1Slot}<div class="op">+</div>${p2Slot}<div class="op">=</div>${outSlot}</div>`;
+        }).join("");
+        recipeHTML.push(
+          `<div class="recipe">` +
+            `<div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}${smTag}</div>` +
+            equations +
+          `</div>`
+        );
       }
     }
     const recipeBlock = recipeHTML.length > 0
@@ -870,41 +889,25 @@
         const bn = b.partner ? (b.partner.name || "") : "zzz任意";
         return an.localeCompare(bn, "zh");
       });
+      // 左边的 A 就是当前猪自己 (整段共用)
+      const selfSlot = renderParentSlot({ pNo: p.pNo, name: p.name, rent: p.rent });
       for (const r of items) {
-        const partnerPng = r.partner ? imgUrl(r.partner.pNo) : "";
-        const partnerBlock = r.any || !r.partner
-          ? `<div class="pname" style="color:var(--danger)">任意猪</div>`
-          : `<div class="pname">${escHtml(r.partner.name || "?")}</div>` +
-            (r.partner.rent ? `<div class="prent">借 ${r.partner.rent}pt</div>` : "");
-        const outs = (r.result || []).map(o => {
+        const partnerSlot = renderParentSlot(
+          (r.any || !r.partner)
+            ? { any: true }
+            : { pNo: r.partner.pNo, name: r.partner.name, rent: r.partner.rent }
+        );
+        const equations = (r.result || []).map(o => {
           const k = o.pigKind || {};
-          const isSelf = k.pNo === p.pNo;
-          const styleAttr = isSelf ? ' style="background:var(--ok);color:#fff"' : "";
-          const chip = `<span class="outcome"${styleAttr}${linkAttr(k.pNo)}>${escHtml(k.name || "?")} ${o.prob}%</span>`;
-          // 活动猪产出 → 附一个 "已有" 勾选; 主猪不管 (用户已有主猪收藏系统)
-          if (k.pNo && state.eventPigsById.has(k.pNo)) {
-            const isOwned = state.ownedEventPigs.has(k.pNo);
-            return chip + `<span class="owned-toggle${isOwned ? " is-on" : ""}" data-owned-pno="${k.pNo}" role="checkbox" aria-checked="${isOwned}" title="标记是否已获得此活动猪">${isOwned ? "☑ 已有" : "☐ 未有"}</span>`;
-          }
-          return chip;
+          const outSlot = renderOutcomeSlot(k, o.prob, { isSelf: k.pNo === p.pNo });
+          return `<div class="equation">${selfSlot}<div class="op">+</div>${partnerSlot}<div class="op">=</div>${outSlot}</div>`;
         }).join("");
-        parentRecipeHTML.push(`
-          <div class="recipe">
-            <div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}</div>
-            <div class="parents">
-              <div class="parent">
-                ${pigImg ? `<img src="${pigImg}" loading="lazy">` : ""}
-                <div class="pname">${escHtml(p.name)}</div>
-              </div>
-              <div class="plus">+</div>
-              <div class="parent"${r.any || !r.partner ? "" : linkAttr(r.partner.pNo)}>
-                ${partnerPng && !r.any && r.partner ? `<img src="${partnerPng}" loading="lazy">` : ""}
-                ${partnerBlock}
-              </div>
-            </div>
-            <div class="outcomes">${outs}</div>
-          </div>
-        `);
+        parentRecipeHTML.push(
+          `<div class="recipe">` +
+            `<div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}</div>` +
+            equations +
+          `</div>`
+        );
       }
     }
     const parentBlock = parentRecipeHTML.length > 0
