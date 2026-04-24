@@ -377,9 +377,8 @@
   .drawer-actions .add-btn.danger:active { background: rgba(220,38,38,0.08); }
 
   /* 抽屉里的父本/产出：若在 186 或活动猪数据里找得到，就可点击跳转到该猪的详情 */
-  .drawer [data-pno] { cursor: pointer; border-radius: 6px; transition: background .12s; }
-  .drawer .parent[data-pno]:hover { background: var(--card-alt, rgba(120,130,140,0.08)); }
-  .drawer .outcome[data-pno]:hover { filter: brightness(0.92); outline: 1px solid var(--accent); }
+  .drawer [data-pno] { cursor: pointer; border-radius: 8px; transition: background .12s, outline .12s; }
+  .drawer .slot[data-pno]:hover { background: var(--card-alt, rgba(120,130,140,0.08)); outline: 1px solid var(--accent); }
   .drawer [data-pno]:active { transform: scale(0.97); }
   .drawer .hero {
     display: flex; gap: 12px; align-items: center;
@@ -405,30 +404,48 @@
     padding: 10px; margin-bottom: 8px;
   }
   .recipe .tag { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-  .recipe .parents {
-    display: flex; align-items: center; gap: 6px;
-    justify-content: space-around;
+  /* A + B = C 等式。多个产出时，同一 .recipe 内多行等式并排，父母重复显示便于扫读。 */
+  .recipe .equation {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 4px; flex-wrap: wrap;
+    padding: 6px 0;
   }
-  .recipe .parent { text-align: center; flex: 1; min-width: 0; }
-  .recipe .parent img { width: 56px; height: 56px; object-fit: contain; }
-  .recipe .parent .pname { font-size: 12px; font-weight: 500; }
-  .recipe .parent .prent { font-size: 10px; color: var(--muted); }
-  .recipe .plus { color: var(--accent); font-size: 18px; font-weight: 700; }
-  .recipe .outcomes {
-    margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);
-    font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px;
+  .recipe .equation + .equation { border-top: 1px dashed var(--border); }
+  .recipe .slot {
+    flex: 1 1 64px; min-width: 60px; max-width: 110px;
+    text-align: center; padding: 4px 2px; border-radius: 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
   }
-  .recipe .outcome { background: var(--chip-bg); padding: 3px 8px; border-radius: 8px; color: var(--chip-fg); font-weight: 500; }
-  /* "已有" 勾选 chip: 紧挨着某个活动猪产出，独立于 .outcome 的 data-pno 导航。 */
+  .recipe .slot img { width: 56px; height: 56px; object-fit: contain; }
+  .recipe .slot .slot-img-placeholder {
+    width: 56px; height: 56px; border-radius: 8px;
+    background: var(--chip-bg); color: var(--muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700;
+  }
+  .recipe .slot .pname { font-size: 12px; font-weight: 500; line-height: 1.25; }
+  .recipe .slot .prent { font-size: 10px; color: var(--muted); }
+  .recipe .slot .prob { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .recipe .slot.any .pname { color: var(--danger); }
+  .recipe .slot.is-self {
+    background: rgba(22, 163, 74, 0.12);
+    outline: 1px solid var(--ok);
+  }
+  .recipe .slot.is-self .pname,
+  .recipe .slot.is-self .prob { color: var(--ok); }
+  .recipe .op {
+    flex: 0 0 auto; align-self: center;
+    color: var(--accent); font-size: 18px; font-weight: 700;
+  }
+  /* "已有" 勾选 chip: 出现在活动猪产出 slot 的底部；点它不会触发 slot 上的导航。 */
   .recipe .owned-toggle {
-    display: inline-flex; align-items: center;
-    padding: 3px 8px; border-radius: 8px;
-    font-size: 11px; font-weight: 500; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 2px; padding: 2px 6px; border-radius: 8px;
+    font-size: 10px; font-weight: 500; line-height: 1.1;
     background: transparent; color: var(--muted);
     border: 1px dashed var(--border);
     cursor: pointer; user-select: none;
     transition: background .12s, color .12s, border-color .12s;
-    margin-left: -2px;
   }
   .recipe .owned-toggle:hover { color: var(--ink); border-color: var(--accent-muted); }
   .recipe .owned-toggle.is-on {
