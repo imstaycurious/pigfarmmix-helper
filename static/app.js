@@ -936,6 +936,21 @@
       }
     });
 
+    // Safety net for PWA standalone (esp. iOS home-screen installs): pointer
+    // events on iOS don't reliably cancel native scroll — a downward drag on
+    // `overflow-y: auto` content can be claimed by the scroll machinery
+    // before our pointermove fires, making the sheet "un-swipe-dismissable".
+    // A touchmove listener registered with `{ passive: false }` is the only
+    // way to call `preventDefault()` on the native scroll for that finger,
+    // which is what actually frees our gesture to run.
+    drawer.addEventListener("touchmove", e => {
+      if (!armed) return;
+      const dy = (e.touches[0] ? e.touches[0].clientY : currentY) - startY;
+      if (dy > DRAG_START_PX && e.cancelable) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
     function endDrag() {
       if (!armed) return;
       const dy = currentY - startY;

@@ -301,7 +301,17 @@
   .drawer-bg.open { opacity: 1; pointer-events: auto; }
   .drawer {
     position: fixed; left: 0; right: 0; bottom: 0;
-    max-height: 92vh;
+    /* Cap the sheet at ~2/3 of the viewport so the top of the page (map /
+       pig list behind it) stays visible — feels less overwhelming than a
+       near-full-screen takeover. `dvh` tracks the dynamic viewport on mobile
+       (URL bar collapse/expand), `vh` is the fallback for older browsers. */
+    max-height: 66vh;
+    max-height: 66dvh;
+    /* `overscroll-behavior: contain` stops the PWA-standalone browser from
+       hijacking a downward touch as a pull-to-refresh / rubber-band, which
+       would otherwise kill our swipe-down-to-dismiss gesture on iOS/Android
+       home-screen installs. */
+    overscroll-behavior: contain;
     background: var(--bg); border-top-left-radius: 18px; border-top-right-radius: 18px;
     box-shadow: 0 -4px 30px rgba(0,0,0,0.2);
     transform: translateY(100%); transition: transform .25s;
@@ -310,10 +320,22 @@
     padding: 12px 14px max(14px, env(safe-area-inset-bottom));
   }
   .drawer.open { transform: translateY(0); }
+  /* Handle bar: the visible pill is 40×4 but we enlarge the touch target to
+     40×20 via padding + negative margin. `touch-action: none` forbids the
+     browser from treating a drag on the handle as native scroll — critical
+     for PWA standalone where native scroll otherwise steals the gesture
+     before our pointermove handler can react. */
   .drawer .handle {
     width: 40px; height: 4px; background: var(--border);
-    border-radius: 2px; margin: 0 auto 10px;
+    border-radius: 2px;
+    margin: 0 auto 10px;
+    padding: 8px 20px;
+    background-clip: content-box;
+    box-sizing: content-box;
+    touch-action: none;
+    cursor: grab;
   }
+  .drawer .handle:active { cursor: grabbing; }
   .drawer h2 { margin: 4px 0 8px; font-size: 18px; }
   .drawer-actions {
     display: flex; gap: 8px; margin: 0 0 10px;
