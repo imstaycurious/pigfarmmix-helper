@@ -419,6 +419,22 @@
     font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px;
   }
   .recipe .outcome { background: var(--chip-bg); padding: 3px 8px; border-radius: 8px; color: var(--chip-fg); font-weight: 500; }
+  /* "已有" 勾选 chip: 紧挨着某个活动猪产出，独立于 .outcome 的 data-pno 导航。 */
+  .recipe .owned-toggle {
+    display: inline-flex; align-items: center;
+    padding: 3px 8px; border-radius: 8px;
+    font-size: 11px; font-weight: 500; line-height: 1;
+    background: transparent; color: var(--muted);
+    border: 1px dashed var(--border);
+    cursor: pointer; user-select: none;
+    transition: background .12s, color .12s, border-color .12s;
+    margin-left: -2px;
+  }
+  .recipe .owned-toggle:hover { color: var(--ink); border-color: var(--accent-muted); }
+  .recipe .owned-toggle.is-on {
+    background: var(--ok); color: #fff; border-style: solid; border-color: var(--ok);
+  }
+  .recipe .owned-toggle.is-on:hover { filter: brightness(0.95); }
 
   .install-hint {
     font-size: 11px; color: var(--muted); text-align: center;
