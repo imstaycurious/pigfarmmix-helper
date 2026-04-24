@@ -19,7 +19,6 @@
     shop: "商店进货",
     hunt: "狩猎",
     hunt_event: "活动狩猎",
-    quest: "任务",
     breed: "配种",
     fail: "养成失败",
     feed_special: "超分歧/超出世",
@@ -55,6 +54,18 @@
   const HUNT_NORMAL_CODES = new Set([3, 4, 7, 9, 11, 13, 15]);
   const HUNT_RARE_CODES   = new Set([5, 6, 8, 10, 12, 14, 16]);
 
+  // eatable id (1~8) -> 饲料名。上游 pigs.json 只存 id, 手工补上映射。
+  const FEED_LABELS = {
+    1: "杂粮",
+    2: "素食MIX",
+    3: "红薯",
+    4: "玉米",
+    5: "草本饲料",
+    6: "橡子",
+    7: "高级MIX",
+    8: "松露",
+  };
+
   // 图鉴 book (1~6) -> 颜色分类。上游 pig.color 字段对图鉴 6 (野猪) 的猪是错的
   // (都写作 1), 所以统一改按 book 派生 color_text。
   const BOOK_COLOR_TEXT = {
@@ -84,8 +95,8 @@
     eventPigsById: new Map(),      // pNo -> 活动猪详情 (仅用于反向配种索引 + 抽屉产出显示)
     pigsByListKey: new Map(),      // `${book}-${listno}` -> pNo
     collection: loadCollection(),  // array of pNo
-    filter:      { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "" }, // 收藏 tab
-    atlasFilter: { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "" }, // 全图鉴 tab
+    filter:      { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 收藏 tab
+    atlasFilter: { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 全图鉴 tab
   };
 
   function loadCollection() {
@@ -100,6 +111,19 @@
   }
   function saveCollection() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.collection));
+  }
+
+  // ----- picky-eating derivation -----
+  // 按 eatable 长度判定挑食程度 (与 arrival_comment 里的 挑食/不挑食 100% 对齐):
+  //   0 种 -> 不挑食
+  //   1 种 -> 挑食 (只吃这一种)
+  //   2+ 种 -> 有点挑食 (吃这几种)
+  function pigPicky(p) {
+    const ids = (p.eatable || []).filter(i => FEED_LABELS[i]);
+    const foods = ids.map(i => FEED_LABELS[i]);
+    if (ids.length === 0) return { level: "none",  label: "不挑食", foods };
+    if (ids.length === 1) return { level: "picky", label: "挑食",   foods };
+    return                       { level: "some",  label: "有点挑食", foods };
   }
 
   // ----- dom helpers -----
@@ -231,7 +255,7 @@
 
   // ----- acquisition derivation (from upstream pig detail) -----
   function deriveAcquisitions(pig) {
-    const groups = { shop: [], hunt: [], hunt_event: [], quest: [], fail: [], feed_special: [] };
+    const groups = { shop: [], hunt: [], hunt_event: [], fail: [], feed_special: [] };
 
     const add = pig.add_rank || [0, 0, 0];
     const costs = [1000, 500, 100], labels = ["A", "B", "C"];
@@ -260,14 +284,6 @@
       }
     }
 
-    const q = pig.quest || {};
-    if (q.quest || q.action || q.type) {
-      const bits = [];
-      if (q.type)   bits.push(`type=${q.type}`);
-      if (q.action) bits.push(`action=${q.action}`);
-      if (q.quest)  bits.push(`quest=${q.quest}`);
-      groups.quest.push(bits.join(" · "));
-    }
 
     for (const f of pig.arrival_fail || []) {
       groups.fail.push(`养成失败自 #${f.pNo} ${f.name}`);
@@ -319,13 +335,15 @@
 
   // ----- render: grid -----
   function filterPigs(pigs, filter) {
-    const { color, method, q, huntRegion, huntTicket, shopRank } = filter;
+    const { color, method, q, huntRegion, huntTicket, shopRank, graze } = filter;
     const ql = (q || "").toLowerCase();
     return pigs.filter(p => {
       if (color && p.color_text !== color) return false;
       if (method && !pigHasMethod(p, method)) return false;
       if (method === "hunt" && !pigMatchesHunt(p, huntRegion, huntTicket)) return false;
       if (method === "shop" && !pigMatchesShopRank(p, shopRank)) return false;
+      if (graze === "yes" && !p.isExer) return false;
+      if (graze === "no"  &&  p.isExer) return false;
       if (ql) {
         const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
         if (!hay.includes(ql)) return false;
@@ -375,10 +393,30 @@
     children.push(el("div", { class: "img" },
       p.png ? el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }) : null
     ));
+    const grazeBadge = p.isExer
+      ? el("span", { class: "graze yes", title: "放牧" },  "🌿 放牧")
+      : el("span", { class: "graze no",  title: "不放牧" }, "🏠 不放牧");
+    const picky = pigPicky(p);
+    const pickyText = picky.level === "none"
+      ? "🍽️ 不挑食"
+      : `🍽️ ${picky.label}: ${picky.foods.join(" / ")}`;
+    const pickyEl = el("div", {
+      class: "picky " + picky.level,
+      title: pickyText,
+    }, pickyText);
+    const feedN = p.eat_times || 0;
+    const feedBadge = el("span", {
+      class: "feed",
+      title: `最少喂食 ${feedN} 次`,
+    }, `🍚 ${feedN}次`);
     children.push(el("div", { class: "body" }, [
       el("div", { class: "name" }, `#${p.pNo} ${p.name}`),
       el("div", { class: "sub" }, `${p.color_text || ""} · ${posText}`),
-      el("div", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
+      el("div", { class: "meta-row" }, [
+        el("span", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
+        el("span", { class: "badges" }, [feedBadge, grazeBadge].filter(Boolean)),
+      ]),
+      pickyEl,
     ]));
     return el("div", {
       class: "card" + (showCollected && isColl ? " collected" : ""),
@@ -656,6 +694,7 @@
 
   // 收藏 tab filters (no prefix, legacy IDs)
   wireFilter("#colorFilter",      state.filter, "color");
+  wireFilter("#grazeFilter",      state.filter, "graze");
   wireFilter("#methodFilter",     state.filter, "method", updateCollectMethodSub);
   wireFilter("#huntRegionFilter", state.filter, "huntRegion");
   wireFilter("#huntTicketFilter", state.filter, "huntTicket");
@@ -663,6 +702,7 @@
 
   // 全图鉴 tab filters (atlas prefix)
   wireFilter("#atlasColorFilter",      state.atlasFilter, "color");
+  wireFilter("#atlasGrazeFilter",      state.atlasFilter, "graze");
   wireFilter("#atlasMethodFilter",     state.atlasFilter, "method", updateAtlasMethodSub);
   wireFilter("#atlasHuntRegionFilter", state.atlasFilter, "huntRegion");
   wireFilter("#atlasHuntTicketFilter", state.atlasFilter, "huntTicket");
@@ -705,10 +745,9 @@
     const box = $("#drawerContent");
     let posText = "";
     if (p.book && p.book <= 6) {
-      posText = `图鉴${p.book} 页${p.page} #${p.slot}  (listno=${p.list && p.list.listno})`;
+      posText = `图鉴${p.book} 页${p.page} #${p.slot}`;
     } else if (isEventPig) {
-      const ln = p.list ? p.list.listno : "?";
-      posText = `活动图鉴 (listno=${ln})`;
+      posText = `活动图鉴`;
     }
 
     // Event pigs don't participate in the 186-only collection list, so we
@@ -724,7 +763,7 @@
     }
 
     const groups = deriveAcquisitions(p);
-    const acqOrder = ["shop", "hunt", "hunt_event", "quest", "fail", "feed_special"];
+    const acqOrder = ["shop", "hunt", "hunt_event", "fail", "feed_special"];
     const acqHTML = [];
     for (const g of acqOrder) {
       if (!groups[g] || groups[g].length === 0) continue;
@@ -852,11 +891,16 @@
         <div class="info">
           <div><b>${escHtml(p.color_text || "")}</b> · <span class="${p.special ? "stars special" : "stars"}">${stars(p.rare, p.special)}</span></div>
           <div class="meta">${posText}</div>
-          <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · 寿命 ${p.lifespan}</div>
+          <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · ${p.isExer ? "🌿 放牧" : "🏠 不放牧"} · 🍚 最少喂 ${p.eat_times || 0} 次</div>
+          <div class="meta">${(() => {
+            const k = pigPicky(p);
+            return k.level === "none"
+              ? "🍽️ 不挑食"
+              : `🍽️ ${k.label}: ${escHtml(k.foods.join(" / "))}`;
+          })()}</div>
         </div>
       </div>
       ${p.description ? `<div class="kv" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
-      ${p.arrival_comment ? `<div class="kv"><div class="k">饲养备注</div><div class="v">${escHtml(p.arrival_comment)}</div></div>` : ""}
       <div class="section"><h3>获得方式</h3>${acqHTML.join("")}</div>
       <div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>
       <div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>
