@@ -2,15 +2,18 @@
  * 养猪场mix图鉴助手 — 纯静态客户端
  *
  * 加载一次 /data/pigs.json (~640KB, 186 只)
+ * Tabs: 全图鉴 (默认) / 收藏 / 添加
  * 用户收藏 (pNo 列表) 持久化在 localStorage
- * 筛选/搜索全在客户端
+ * 筛选/搜索全在客户端, 全图鉴与收藏各有独立的 filter 状态
  */
 (function () {
   "use strict";
 
-  const IMG_BASE = "https://pigfarmmix.net/";
   const STORAGE_KEY = "pig_collection_v1";
   const DATA_URL = "/data/pigs.json";
+  const EVENT_DATA_URL = "/data/pigs_event.json";
+  // Local front-facing portrait per pig, downloaded by tools/download_portraits.py.
+  const IMG_BASE = "/img/pigs/";
 
   const METHOD_LABELS = {
     shop: "商店进货",
@@ -66,10 +69,12 @@
   // ----- state -----
   const state = {
     dataLoaded: false,
-    pigsById: new Map(),           // pNo -> pig detail
+    pigsById: new Map(),           // pNo -> pig detail (186 只, 进入全图鉴)
+    eventPigsById: new Map(),      // pNo -> 活动猪详情 (仅用于反向配种索引 + 抽屉产出显示)
     pigsByListKey: new Map(),      // `${book}-${listno}` -> pNo
     collection: loadCollection(),  // array of pNo
-    filter: { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "" },
+    filter:      { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "" }, // 收藏 tab
+    atlasFilter: { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "" }, // 全图鉴 tab
   };
 
   function loadCollection() {
@@ -113,12 +118,10 @@
     toast._t = setTimeout(() => t.classList.remove("show"), ms);
   }
 
-  function imgUrl(p) {
-    if (!p) return "";
-    if (Array.isArray(p)) p = p[0] || "";
-    if (!p) return "";
-    if (p.startsWith("http")) return p;
-    return IMG_BASE + p;
+  // Every pig has one canonical portrait at /img/pigs/{pNo}.png.
+  // pNo is always present on both top-level pigs and nested pigKind refs.
+  function imgUrl(pNo) {
+    return pNo ? `${IMG_BASE}${pNo}.png` : "";
   }
 
   function stars(rare, special) {
@@ -128,9 +131,14 @@
 
   // ----- data load -----
   async function loadData() {
-    const res = await fetch(DATA_URL);
-    if (!res.ok) throw new Error("加载数据失败: " + res.status);
-    const bundle = await res.json();
+    // 并行请求 186 本体和活动猪。活动猪只用于丰富抽屉（反向配种产出 +
+    // 作为 186 配方里的亲本/产出），不进入全图鉴 / 收藏 / 添加流程。
+    const [mainRes, evRes] = await Promise.all([
+      fetch(DATA_URL),
+      fetch(EVENT_DATA_URL).catch(() => null),
+    ]);
+    if (!mainRes.ok) throw new Error("加载数据失败: " + mainRes.status);
+    const bundle = await mainRes.json();
     if (!bundle || !Array.isArray(bundle.pigs)) throw new Error("数据格式错误");
 
     for (const p of bundle.pigs) {
@@ -139,8 +147,71 @@
         state.pigsByListKey.set(`${p.list.typeno}-${p.list.listno}`, p.pNo);
       }
     }
+
+    if (evRes && evRes.ok) {
+      try {
+        const evBundle = await evRes.json();
+        if (evBundle && Array.isArray(evBundle.pigs)) {
+          for (const p of evBundle.pigs) state.eventPigsById.set(p.pNo, p);
+        }
+      } catch (err) {
+        console.warn("活动猪数据解析失败:", err);
+      }
+    } else {
+      console.warn("未加载活动猪数据 (pigs_event.json), 抽屉反向配种将不含活动猪产出");
+    }
+
+    buildBreedingIndex();
     state.dataLoaded = true;
     return bundle;
+  }
+
+  // Reverse breeding index: pNo -> Array<{ partner, isview, any, result }>.
+  // The upstream `arrival_bleed` on each pig Y lists recipes that PRODUCE Y
+  // ("A + B -> Y"). To answer "what can X breed?", walk every Y's recipes and
+  // register X under both parent slots it appears in. A single pairing
+  // (A + B, isview) usually shows up on multiple children's arrival_bleed
+  // (each carrying the full result[] of outcomes), so we dedupe per parent.
+  function buildBreedingIndex() {
+    state.breedByParent = new Map();
+    const seen = new Map();
+    function addEntry(pNo, entry) {
+      const key = `${entry.partner ? entry.partner.pNo : "any"}-${entry.isview}-${entry.any ? 1 : 0}`;
+      if (!seen.has(pNo)) seen.set(pNo, new Set());
+      const s = seen.get(pNo);
+      if (s.has(key)) return;
+      s.add(key);
+      if (!state.breedByParent.has(pNo)) state.breedByParent.set(pNo, []);
+      state.breedByParent.get(pNo).push(entry);
+    }
+    // 同时遍历 186 + 活动猪的 arrival_bleed。
+    // 活动猪配方的意义: 某个 186 猪 X 与某个亲本 B 配 -> 活动猪 Y。
+    // 这样从 X 的抽屉里就能看到活动猪 Y 作为产出。
+    const sources = [state.pigsById.values(), state.eventPigsById.values()];
+    for (const iter of sources) {
+      for (const pig of iter) {
+        for (const r of pig.arrival_bleed || []) {
+          const p1 = r.pNo1 || {}, p2 = r.pNo2 || {};
+          const result = r.result || [];
+          if (p1.pNo) {
+            addEntry(p1.pNo, {
+              partner: r.any ? null : (p2.pNo ? p2 : null),
+              isview: r.isview,
+              any: !!r.any,
+              result,
+            });
+          }
+          if (p2.pNo && !r.any) {
+            addEntry(p2.pNo, {
+              partner: p1.pNo ? p1 : null,
+              isview: r.isview,
+              any: false,
+              result,
+            });
+          }
+        }
+      }
+    }
   }
 
   // ----- acquisition derivation (from upstream pig detail) -----
@@ -232,30 +303,75 @@
   }
 
   // ----- render: grid -----
-  function currentCollectionPigs() {
-    const { color, method, q, huntRegion, huntTicket, shopRank } = state.filter;
-    const ql = q.toLowerCase();
-    const out = [];
-    for (const pNo of state.collection) {
-      const p = state.pigsById.get(pNo);
-      if (!p) continue;
-      if (color && p.color_text !== color) continue;
-      if (method && !pigHasMethod(p, method)) continue;
-      if (method === "hunt" && !pigMatchesHunt(p, huntRegion, huntTicket)) continue;
-      if (method === "shop" && !pigMatchesShopRank(p, shopRank)) continue;
+  function filterPigs(pigs, filter) {
+    const { color, method, q, huntRegion, huntTicket, shopRank } = filter;
+    const ql = (q || "").toLowerCase();
+    return pigs.filter(p => {
+      if (color && p.color_text !== color) return false;
+      if (method && !pigHasMethod(p, method)) return false;
+      if (method === "hunt" && !pigMatchesHunt(p, huntRegion, huntTicket)) return false;
+      if (method === "shop" && !pigMatchesShopRank(p, shopRank)) return false;
       if (ql) {
         const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
-        if (!hay.includes(ql)) continue;
+        if (!hay.includes(ql)) return false;
       }
-      out.push(p);
-    }
-    out.sort((a, b) =>
-      (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot) || (a.pNo - b.pNo)
-    );
-    return out;
+      return true;
+    });
   }
 
-  function renderBody() {
+  function sortPigs(pigs) {
+    return pigs.slice().sort((a, b) =>
+      (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot) || (a.pNo - b.pNo)
+    );
+  }
+
+  function currentCollectionPigs() {
+    const pigs = [];
+    for (const pNo of state.collection) {
+      const p = state.pigsById.get(pNo);
+      if (p) pigs.push(p);
+    }
+    return sortPigs(filterPigs(pigs, state.filter));
+  }
+
+  function currentAtlasPigs() {
+    return sortPigs(filterPigs([...state.pigsById.values()], state.atlasFilter));
+  }
+
+  // Shared card renderer. `showRemove` shows the × (收藏 tab); `showCollected`
+  // draws a green tick + border when the pig is already in the collection
+  // (全图鉴 tab).
+  function buildCard(p, opts) {
+    const { showRemove = false, showCollected = false } = opts || {};
+    const posText = p.book && p.book <= 6
+      ? `图鉴${p.book} 页${p.page} #${p.slot}` : "";
+    const isColl = state.collection.includes(p.pNo);
+    const children = [];
+    if (showRemove) {
+      children.push(el("button", {
+        class: "remove",
+        "aria-label": "移除",
+        onclick: ev => { ev.stopPropagation(); removePig(p.pNo); },
+      }, "×"));
+    }
+    if (showCollected && isColl) {
+      children.push(el("span", { class: "tick", "aria-label": "已收藏" }, "✓"));
+    }
+    children.push(el("div", { class: "img" },
+      p.png ? el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }) : null
+    ));
+    children.push(el("div", { class: "body" }, [
+      el("div", { class: "name" }, `#${p.pNo} ${p.name}`),
+      el("div", { class: "sub" }, `${p.color_text || ""} · ${posText}`),
+      el("div", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
+    ]));
+    return el("div", {
+      class: "card" + (showCollected && isColl ? " collected" : ""),
+      onclick: () => showDetail(p.pNo),
+    }, children);
+  }
+
+  function renderCollectionBody() {
     const box = $("#body");
     box.innerHTML = "";
 
@@ -271,12 +387,12 @@
       box.appendChild(el("div", { class: "empty" }, [
         el("div", { class: "big" }, "🐽"),
         el("div", { class: "title" }, "你的收藏还是空的"),
-        el("div", { class: "hint" }, "切换到下方「添加」页来登记你的第一只猪"),
+        el("div", { class: "hint" }, "到「全图鉴」点开一头猪即可加入收藏，或到「添加」页批量录入"),
         el("div", {
           class: "arrow",
           style: "cursor:pointer",
-          onclick: () => activateTab("add"),
-        }, "👇"),
+          onclick: () => activateTab("atlas"),
+        }, "�"),
       ]));
       return;
     }
@@ -291,34 +407,34 @@
     }
 
     const grid = el("div", { class: "grid" });
-    for (const p of pigs) {
-      const posText = p.book && p.book <= 6
-        ? `图鉴${p.book} 页${p.page} #${p.slot}`
-        : "";
-      const remove = el("button", {
-        class: "remove",
-        "aria-label": "移除",
-        onclick: (ev) => {
-          ev.stopPropagation();
-          removePig(p.pNo);
-        },
-      }, "×");
-      const card = el("div", {
-        class: "card",
-        onclick: () => showDetail(p.pNo),
-      }, [
-        remove,
-        el("div", { class: "img" },
-          p.png ? el("img", { src: imgUrl(p.png), loading: "lazy", alt: p.name }) : null
-        ),
-        el("div", { class: "body" }, [
-          el("div", { class: "name" }, `#${p.pNo} ${p.name}`),
-          el("div", { class: "sub" }, `${p.color_text || ""} · ${posText}`),
-          el("div", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
-        ]),
-      ]);
-      grid.appendChild(card);
+    for (const p of pigs) grid.appendChild(buildCard(p, { showRemove: true }));
+    box.appendChild(grid);
+  }
+
+  function renderAtlasBody() {
+    const box = $("#atlasBody");
+    if (!box) return;
+    box.innerHTML = "";
+
+    if (!state.dataLoaded) {
+      box.appendChild(el("div", { class: "loading" }, [
+        el("div", { class: "spinner" }),
+        "正在加载图鉴数据…",
+      ]));
+      return;
     }
+
+    const pigs = currentAtlasPigs();
+    if (pigs.length === 0) {
+      box.appendChild(el("div", { class: "empty" }, [
+        el("div", { class: "title" }, "没有符合筛选条件的猪"),
+        el("div", { class: "hint" }, "试试换个颜色/获得方式，或清空搜索词"),
+      ]));
+      return;
+    }
+
+    const grid = el("div", { class: "grid" });
+    for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true }));
     box.appendChild(grid);
   }
 
@@ -327,25 +443,34 @@
       ? `${state.collection.length} 只收藏 / 共 ${state.pigsById.size} 只`
       : "加载中…";
 
+    // 收藏 tab: 颜色分布
     const sb = $("#statsBar");
     sb.innerHTML = "";
-    if (state.collection.length === 0) return;
-    const byColor = {};
-    const byMethod = {};
-    for (const pNo of state.collection) {
-      const p = state.pigsById.get(pNo);
-      if (!p) continue;
-      const c = p.color_text || "?";
-      byColor[c] = (byColor[c] || 0) + 1;
-      const g = deriveAcquisitions(p);
-      for (const k of Object.keys(g)) {
-        if (g[k].length > 0) byMethod[k] = (byMethod[k] || 0) + 1;
+    if (state.collection.length > 0) {
+      const byColor = {};
+      for (const pNo of state.collection) {
+        const p = state.pigsById.get(pNo);
+        if (!p) continue;
+        const c = p.color_text || "?";
+        byColor[c] = (byColor[c] || 0) + 1;
       }
-      if ((p.arrival_bleed || []).length > 0) byMethod.breed = (byMethod.breed || 0) + 1;
+      const colorBits = Object.entries(byColor).sort((a, b) => b[1] - a[1])
+        .map(([c, n]) => `${c} ${n}`).join(" · ");
+      if (colorBits) sb.appendChild(text("颜色: " + colorBits));
     }
-    const colorBits = Object.entries(byColor).sort((a, b) => b[1] - a[1])
-      .map(([c, n]) => `${c} ${n}`).join(" · ");
-    if (colorBits) sb.appendChild(text("颜色: " + colorBits));
+
+    // 全图鉴 tab: 当前筛选结果 / 总数 · 已收藏
+    const asb = $("#atlasStatsBar");
+    if (asb) {
+      if (!state.dataLoaded) {
+        asb.textContent = "";
+      } else {
+        const total = state.pigsById.size;
+        const shown = currentAtlasPigs().length;
+        const coll = state.collection.length;
+        asb.textContent = `显示 ${shown} / 共 ${total} 只 · 已收藏 ${coll}`;
+      }
+    }
   }
 
   $("#clearBtn").addEventListener("click", () => {
@@ -362,7 +487,8 @@
 
   function render() {
     renderStatsBar();
-    renderBody();
+    renderCollectionBody();
+    renderAtlasBody();
     // sync 添加-tab 收藏管理 count
     const mc = $("#manageCount");
     if (mc) mc.textContent = `当前收藏 ${state.collection.length} 只`;
@@ -467,13 +593,13 @@
   wireAutoAdvance();
 
   // ----- filters & search -----
-  function wireFilter(rootSel, key, onChange) {
+  function wireFilter(rootSel, filterObj, key, onChange) {
     $(rootSel).addEventListener("click", e => {
       const chip = e.target.closest(".chip");
       if (!chip) return;
       $$(".chip", $(rootSel)).forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
-      state.filter[key] = chip.dataset.value;
+      filterObj[key] = chip.dataset.value;
       if (onChange) onChange(chip.dataset.value);
       render();
     });
@@ -483,50 +609,99 @@
     $$(".chip", $(rootSel)).forEach(c =>
       c.classList.toggle("active", c.dataset.value === ""));
   }
-  function resetHuntSubFilter() {
-    state.filter.huntRegion = "";
-    state.filter.huntTicket = "";
-    resetChipRow("#huntRegionFilter");
-    resetChipRow("#huntTicketFilter");
-  }
-  function resetShopSubFilter() {
-    state.filter.shopRank = "";
-    resetChipRow("#shopRankFilter");
-  }
-  function updateMethodSubFilterVisibility() {
-    const m = state.filter.method;
-    const showHunt = m === "hunt";
-    const showShop = m === "shop";
-    $("#huntRegionFilter").style.display = showHunt ? "" : "none";
-    $("#huntTicketFilter").style.display = showHunt ? "" : "none";
-    $("#shopRankFilter").style.display   = showShop ? "" : "none";
-    if (!showHunt) resetHuntSubFilter();
-    if (!showShop) resetShopSubFilter();
-  }
 
-  wireFilter("#colorFilter", "color");
-  wireFilter("#methodFilter", "method", () => updateMethodSubFilterVisibility());
-  wireFilter("#huntRegionFilter", "huntRegion");
-  wireFilter("#huntTicketFilter", "huntTicket");
-  wireFilter("#shopRankFilter", "shopRank");
+  // Each tab has its own method-driven sub-filter visibility (狩猎/商店).
+  function makeMethodSubUpdater(prefix, filterObj) {
+    const regionSel = `#${prefix}HuntRegionFilter`;
+    const ticketSel = `#${prefix}HuntTicketFilter`;
+    const shopSel   = `#${prefix}ShopRankFilter`;
+    return function update() {
+      const m = filterObj.method;
+      const showHunt = m === "hunt", showShop = m === "shop";
+      $(regionSel).style.display = showHunt ? "" : "none";
+      $(ticketSel).style.display = showHunt ? "" : "none";
+      $(shopSel).style.display   = showShop ? "" : "none";
+      if (!showHunt) {
+        filterObj.huntRegion = ""; filterObj.huntTicket = "";
+        resetChipRow(regionSel); resetChipRow(ticketSel);
+      }
+      if (!showShop) {
+        filterObj.shopRank = "";
+        resetChipRow(shopSel);
+      }
+    };
+  }
+  const updateCollectMethodSub = makeMethodSubUpdater("", state.filter);
+  const updateAtlasMethodSub   = makeMethodSubUpdater("atlas", state.atlasFilter);
 
-  let searchTimer = null;
-  $("#search").addEventListener("input", e => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-      state.filter.q = e.target.value.trim();
-      render();
-    }, 200);
-  });
+  // 收藏 tab filters (no prefix, legacy IDs)
+  wireFilter("#colorFilter",      state.filter, "color");
+  wireFilter("#methodFilter",     state.filter, "method", updateCollectMethodSub);
+  wireFilter("#huntRegionFilter", state.filter, "huntRegion");
+  wireFilter("#huntTicketFilter", state.filter, "huntTicket");
+  wireFilter("#shopRankFilter",   state.filter, "shopRank");
+
+  // 全图鉴 tab filters (atlas prefix)
+  wireFilter("#atlasColorFilter",      state.atlasFilter, "color");
+  wireFilter("#atlasMethodFilter",     state.atlasFilter, "method", updateAtlasMethodSub);
+  wireFilter("#atlasHuntRegionFilter", state.atlasFilter, "huntRegion");
+  wireFilter("#atlasHuntTicketFilter", state.atlasFilter, "huntTicket");
+  wireFilter("#atlasShopRankFilter",   state.atlasFilter, "shopRank");
+
+  function wireSearch(inputSel, filterObj) {
+    let timer = null;
+    $(inputSel).addEventListener("input", e => {
+      const v = e.target.value;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        filterObj.q = v.trim();
+        render();
+      }, 200);
+    });
+  }
+  wireSearch("#search",      state.filter);
+  wireSearch("#atlasSearch", state.atlasFilter);
+
+  // Return true if a pNo resolves to either a 186 pig or an event pig.
+  function isKnownPig(pNo) {
+    return state.pigsById.has(pNo) || state.eventPigsById.has(pNo);
+  }
+  // `data-pno` attribute snippet — only emitted when the pNo resolves to a
+  // pig we have data for (so drawer navigation never dead-links).
+  function linkAttr(pNo) {
+    return pNo && isKnownPig(pNo) ? ` data-pno="${pNo}"` : "";
+  }
 
   // ----- drawer (detail) -----
+  // Track the pig currently shown in the drawer so the delegated nav click
+  // handler can ignore same-pig clicks.
+  let currentDetailPNo = null;
+
   function showDetail(pNo) {
-    const p = state.pigsById.get(pNo);
+    const p = state.pigsById.get(pNo) || state.eventPigsById.get(pNo);
     if (!p) return;
+    currentDetailPNo = pNo;
+    const isEventPig = state.eventPigsById.has(pNo);
     const box = $("#drawerContent");
-    const posText = p.book && p.book <= 6
-      ? `图鉴${p.book} 页${p.page} #${p.slot}  (listno=${p.list && p.list.listno})`
-      : "";
+    let posText = "";
+    if (p.book && p.book <= 6) {
+      posText = `图鉴${p.book} 页${p.page} #${p.slot}  (listno=${p.list && p.list.listno})`;
+    } else if (isEventPig) {
+      const ln = p.list ? p.list.listno : "?";
+      posText = `活动图鉴 (listno=${ln})`;
+    }
+
+    // Event pigs don't participate in the 186-only collection list, so we
+    // replace the add/remove button with a muted caption on their drawers.
+    const inColl = !isEventPig && state.collection.includes(p.pNo);
+    let collectBtn;
+    if (isEventPig) {
+      collectBtn = `<div class="hint-strip" style="flex:1;color:var(--muted);font-size:13px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-align:center">活动猪不列入全图鉴 / 收藏</div>`;
+    } else if (inColl) {
+      collectBtn = `<button type="button" class="add-btn danger" id="drawerCollectBtn">从收藏中移除</button>`;
+    } else {
+      collectBtn = `<button type="button" class="add-btn" id="drawerCollectBtn">加入收藏</button>`;
+    }
 
     const groups = deriveAcquisitions(p);
     const acqOrder = ["shop", "hunt", "hunt_event", "quest", "fail", "feed_special"];
@@ -558,15 +733,15 @@
       if (!items) continue;
       for (const r of items) {
         const p1 = r.pNo1 || {}, p2 = r.pNo2 || {};
-        const p1Png = imgUrl(p1.png);
-        const p2Png = imgUrl(p2.png);
+        const p1Png = imgUrl(p1.pNo);
+        const p2Png = imgUrl(p2.pNo);
         const partner = r.any
           ? `<div class="pname" style="color:var(--danger)">任意猪</div>`
           : `<div class="pname">${escHtml(p2.name || "?")}</div>` +
             (p2.rent ? `<div class="prent">借 ${p2.rent}pt</div>` : "");
         const outs = (r.result || []).map(o => {
           const k = o.pigKind || {};
-          return `<span class="outcome">${escHtml(k.name || "?")} ${o.prob}%</span>`;
+          return `<span class="outcome"${linkAttr(k.pNo)}>${escHtml(k.name || "?")} ${o.prob}%</span>`;
         }).join("");
         const smTag = (iv === 3 || iv === 4 || iv === -3 || iv === -4) && r.result && r.result[0]
           ? ` · 系统图 #${r.result[0].orderNo} x${r.result[0].pigKind && r.result[0].pigKind.rare === 6 ? 10 : r.result[0].pigKind && r.result[0].pigKind.rare}`
@@ -575,13 +750,13 @@
           <div class="recipe">
             <div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}${smTag}</div>
             <div class="parents">
-              <div class="parent">
+              <div class="parent"${linkAttr(p1.pNo)}>
                 ${p1Png ? `<img src="${p1Png}" loading="lazy">` : ""}
                 <div class="pname">${escHtml(p1.name || "?")}</div>
                 ${p1.rent ? `<div class="prent">借 ${p1.rent}pt</div>` : ""}
               </div>
               <div class="plus">+</div>
-              <div class="parent">
+              <div class="parent"${r.any ? "" : linkAttr(p2.pNo)}>
                 ${p2Png && !r.any ? `<img src="${p2Png}" loading="lazy">` : ""}
                 ${partner}
               </div>
@@ -595,9 +770,63 @@
       ? recipeHTML.join("")
       : `<div class="kv">没有已公开的配种组合</div>`;
 
-    const pigImg = imgUrl(p.png) || "";
+    const pigImg = imgUrl(p.pNo);
+
+    // Reverse: "this pig as a parent → what it can breed"
+    const asParent = (state.breedByParent && state.breedByParent.get(p.pNo)) || [];
+    const asParentByView = new Map();
+    for (const b of asParent) {
+      const k = String(b.isview);
+      if (!asParentByView.has(k)) asParentByView.set(k, []);
+      asParentByView.get(k).push(b);
+    }
+    const parentRecipeHTML = [];
+    for (const iv of order) {
+      const items = asParentByView.get(String(iv));
+      if (!items) continue;
+      // sort partners by name for stable, readable output
+      items.sort((a, b) => {
+        const an = a.partner ? (a.partner.name || "") : "zzz任意";
+        const bn = b.partner ? (b.partner.name || "") : "zzz任意";
+        return an.localeCompare(bn, "zh");
+      });
+      for (const r of items) {
+        const partnerPng = r.partner ? imgUrl(r.partner.pNo) : "";
+        const partnerBlock = r.any || !r.partner
+          ? `<div class="pname" style="color:var(--danger)">任意猪</div>`
+          : `<div class="pname">${escHtml(r.partner.name || "?")}</div>` +
+            (r.partner.rent ? `<div class="prent">借 ${r.partner.rent}pt</div>` : "");
+        const outs = (r.result || []).map(o => {
+          const k = o.pigKind || {};
+          const isSelf = k.pNo === p.pNo;
+          const styleAttr = isSelf ? ' style="background:var(--ok);color:#fff"' : "";
+          return `<span class="outcome"${styleAttr}${linkAttr(k.pNo)}>${escHtml(k.name || "?")} ${o.prob}%</span>`;
+        }).join("");
+        parentRecipeHTML.push(`
+          <div class="recipe">
+            <div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}</div>
+            <div class="parents">
+              <div class="parent">
+                ${pigImg ? `<img src="${pigImg}" loading="lazy">` : ""}
+                <div class="pname">${escHtml(p.name)}</div>
+              </div>
+              <div class="plus">+</div>
+              <div class="parent"${r.any || !r.partner ? "" : linkAttr(r.partner.pNo)}>
+                ${partnerPng && !r.any && r.partner ? `<img src="${partnerPng}" loading="lazy">` : ""}
+                ${partnerBlock}
+              </div>
+            </div>
+            <div class="outcomes">${outs}</div>
+          </div>
+        `);
+      }
+    }
+    const parentBlock = parentRecipeHTML.length > 0
+      ? parentRecipeHTML.join("")
+      : `<div class="kv">没有已知的配种产出 (可能仅作为被配出的结果)</div>`;
     box.innerHTML = `
       <h2>#${p.pNo} ${escHtml(p.name)}</h2>
+      <div class="drawer-actions">${collectBtn}</div>
       <div class="hero">
         ${pigImg ? `<img src="${pigImg}" alt="${escHtml(p.name)}">` : ""}
         <div class="info">
@@ -609,8 +838,30 @@
       ${p.description ? `<div class="kv" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
       ${p.arrival_comment ? `<div class="kv"><div class="k">饲养备注</div><div class="v">${escHtml(p.arrival_comment)}</div></div>` : ""}
       <div class="section"><h3>获得方式</h3>${acqHTML.join("")}</div>
+      <div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>
       <div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>
     `;
+    // Wire the collect/uncollect button inside the drawer. Rebuilds the
+    // drawer in place so the button label flips without closing the sheet.
+    // (Event pigs have no button, just a muted caption.)
+    const cbtn = $("#drawerCollectBtn");
+    if (cbtn) {
+      cbtn.addEventListener("click", () => {
+        if (state.collection.includes(p.pNo)) {
+          const i = state.collection.indexOf(p.pNo);
+          state.collection.splice(i, 1);
+          saveCollection();
+          render();
+          toast(`已移除: ${p.name}`);
+        } else {
+          const res = addByPNo(p.pNo);
+          if (res.ok) { toast(res.msg); render(); }
+          else if (res.msg) toast(res.msg);
+        }
+        showDetail(p.pNo); // re-render drawer so the button label flips
+      });
+    }
+
     $("#drawer").classList.add("open");
     $("#drawerBg").classList.add("open");
   }
@@ -621,9 +872,110 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
-  $("#drawerBg").addEventListener("click", () => {
-    $("#drawer").classList.remove("open");
-    $("#drawerBg").classList.remove("open");
+  function closeDrawer() {
+    const drawer = $("#drawer"), bg = $("#drawerBg");
+    drawer.classList.remove("open");
+    bg.classList.remove("open");
+    // Reset any inline styles left over from a swipe gesture.
+    drawer.style.transform = "";
+    drawer.style.transition = "";
+    bg.style.opacity = "";
+    currentDetailPNo = null;
+  }
+  $("#drawerBg").addEventListener("click", closeDrawer);
+
+  // Swipe-down-to-dismiss on the drawer itself (touch / mouse / pen).
+  // Gesture is only armed when the drawer is at scrollTop=0 (so upward scroll
+  // still works normally), or when the user touches the top handle bar.
+  // Dragged past SWIPE_CLOSE_PX closes; otherwise snaps back.
+  (function setupDrawerSwipe() {
+    const drawer = $("#drawer");
+    const bg = $("#drawerBg");
+    const SWIPE_CLOSE_PX = 100;
+    const DRAG_START_PX = 6; // jitter tolerance before we consider it a drag
+    let startY = 0, currentY = 0, activePointerId = null;
+    let armed = false, dragging = false;
+
+    drawer.addEventListener("pointerdown", e => {
+      if (!drawer.classList.contains("open")) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      const onHandle = e.target.closest(".handle");
+      // Arm only if finger started at the handle OR drawer is scrolled to top.
+      if (!onHandle && drawer.scrollTop > 0) return;
+      armed = true;
+      dragging = false;
+      startY = e.clientY;
+      currentY = startY;
+      activePointerId = e.pointerId;
+      drawer.style.transition = "none";
+    });
+
+    drawer.addEventListener("pointermove", e => {
+      if (!armed || e.pointerId !== activePointerId) return;
+      currentY = e.clientY;
+      const dy = currentY - startY;
+      if (dy <= 0) {
+        // Moving up — give up the gesture, let native scrolling resume.
+        drawer.style.transform = "";
+        bg.style.opacity = "";
+        return;
+      }
+      if (dy > DRAG_START_PX) {
+        dragging = true;
+        // Capture so we keep receiving move/up even if finger leaves the drawer
+        // (e.g. drags onto the backdrop).
+        if (drawer.setPointerCapture && activePointerId !== null) {
+          try { drawer.setPointerCapture(activePointerId); } catch (_) {}
+        }
+      }
+      if (dragging) {
+        drawer.style.transform = `translateY(${dy}px)`;
+        // Fade the backdrop proportionally for tactile feedback.
+        const progress = Math.min(1, dy / 300);
+        bg.style.opacity = String(Math.max(0.2, 1 - progress * 0.8));
+      }
+    });
+
+    function endDrag() {
+      if (!armed) return;
+      const dy = currentY - startY;
+      // Restore CSS transitions BEFORE clearing inline styles so the snap-back
+      // or close animation is smooth.
+      drawer.style.transition = "";
+      bg.style.opacity = "";
+      if (dragging && dy > SWIPE_CLOSE_PX) {
+        closeDrawer();
+      } else {
+        drawer.style.transform = "";
+      }
+      armed = false;
+      dragging = false;
+      activePointerId = null;
+    }
+    drawer.addEventListener("pointerup", endDrag);
+    drawer.addEventListener("pointercancel", endDrag);
+    drawer.addEventListener("pointerleave", e => {
+      // Only end on leave if we never captured (pointer capture keeps events
+      // flowing even off-element).
+      if (!drawer.hasPointerCapture || !drawer.hasPointerCapture(e.pointerId)) {
+        endDrag();
+      }
+    });
+  })();
+
+  // Delegated nav: clicking a parent block or outcome chip marked with
+  // `data-pno` re-renders the drawer for that pig (works for both 186 and
+  // event pigs, and cross-navigates between them). Attached once; survives
+  // drawer innerHTML re-renders because it listens on the container.
+  $("#drawerContent").addEventListener("click", e => {
+    const t = e.target.closest("[data-pno]");
+    if (!t) return;
+    const target = parseInt(t.dataset.pno, 10);
+    if (!target || target === currentDetailPNo) return;
+    e.stopPropagation();
+    showDetail(target);
+    // keep the scroll position comfortable when deep-diving a lineage
+    $("#drawerContent").scrollTop = 0;
   });
 
   // ----- theme toggle -----
@@ -691,21 +1043,25 @@
   }
 
   // ----- tab switching -----
+  const TABS = {
+    atlas:   { panel: "#tabAtlas",   btn: "#tabBtnAtlas" },
+    collect: { panel: "#tabCollect", btn: "#tabBtnCollect" },
+    add:     { panel: "#tabAdd",     btn: "#tabBtnAdd" },
+  };
   function activateTab(name) {
-    const isAdd = name === "add";
-    $("#tabCollect").classList.toggle("active", !isAdd);
-    $("#tabAdd").classList.toggle("active", isAdd);
-    $("#tabBtnCollect").classList.toggle("active", !isAdd);
-    $("#tabBtnAdd").classList.toggle("active", isAdd);
-    $("#tabBtnCollect").setAttribute("aria-selected", String(!isAdd));
-    $("#tabBtnAdd").setAttribute("aria-selected", String(isAdd));
-    // scroll to top of the new panel
+    if (!TABS[name]) name = "atlas";
+    for (const [k, ids] of Object.entries(TABS)) {
+      const active = k === name;
+      $(ids.panel).classList.toggle("active", active);
+      $(ids.btn).classList.toggle("active", active);
+      $(ids.btn).setAttribute("aria-selected", String(active));
+    }
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
-    // refresh name-search rendering (e.g. "已添加" tags)
-    if (isAdd) renderNameResults();
+    if (name === "add") renderNameResults();
   }
+  $("#tabBtnAtlas").addEventListener("click",   () => activateTab("atlas"));
   $("#tabBtnCollect").addEventListener("click", () => activateTab("collect"));
-  $("#tabBtnAdd").addEventListener("click", () => activateTab("add"));
+  $("#tabBtnAdd").addEventListener("click",     () => activateTab("add"));
 
   // ----- name search (add-tab) -----
   const nameState = { q: "", results: [] };
@@ -757,7 +1113,7 @@
           }
         },
       }, [
-        p.png ? el("img", { src: imgUrl(p.png), loading: "lazy", alt: p.name }) : el("div", { style: "width:36px;height:36px" }),
+        p.png ? el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }) : el("div", { style: "width:36px;height:36px" }),
         el("div", { class: "meta" }, [
           el("div", { class: "r-name" }, `#${p.pNo} ${p.name}`),
           el("div", { class: "r-sub" }, `${p.color_text || ""}${posText ? " · " + posText : ""}`),

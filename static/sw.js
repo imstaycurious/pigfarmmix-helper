@@ -3,13 +3,14 @@
 // 首次加载:
 //   - 立即预缓存 shell (HTML/CSS/JS/icons)
 //   - 加载 pigs.json 后也进入缓存 (stale-while-revalidate 上次成功的版本)
+//   - /img/pigs/*.png 惰性缓存 (同源 cache-first)
 // 之后用户离线:
 //   - shell 从缓存读取
 //   - pigs.json 从缓存读取
-//   - 远端图片 (pigfarmmix.net) 从缓存读取
+//   - 已浏览过的猪头像从缓存读取
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
-const CACHE = "pigfarm-v5";
+const CACHE = "pigfarm-v12";
 const SHELL = [
   "/",
   "/index.html",
@@ -19,6 +20,7 @@ const SHELL = [
   "/icon-512.png",
   "/icon-maskable.png",
   "/data/pigs.json",
+  "/data/pigs_event.json",
 ];
 
 self.addEventListener("install", e => {
@@ -59,8 +61,8 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // remote pig images from pigfarmmix.net: cache-first
-  if (url.origin !== location.origin) {
+  // local pig portraits /img/pigs/*.png: cache-first, lazy-populated
+  if (url.pathname.startsWith("/img/pigs/")) {
     e.respondWith(
       caches.open(CACHE).then(async cache => {
         const hit = await cache.match(e.request);
