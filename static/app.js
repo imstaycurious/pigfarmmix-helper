@@ -1340,17 +1340,34 @@
     $("#batchReport").innerHTML = "";
   });
 
-  // ----- export flow -----
-  // Build 图鉴/页/格 lines for the current collection, sorted by book,page,slot.
-  function buildExportText() {
-    const pigs = [];
+  // ----- export / import flow -----
+  // 导出的 JSON 结构。version 用于日后兼容性升级。
+  const EXPORT_TYPE = "pigfarm-helper-backup";
+  const EXPORT_VERSION = 1;
+
+  function buildExportPayload() {
+    // 收藏用 pNo 数组；也附带 triplets 方便人眼阅读 / 老格式粘贴回来。
+    const triplets = [];
     for (const pNo of state.collection) {
       const p = state.pigsById.get(pNo);
-      if (p && p.book && p.page && p.slot) pigs.push(p);
+      if (p && p.book && p.page && p.slot) {
+        triplets.push({ pNo, book: p.book, page: p.page, slot: p.slot });
+      }
     }
-    pigs.sort((a, b) =>
+    triplets.sort((a, b) =>
       (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot));
-    return pigs.map(p => `${p.book}/${p.page}/${p.slot}`).join("\n");
+    return {
+      type: EXPORT_TYPE,
+      version: EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      collection: triplets.map(t => t.pNo),
+      collectionTriplets: triplets.map(t => `${t.book}/${t.page}/${t.slot}`),
+      ownedEventPigs: Array.from(state.ownedEventPigs).sort((a, b) => a - b),
+    };
+  }
+
+  function buildExportJson() {
+    return JSON.stringify(buildExportPayload(), null, 2);
   }
 
   async function copyText(txt) {
@@ -1383,18 +1400,20 @@
       msg.innerHTML = `<span class="err">数据还没加载好</span>`;
       return;
     }
-    const txt = buildExportText();
+    const payload = buildExportPayload();
+    const txt = JSON.stringify(payload, null, 2);
     out.value = txt;
-    if (!txt) {
-      msg.innerHTML = `<span class="err">收藏为空，没什么可导出</span>`;
+    const nColl = payload.collection.length;
+    const nOwned = payload.ownedEventPigs.length;
+    if (nColl === 0 && nOwned === 0) {
+      msg.innerHTML = `<span class="err">收藏和勾选都为空，没什么可导出</span>`;
       return;
     }
-    const n = txt.split("\n").length;
     if (alsoCopy) {
       copyText(txt).then(ok => {
         if (ok) {
-          msg.innerHTML = `<span class="ok">已复制 ${n} 条到剪贴板</span>`;
-          toast(`已复制 ${n} 条到剪贴板`);
+          msg.innerHTML = `<span class="ok">已复制到剪贴板：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条</span>`;
+          toast(`已复制到剪贴板`);
         } else {
           out.focus(); out.select();
           msg.innerHTML = `<span class="err">复制失败，请手动选中上方文本复制</span>`;
@@ -1402,12 +1421,207 @@
       });
     } else {
       out.focus(); out.select();
-      msg.innerHTML = `<span class="ok">已导出 ${n} 条，点击「复制到剪贴板」或直接选中复制</span>`;
+      msg.innerHTML = `<span class="ok">已导出：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条</span>`;
     }
+  }
+
+  function runExportDownload() {
+    const msg = $("#exportMsg");
+    if (!state.dataLoaded) {
+      msg.innerHTML = `<span class="err">数据还没加载好</span>`;
+      return;
+    }
+    const payload = buildExportPayload();
+    if (payload.collection.length === 0 && payload.ownedEventPigs.length === 0) {
+      msg.innerHTML = `<span class="err">收藏和勾选都为空，没什么可导出</span>`;
+      return;
+    }
+    const txt = JSON.stringify(payload, null, 2);
+    $("#exportOut").value = txt;
+    try {
+      const blob = new Blob([txt], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      a.href = url;
+      a.download = `pigfarm-helper-backup-${stamp}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      msg.innerHTML = `<span class="ok">已下载备份文件</span>`;
+    } catch (err) {
+      console.error(err);
+      msg.innerHTML = `<span class="err">下载失败：${escHtml(err.message || String(err))}</span>`;
+    }
+  }
+
+  // 解析导入文本，返回 { collection: number[], ownedEventPigs: number[] } 或 { err }。
+  // 支持两种格式:
+  //   1) JSON (来自本工具的导出)
+  //   2) 旧式「图鉴/页/格」三元组列表 (每行一条，可带 # 注释)
+  function parseImportText(raw) {
+    const txt = (raw || "").trim();
+    if (!txt) return { err: "输入为空" };
+
+    // Try JSON first
+    if (txt.startsWith("{") || txt.startsWith("[")) {
+      let obj;
+      try {
+        obj = JSON.parse(txt);
+      } catch (err) {
+        return { err: `JSON 解析失败: ${err.message}` };
+      }
+      if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+        return { err: "JSON 顶层必须是一个对象" };
+      }
+      if (obj.type && obj.type !== EXPORT_TYPE) {
+        return { err: `不是本工具的备份文件 (type=${obj.type})` };
+      }
+      const collection = [];
+      const ownedEventPigs = [];
+      // Prefer explicit pNo array; fall back to triplets if only those exist.
+      if (Array.isArray(obj.collection)) {
+        for (const v of obj.collection) {
+          const n = Number.parseInt(v, 10);
+          if (Number.isInteger(n) && state.pigsById.has(n)) collection.push(n);
+        }
+      } else if (Array.isArray(obj.collectionTriplets)) {
+        for (const s of obj.collectionTriplets) {
+          const m = String(s).match(/^(\d+)[\/\s,.;]+(\d+)[\/\s,.;]+(\d+)$/);
+          if (!m) continue;
+          const key = `${+m[1]}-${(+m[2] - 1) * 6 + +m[3]}`;
+          const pNo = state.pigsByListKey.get(key);
+          if (pNo) collection.push(pNo);
+        }
+      }
+      if (Array.isArray(obj.ownedEventPigs)) {
+        for (const v of obj.ownedEventPigs) {
+          const n = Number.parseInt(v, 10);
+          if (Number.isInteger(n) && state.eventPigsById.has(n)) ownedEventPigs.push(n);
+        }
+      }
+      return { collection, ownedEventPigs, source: "json" };
+    }
+
+    // Fallback: legacy triplet list (collection-only)
+    const items = parseBatchLines(txt);
+    if (items.length === 0) return { err: "没有可识别的 JSON 或三元组内容" };
+    const collection = [];
+    let skipped = 0;
+    for (const it of items) {
+      if (it.parts.length < 3) { skipped++; continue; }
+      const [b, p, s] = it.parts.map(n => parseInt(n, 10));
+      if (!(b >= 1 && b <= 6 && p >= 1 && s >= 1 && s <= 6)) { skipped++; continue; }
+      const pNo = state.pigsByListKey.get(`${b}-${(p - 1) * 6 + s}`);
+      if (pNo) collection.push(pNo); else skipped++;
+    }
+    return { collection, ownedEventPigs: [], source: "triplets", skipped };
+  }
+
+  function applyImport(parsed, { replace }) {
+    // Dedupe and preserve order for collection; event pigs use a Set.
+    const desiredColl = Array.from(new Set(parsed.collection));
+    const desiredOwned = new Set(parsed.ownedEventPigs);
+
+    let addedColl = 0, removedColl = 0;
+    let addedOwned = 0, removedOwned = 0;
+
+    if (replace) {
+      const prevColl = new Set(state.collection);
+      const nextColl = new Set(desiredColl);
+      state.collection = desiredColl.slice();
+      for (const n of nextColl) if (!prevColl.has(n)) addedColl++;
+      for (const n of prevColl) if (!nextColl.has(n)) removedColl++;
+
+      const prevOwned = new Set(state.ownedEventPigs);
+      state.ownedEventPigs = new Set(desiredOwned);
+      for (const n of desiredOwned) if (!prevOwned.has(n)) addedOwned++;
+      for (const n of prevOwned) if (!desiredOwned.has(n)) removedOwned++;
+    } else {
+      const have = new Set(state.collection);
+      for (const n of desiredColl) {
+        if (!have.has(n)) { state.collection.push(n); have.add(n); addedColl++; }
+      }
+      for (const n of desiredOwned) {
+        if (!state.ownedEventPigs.has(n)) { state.ownedEventPigs.add(n); addedOwned++; }
+      }
+    }
+
+    saveCollection();
+    saveOwnedEventPigs();
+    return { addedColl, removedColl, addedOwned, removedOwned };
+  }
+
+  function runImport(replace) {
+    const msg = $("#importMsg");
+    if (!state.dataLoaded) {
+      msg.innerHTML = `<span class="err">数据还没加载好</span>`;
+      return;
+    }
+    const raw = $("#importIn").value;
+    const parsed = parseImportText(raw);
+    if (parsed.err) {
+      msg.innerHTML = `<span class="err">${escHtml(parsed.err)}</span>`;
+      return;
+    }
+    const nColl = parsed.collection.length;
+    const nOwned = parsed.ownedEventPigs.length;
+    if (nColl === 0 && nOwned === 0) {
+      msg.innerHTML = `<span class="err">解析成功但内容为空 (可能 pNo 对不上当前数据)</span>`;
+      return;
+    }
+    if (replace) {
+      const confirmMsg =
+        `覆盖导入会替换你现有的全部配置：\n` +
+        `  当前收藏 ${state.collection.length} 只 → 导入 ${nColl} 只\n` +
+        `  活动猪已有 ${state.ownedEventPigs.size} 条 → 导入 ${nOwned} 条\n\n` +
+        `确定要覆盖吗？`;
+      if (!confirm(confirmMsg)) return;
+    }
+    const r = applyImport(parsed, { replace });
+    // 抽屉里可能在显示活动猪的「已有」勾选，导入后直接关掉以避免 UI 不同步。
+    if ($("#drawer").classList.contains("open")) closeDrawer();
+    render();
+    const parts = [];
+    if (r.addedColl) parts.push(`收藏新增 ${r.addedColl}`);
+    if (r.removedColl) parts.push(`收藏移除 ${r.removedColl}`);
+    if (r.addedOwned) parts.push(`已有新增 ${r.addedOwned}`);
+    if (r.removedOwned) parts.push(`已有移除 ${r.removedOwned}`);
+    const suffix = parsed.source === "triplets"
+      ? ` <span style="color:var(--muted)">· 旧式三元组格式，仅收藏部分</span>`
+      : "";
+    msg.innerHTML = parts.length
+      ? `<span class="ok">导入完成：${parts.join(" · ")}</span>${suffix}`
+      : `<span class="ok">导入完成：没有变化 (全部已存在)</span>${suffix}`;
+    toast("导入完成");
   }
 
   $("#exportBtn").addEventListener("click", () => runExport(false));
   $("#exportCopyBtn").addEventListener("click", () => runExport(true));
+  $("#exportDownloadBtn").addEventListener("click", runExportDownload);
+
+  $("#importMergeBtn").addEventListener("click", () => runImport(false));
+  $("#importReplaceBtn").addEventListener("click", () => runImport(true));
+  $("#importClearBtn").addEventListener("click", () => {
+    $("#importIn").value = "";
+    $("#importMsg").textContent = "合并：只追加缺失的项；覆盖：用导入数据替换现有全部配置";
+  });
+  $("#importFileBtn").addEventListener("click", () => $("#importFile").click());
+  $("#importFile").addEventListener("change", async e => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    try {
+      const text = await f.text();
+      $("#importIn").value = text;
+      $("#importMsg").innerHTML = `<span class="ok">已读取文件 ${escHtml(f.name)}，点击「合并导入」或「覆盖导入」继续</span>`;
+    } catch (err) {
+      $("#importMsg").innerHTML = `<span class="err">读取文件失败: ${escHtml(err.message || String(err))}</span>`;
+    } finally {
+      // allow re-picking the same file
+      e.target.value = "";
+    }
+  });
 
   // ----- bootstrap -----
   render(); // initial loading state

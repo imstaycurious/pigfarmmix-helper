@@ -510,6 +510,15 @@
   }
   .add-section .hint-line .err { color: var(--danger); font-weight: 500; }
   .add-section .hint-line .ok { color: var(--ok); font-weight: 500; }
+  .add-section .subhead {
+    font-size: 12px; font-weight: 600; color: var(--ink);
+    margin: 12px 0 6px;
+  }
+  .add-section .add-btn.danger-btn {
+    background: transparent; color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+  .add-section .add-btn.danger-btn:active { background: rgba(220,38,38,0.08); }
 
   .name-input {
     width: 100%;
@@ -765,16 +774,32 @@
       <div class="batch-report" id="batchReport"></div>
     </div>
 
-    <!-- 导出 -->
+    <!-- 导出 / 导入 -->
     <div class="add-section">
-      <h3>导出收藏</h3>
+      <h3>导出 / 导入配置</h3>
+      <div class="hint-line">配置包含：收藏列表、活动猪「已有」勾选。可用于备份、换设备恢复或分享。</div>
+
+      <div class="subhead">导出</div>
       <textarea class="batch-ta" id="exportOut" readonly
-                placeholder="点击下方「导出三元组」按钮，你的收藏会以 图鉴/页/格 的格式列在这里"></textarea>
+                placeholder="点击「导出」后，这里会出现一段 JSON 备份文本"></textarea>
       <div class="batch-actions">
-        <button type="button" class="add-btn" id="exportBtn">导出三元组</button>
+        <button type="button" class="add-btn" id="exportBtn">导出</button>
         <button type="button" class="add-btn" id="exportCopyBtn">复制到剪贴板</button>
+        <button type="button" class="add-btn" id="exportDownloadBtn">下载 .json</button>
       </div>
-      <div class="hint-line" id="exportMsg">导出后可直接粘贴到「批量元组添加」区、群聊或笔记里</div>
+      <div class="hint-line" id="exportMsg">导出的 JSON 可粘贴到另一台设备的「导入」框里</div>
+
+      <div class="subhead">导入</div>
+      <textarea class="batch-ta" id="importIn"
+                placeholder="把之前导出的 JSON 粘贴到这里&#10;也兼容旧的「图鉴/页/格」三元组（仅收藏）"></textarea>
+      <div class="batch-actions">
+        <button type="button" class="add-btn" id="importMergeBtn">合并导入</button>
+        <button type="button" class="add-btn danger-btn" id="importReplaceBtn">覆盖导入</button>
+        <button type="button" class="add-btn" id="importFileBtn">选择文件…</button>
+        <input type="file" id="importFile" accept=".json,application/json,text/plain" style="display:none">
+        <button type="button" class="add-btn" id="importClearBtn">清空输入</button>
+      </div>
+      <div class="hint-line" id="importMsg">合并：只追加缺失的项；覆盖：用导入数据替换现有全部配置</div>
     </div>
 
     <!-- 危险区 -->
