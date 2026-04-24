@@ -74,6 +74,7 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  html { height: 100%; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
                  "Segoe UI", Roboto, sans-serif;
@@ -81,6 +82,10 @@
     color: var(--ink);
     font-size: 15px;
     line-height: 1.45;
+    /* Full viewport, with dynamic viewport height on browsers that support it
+       so the URL bar appearing/disappearing on mobile doesn't clip content. */
+    min-height: 100vh;
+    min-height: 100dvh;
     /* reserve space for the bottom tab bar (56px) + safe area */
     padding-bottom: calc(56px + env(safe-area-inset-bottom));
   }
@@ -249,6 +254,21 @@
   .card:hover .remove { opacity: 1; }
   @media (hover: none) { .card .remove { opacity: 0.9; } }
 
+  /* 全图鉴: 标记已收藏的猪 */
+  .card .tick {
+    position: absolute; top: 4px; right: 4px;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--ok); color: #fff;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    pointer-events: none;
+  }
+  .card.collected { border-color: var(--ok); }
+  [data-theme="dark"] .card.collected { border-color: var(--ok); }
+
   .empty {
     text-align: center; color: var(--muted);
     padding: 40px 16px 60px;
@@ -295,6 +315,21 @@
     border-radius: 2px; margin: 0 auto 10px;
   }
   .drawer h2 { margin: 4px 0 8px; font-size: 18px; }
+  .drawer-actions {
+    display: flex; gap: 8px; margin: 0 0 10px;
+  }
+  .drawer-actions .add-btn { flex: 1; }
+  .drawer-actions .add-btn.danger {
+    background: transparent; color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+  .drawer-actions .add-btn.danger:active { background: rgba(220,38,38,0.08); }
+
+  /* 抽屉里的父本/产出：若在 186 或活动猪数据里找得到，就可点击跳转到该猪的详情 */
+  .drawer [data-pno] { cursor: pointer; border-radius: 6px; transition: background .12s; }
+  .drawer .parent[data-pno]:hover { background: var(--card-alt, rgba(120,130,140,0.08)); }
+  .drawer .outcome[data-pno]:hover { filter: brightness(0.92); outline: 1px solid var(--accent); }
+  .drawer [data-pno]:active { transform: scale(0.97); }
   .drawer .hero {
     display: flex; gap: 12px; align-items: center;
     background: var(--card); padding: 12px; border-radius: 12px;
@@ -346,27 +381,47 @@
     margin-left: 6px; cursor: pointer;
   }
 
-  /* bottom tab bar */
+  /* bottom tab bar — nailed to the visual viewport bottom.
+     `!important` on positioning props is defensive in case some future layout
+     CSS tries to re-flow the nav. `transform: translateZ(0)` hoists the bar to
+     its own compositor layer which fixes a class of mobile-browser bugs where
+     `position: fixed` visibly drifts when the URL bar animates. */
   .tabbar {
-    position: fixed; left: 0; right: 0; bottom: 0;
+    position: fixed !important;
+    left: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100%;
     height: calc(56px + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
     background: var(--card);
     border-top: 1px solid var(--border);
     display: flex; align-items: stretch;
     z-index: 15;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
+  /* Every tab keeps the SAME font-weight so the active state never changes
+     text metrics — previously `font-weight: 600` on the active tab would
+     widen the label, pushing siblings sideways and making the whole bar
+     appear to "jump" on tab switch. We now indicate active via color + a
+     subtle top-accent bar. */
   .tabbar .tab {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 2px;
     background: transparent; border: none;
-    color: var(--muted); font-size: 11px;
+    color: var(--muted); font-size: 11px; font-weight: 500;
     cursor: pointer; padding: 4px 0;
-    transition: color .15s;
+    transition: color .15s, background .15s;
+    position: relative;
   }
   .tabbar .tab .ico { font-size: 20px; line-height: 1; }
-  .tabbar .tab.active { color: var(--accent); font-weight: 600; }
+  .tabbar .tab.active { color: var(--accent); }
+  .tabbar .tab.active::before {
+    content: ""; position: absolute;
+    top: 0; left: 25%; right: 25%; height: 2px;
+    background: var(--accent); border-radius: 0 0 2px 2px;
+  }
   [data-theme="dark"] .tabbar .tab.active { color: var(--accent); }
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
@@ -472,8 +527,67 @@
   </div>
 </header>
 
+<!-- ========== TAB: 全图鉴 ========== -->
+<section class="tab-panel active" id="tabAtlas" role="tabpanel" aria-labelledby="tabBtnAtlas">
+  <div class="filters">
+    <input class="search" id="atlasSearch" type="search" placeholder="在全图鉴中搜索名称 / 描述…">
+    <div class="filter-row" id="atlasColorFilter">
+      <span class="label">颜色</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="肉色">肉色</button>
+      <button class="chip" data-value="灰色">灰色</button>
+      <button class="chip" data-value="米色">米色</button>
+      <button class="chip" data-value="粉红">粉红</button>
+      <button class="chip" data-value="白色">白色</button>
+    </div>
+    <div class="filter-row" id="atlasMethodFilter">
+      <span class="label">获得</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="shop">商店进货</button>
+      <button class="chip" data-value="hunt">狩猎</button>
+      <button class="chip" data-value="quest">任务</button>
+      <button class="chip" data-value="breed">配种</button>
+      <button class="chip" data-value="fail">养成失败</button>
+    </div>
+    <div class="filter-row" id="atlasShopRankFilter" style="display:none">
+      <span class="label">进货等级</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="A">A 级 (1000pt)</button>
+      <button class="chip" data-value="B">B 级 (500pt)</button>
+      <button class="chip" data-value="C">C 级 (100pt)</button>
+    </div>
+    <div class="filter-row" id="atlasHuntRegionFilter" style="display:none">
+      <span class="label">场所</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="草原">草原</button>
+      <button class="chip" data-value="山林">山林</button>
+      <button class="chip" data-value="日本">日本</button>
+      <button class="chip" data-value="亚洲">亚洲</button>
+      <button class="chip" data-value="欧洲">欧洲</button>
+      <button class="chip" data-value="美洲">美洲</button>
+      <button class="chip" data-value="大洋洲">大洋洲</button>
+    </div>
+    <div class="filter-row" id="atlasHuntTicketFilter" style="display:none">
+      <span class="label">券</span>
+      <button class="chip active" data-value="">全部</button>
+      <button class="chip" data-value="normal">普通券</button>
+      <button class="chip" data-value="rare">稀有券</button>
+    </div>
+    <div class="stats-bar" id="atlasStatsBar"></div>
+  </div>
+
+  <main>
+    <div id="atlasBody">
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>正在加载图鉴数据…</div>
+      </div>
+    </div>
+  </main>
+</section>
+
 <!-- ========== TAB: 收藏 ========== -->
-<section class="tab-panel active" id="tabCollect" role="tabpanel" aria-labelledby="tabBtnCollect">
+<section class="tab-panel" id="tabCollect" role="tabpanel" aria-labelledby="tabBtnCollect">
   <div class="filters">
     <input class="search" id="search" type="search" placeholder="在收藏中搜索名称…">
     <div class="filter-row" id="colorFilter">
@@ -585,8 +699,13 @@
 
 <!-- ========== bottom tab bar ========== -->
 <nav class="tabbar" role="tablist">
-  <button type="button" class="tab active" id="tabBtnCollect"
-          role="tab" aria-selected="true" aria-controls="tabCollect" data-tab="collect">
+  <button type="button" class="tab active" id="tabBtnAtlas"
+          role="tab" aria-selected="true" aria-controls="tabAtlas" data-tab="atlas">
+    <span class="ico">📖</span>
+    <span>全图鉴</span>
+  </button>
+  <button type="button" class="tab" id="tabBtnCollect"
+          role="tab" aria-selected="false" aria-controls="tabCollect" data-tab="collect">
     <span class="ico">🐽</span>
     <span>收藏</span>
   </button>
