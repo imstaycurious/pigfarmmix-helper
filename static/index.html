@@ -632,9 +632,14 @@
   }
   .batch-ta:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   .batch-actions {
-    display: flex; gap: 8px; margin-top: 8px;
+    display: flex; gap: 6px; margin-top: 8px;
   }
-  .batch-actions .add-btn { flex: 1; }
+  .batch-actions .add-btn {
+    flex: 1;
+    font-size: 12px;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
   .batch-report {
     margin-top: 10px; font-size: 12px;
     max-height: 160px; overflow-y: auto;
