@@ -19,3 +19,8 @@ Thumbs.db
 # Scratch / scraped artifacts (if they come back)
 *.tmp
 *.log
+
+*.py
+.wrangler/*
+tmp*
+pig143*
