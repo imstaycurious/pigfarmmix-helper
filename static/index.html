@@ -399,6 +399,57 @@
   .kv .k { color: var(--muted); font-size: 12px; }
   .kv .v { font-weight: 500; }
 
+  /* 体型徽章 inline meta line — sits inside the drawer hero `info` column,
+     rendered via badgeMetaHTML(). Each chip is a click-to-toggle button:
+     - default state: outlined, threshold weight + "未获得"
+     - is-on state:   filled with the kind's accent color, "已获得"
+     The icons are static/img/{small,big}.png — small ~16px keeps the chip
+     compact enough to live in the hero meta row alongside other meta. */
+  .badge-line {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 4px;
+  }
+  .badge-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 1px 6px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 12px; font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .badge-chip .badge-icon {
+    width: 12px !important; height: 12px !important; object-fit: contain;
+    display: block;
+    /* Slight desaturation when un-owned to convey "not yet earned"; restored
+       on .is-on. */
+    opacity: 0.6;
+    transition: opacity .12s, filter .12s;
+  }
+  .badge-chip .badge-text {
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .badge-chip .badge-state {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; color: var(--muted);
+    border: 1px dashed var(--border); border-radius: 8px;
+    font-size: 10px; font-weight: 500; line-height: 1.1;
+    padding: 2px 6px; margin: 0;
+    cursor: pointer; user-select: none;
+    font-family: inherit;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .badge-chip .badge-state:hover {
+    color: var(--ink); border-color: var(--accent-muted);
+  }
+  /* Owned state — only the badge-state button changes, not the icon or text */
+  .badge-chip.is-on .badge-icon { opacity: 1; }
+  .badge-chip.is-on .badge-state {
+    background: var(--ok); color: #fff; border-style: solid; border-color: var(--ok);
+  }
+  .badge-chip.is-on .badge-state:hover { filter: brightness(0.95); }
+
   .recipe {
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     padding: 10px; margin-bottom: 8px;

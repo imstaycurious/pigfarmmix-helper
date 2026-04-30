@@ -13,6 +13,10 @@
   // 独立于 186 主猪收藏的 "活动猪已有" 勾选。抽屉里 "它能配出的崽"
   // 如果产出是活动猪，旁边会有一个勾选框让用户标记是否已获得。
   const STORAGE_KEY_OWNED_EVENT = "pig_owned_event_v1";
+  // 体型徽章独立持久化: 每只猪 (含活动猪) 都有「小章」「大章」两个独立目标，
+  // 用 Set<pNo> 各自存一份，对称于 ownedEventPigs 的形状，便于简洁的 import/export。
+  const STORAGE_KEY_BADGE_SMALL = "pig_badge_small_v1";
+  const STORAGE_KEY_BADGE_BIG = "pig_badge_big_v1";
   const DATA_URL = "/data/pigs.json";
   const EVENT_DATA_URL = "/data/pigs_event.json";
   // Local front-facing portrait per pig, downloaded by tools/download_portraits.py.
@@ -99,6 +103,8 @@
     pigsByListKey: new Map(),      // `${book}-${listno}` -> pNo
     collection: loadCollection(),  // array of pNo
     ownedEventPigs: loadOwnedEventPigs(), // Set<pNo>, 仅针对活动猪
+    smallBadges: loadBadgeSet(STORAGE_KEY_BADGE_SMALL), // Set<pNo>, 已拿过小章
+    bigBadges:   loadBadgeSet(STORAGE_KEY_BADGE_BIG),   // Set<pNo>, 已拿过大章
     filter:      { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 收藏 tab
     atlasFilter: { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 全图鉴 tab
   };
@@ -133,6 +139,24 @@
       JSON.stringify(Array.from(state.ownedEventPigs))
     );
   }
+
+  // 体型徽章 Set<pNo> 持久化 — 一个 key 只装一个 set。两个 key 共用这套读写
+  // 逻辑，避免重复样板代码（小章 / 大章 形状完全一样）。
+  function loadBadgeSet(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      return new Set(Array.isArray(arr) ? arr.filter(n => Number.isInteger(n)) : []);
+    } catch {
+      return new Set();
+    }
+  }
+  function saveBadgeSet(key, set) {
+    localStorage.setItem(key, JSON.stringify(Array.from(set).sort((a, b) => a - b)));
+  }
+  function saveSmallBadges() { saveBadgeSet(STORAGE_KEY_BADGE_SMALL, state.smallBadges); }
+  function saveBigBadges()   { saveBadgeSet(STORAGE_KEY_BADGE_BIG,   state.bigBadges); }
 
   // ----- picky-eating derivation -----
   // 按 eatable 长度判定挑食程度 (与 arrival_comment 里的 挑食/不挑食 100% 对齐):
@@ -178,6 +202,65 @@
   // pNo is always present on both top-level pigs and nested pigKind refs.
   function imgUrl(pNo) {
     return pNo ? `${IMG_BASE}${pNo}.png` : "";
+  }
+
+  // ----- badge weight (体型徽章) display formula -----
+  // Upstream API stores `bigWeight` / `smallWeight` as raw "growth points"
+  // values. The pigfarmmix.net web UI renders the in-game scale numbers by
+  // adding a fixed +120 kg adult-baseline offset, plus a per-pig override
+  // for three known oversized breeds (reverse-engineered from ctrl.js's
+  // `f = f - 120` and the `case 50/508/528: weight += 180/200` switch).
+  // Without this, the numbers shown in the drawer don't match what players
+  // actually see on the in-game scale.
+  const WEIGHT_OFFSET_BASE = 120;
+  const WEIGHT_OFFSET_OVERRIDE = { 50: 180, 508: 180, 528: 200 };
+  function badgeOffset(pNo) {
+    return WEIGHT_OFFSET_BASE + (WEIGHT_OFFSET_OVERRIDE[pNo] || 0);
+  }
+  // Format a weight value to one decimal, trimming a useless trailing ".0"
+  // when it'd just add visual noise (e.g. 175 vs 175.0 — keep the .0 for
+  // consistency with the official site).
+  function fmtKg(v) {
+    if (typeof v !== "number" || !isFinite(v)) return "?";
+    return (Math.round(v * 10) / 10).toFixed(1);
+  }
+  function badgeWeights(pig) {
+    if (!pig || typeof pig.bigWeight !== "number" || typeof pig.smallWeight !== "number") {
+      return null;
+    }
+    const off = badgeOffset(pig.pNo);
+    return {
+      small: pig.smallWeight + off,
+      big: pig.bigWeight + off,
+      smallRaw: pig.smallWeight,
+      bigRaw: pig.bigWeight,
+      offset: off,
+    };
+  }
+  // Render the "体型徽章" inline meta row that lives directly in the drawer
+  // hero. Each pig has two independent badge targets (小章 / 大章); each
+  // chip is a click-to-toggle "已获得" tracker that mirrors the activity-pig
+  // owned-toggle pattern (Set<pNo> in state, persisted to localStorage).
+  // The chip itself also conveys the threshold weight using the same +120kg
+  // adult-baseline formula as the official site, so players can match
+  // numbers directly against the in-game scale without doing any math.
+  function badgeMetaHTML(pig) {
+    const w = badgeWeights(pig);
+    if (!w) return "";
+    const hasSmall = state.smallBadges.has(pig.pNo);
+    const hasBig   = state.bigBadges.has(pig.pNo);
+    const chip = (kind, ownedAttr, value, op, iconSrc, label) =>
+      `<div class="badge-chip badge-${kind}${ownedAttr ? " is-on" : ""}"` +
+      ` data-badge-kind="${kind}" data-badge-pno="${pig.pNo}">` +
+      `<img class="badge-icon" src="${iconSrc}" alt="${label}">` +
+      `<span class="badge-text">${op} ${fmtKg(value)} kg</span>` +
+      `<button type="button" class="badge-state" data-badge-kind="${kind}" data-badge-pno="${pig.pNo}"` +
+      ` aria-pressed="${ownedAttr}" title="点击切换是否已获得${label}">${ownedAttr ? "☑ 已有" : "☐ 未有"}</button>` +
+      `</div>`;
+    return `<div class="meta badge-line">` +
+      chip("small", hasSmall, w.small, "≤", "/img/small.png", "小章") +
+      chip("big",   hasBig,   w.big,   "≥", "/img/big.png",   "大章") +
+      `</div>`;
   }
 
   function stars(rare, special) {
@@ -921,13 +1004,13 @@
         <div class="info">
           <div><b>${escHtml(p.color_text || "")}</b> · <span class="${p.special ? "stars special" : "stars"}">${stars(p.rare, p.special)}</span></div>
           <div class="meta">${posText}</div>
-          <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · ${p.isExer ? "🌿 放牧" : "🏠 不放牧"} · 🍚 最少喂 ${p.eat_times || 0} 次</div>
-          <div class="meta">${(() => {
+          <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · ${p.isExer ? "🌿 放牧" : "🏠 不放牧"} · 🍚 最少喂 ${p.eat_times || 0} 次 · ${(() => {
             const k = pigPicky(p);
             return k.level === "none"
               ? "🍽️ 不挑食"
               : `🍽️ ${k.label}: ${escHtml(k.foods.join(" / "))}`;
           })()}</div>
+          ${badgeMetaHTML(p)}
         </div>
       </div>
       ${p.description ? `<div class="kv" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
@@ -1077,6 +1160,27 @@
   // event pigs, and cross-navigates between them). Attached once; survives
   // drawer innerHTML re-renders because it listens on the container.
   $("#drawerContent").addEventListener("click", e => {
+    // 体型徽章 (小章 / 大章) 勾选 — 只响应 badge-state 按钮的点击，不触发抽屉导航。
+    // 同一只猪可能在抽屉里出现多次（比如配种产出 slot），但徽章块目前只有
+    // 一处（hero 区），不需要 ownedEventPigs 的多元素同步逻辑。
+    const badgeStateBtn = e.target.closest(".badge-state");
+    if (badgeStateBtn) {
+      e.stopPropagation();
+      const pNo = parseInt(badgeStateBtn.dataset.badgePno, 10);
+      const kind = badgeStateBtn.dataset.badgeKind;
+      if (!pNo || (kind !== "small" && kind !== "big")) return;
+      const set = kind === "small" ? state.smallBadges : state.bigBadges;
+      if (set.has(pNo)) set.delete(pNo);
+      else set.add(pNo);
+      if (kind === "small") saveSmallBadges();
+      else saveBigBadges();
+      const nowOn = set.has(pNo);
+      const badgeChip = badgeStateBtn.closest(".badge-chip");
+      if (badgeChip) badgeChip.classList.toggle("is-on", nowOn);
+      badgeStateBtn.setAttribute("aria-pressed", String(nowOn));
+      badgeStateBtn.textContent = nowOn ? "☑ 已有" : "☐ 未有";
+      return;
+    }
     // "已有" 勾选优先处理，且不触发导航。
     const chk = e.target.closest("[data-owned-pno]");
     if (chk) {
@@ -1366,6 +1470,8 @@
       collection: triplets.map(t => t.pNo),
       collectionTriplets: triplets.map(t => `${t.book}/${t.page}/${t.slot}`),
       ownedEventPigs: Array.from(state.ownedEventPigs).sort((a, b) => a - b),
+      smallBadges: Array.from(state.smallBadges).sort((a, b) => a - b),
+      bigBadges:   Array.from(state.bigBadges).sort((a, b) => a - b),
     };
   }
 
@@ -1408,14 +1514,16 @@
     out.value = txt;
     const nColl = payload.collection.length;
     const nOwned = payload.ownedEventPigs.length;
-    if (nColl === 0 && nOwned === 0) {
+    const nSmall = payload.smallBadges.length;
+    const nBig   = payload.bigBadges.length;
+    if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0) {
       msg.innerHTML = `<span class="err">收藏和勾选都为空，没什么可导出</span>`;
       return;
     }
     if (alsoCopy) {
       copyText(txt).then(ok => {
         if (ok) {
-          msg.innerHTML = `<span class="ok">已复制到剪贴板：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条</span>`;
+          msg.innerHTML = `<span class="ok">已复制到剪贴板：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条，小章 ${nSmall} 条，大章 ${nBig} 条</span>`;
           toast(`已复制到剪贴板`);
         } else {
           out.focus(); out.select();
@@ -1424,7 +1532,7 @@
       });
     } else {
       out.focus(); out.select();
-      msg.innerHTML = `<span class="ok">已导出：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条</span>`;
+      msg.innerHTML = `<span class="ok">已导出：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条，小章 ${nSmall} 条，大章 ${nBig} 条</span>`;
     }
   }
 
@@ -1435,7 +1543,7 @@
       return;
     }
     const payload = buildExportPayload();
-    if (payload.collection.length === 0 && payload.ownedEventPigs.length === 0) {
+    if (payload.collection.length === 0 && payload.ownedEventPigs.length === 0 && payload.smallBadges.length === 0 && payload.bigBadges.length === 0) {
       msg.innerHTML = `<span class="err">收藏和勾选都为空，没什么可导出</span>`;
       return;
     }
@@ -1483,6 +1591,8 @@
       }
       const collection = [];
       const ownedEventPigs = [];
+      const smallBadges = [];
+      const bigBadges   = [];
       // Prefer explicit pNo array; fall back to triplets if only those exist.
       if (Array.isArray(obj.collection)) {
         for (const v of obj.collection) {
@@ -1504,7 +1614,19 @@
           if (Number.isInteger(n) && state.eventPigsById.has(n)) ownedEventPigs.push(n);
         }
       }
-      return { collection, ownedEventPigs, source: "json" };
+      if (Array.isArray(obj.smallBadges)) {
+        for (const v of obj.smallBadges) {
+          const n = Number.parseInt(v, 10);
+          if (Number.isInteger(n) && (state.pigsById.has(n) || state.eventPigsById.has(n))) smallBadges.push(n);
+        }
+      }
+      if (Array.isArray(obj.bigBadges)) {
+        for (const v of obj.bigBadges) {
+          const n = Number.parseInt(v, 10);
+          if (Number.isInteger(n) && (state.pigsById.has(n) || state.eventPigsById.has(n))) bigBadges.push(n);
+        }
+      }
+      return { collection, ownedEventPigs, smallBadges, bigBadges, source: "json" };
     }
 
     // Fallback: legacy triplet list (collection-only)
@@ -1519,16 +1641,20 @@
       const pNo = state.pigsByListKey.get(`${b}-${(p - 1) * 6 + s}`);
       if (pNo) collection.push(pNo); else skipped++;
     }
-    return { collection, ownedEventPigs: [], source: "triplets", skipped };
+    return { collection, ownedEventPigs: [], smallBadges: [], bigBadges: [], source: "triplets", skipped };
   }
 
   function applyImport(parsed, { replace }) {
     // Dedupe and preserve order for collection; event pigs use a Set.
-    const desiredColl = Array.from(new Set(parsed.collection));
+    const desiredColl  = Array.from(new Set(parsed.collection));
     const desiredOwned = new Set(parsed.ownedEventPigs);
+    const desiredSmall = new Set(parsed.smallBadges || []);
+    const desiredBig   = new Set(parsed.bigBadges   || []);
 
     let addedColl = 0, removedColl = 0;
     let addedOwned = 0, removedOwned = 0;
+    let addedSmall = 0, removedSmall = 0;
+    let addedBig   = 0, removedBig   = 0;
 
     if (replace) {
       const prevColl = new Set(state.collection);
@@ -1541,6 +1667,16 @@
       state.ownedEventPigs = new Set(desiredOwned);
       for (const n of desiredOwned) if (!prevOwned.has(n)) addedOwned++;
       for (const n of prevOwned) if (!desiredOwned.has(n)) removedOwned++;
+
+      const prevSmall = new Set(state.smallBadges);
+      state.smallBadges = new Set(desiredSmall);
+      for (const n of desiredSmall) if (!prevSmall.has(n)) addedSmall++;
+      for (const n of prevSmall) if (!desiredSmall.has(n)) removedSmall++;
+
+      const prevBig = new Set(state.bigBadges);
+      state.bigBadges = new Set(desiredBig);
+      for (const n of desiredBig) if (!prevBig.has(n)) addedBig++;
+      for (const n of prevBig) if (!desiredBig.has(n)) removedBig++;
     } else {
       const have = new Set(state.collection);
       for (const n of desiredColl) {
@@ -1549,11 +1685,19 @@
       for (const n of desiredOwned) {
         if (!state.ownedEventPigs.has(n)) { state.ownedEventPigs.add(n); addedOwned++; }
       }
+      for (const n of desiredSmall) {
+        if (!state.smallBadges.has(n)) { state.smallBadges.add(n); addedSmall++; }
+      }
+      for (const n of desiredBig) {
+        if (!state.bigBadges.has(n)) { state.bigBadges.add(n); addedBig++; }
+      }
     }
 
     saveCollection();
     saveOwnedEventPigs();
-    return { addedColl, removedColl, addedOwned, removedOwned };
+    saveSmallBadges();
+    saveBigBadges();
+    return { addedColl, removedColl, addedOwned, removedOwned, addedSmall, removedSmall, addedBig, removedBig };
   }
 
   function runImport(replace) {
@@ -1568,9 +1712,11 @@
       msg.innerHTML = `<span class="err">${escHtml(parsed.err)}</span>`;
       return;
     }
-    const nColl = parsed.collection.length;
+    const nColl  = parsed.collection.length;
     const nOwned = parsed.ownedEventPigs.length;
-    if (nColl === 0 && nOwned === 0) {
+    const nSmall = parsed.smallBadges.length;
+    const nBig   = parsed.bigBadges.length;
+    if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0) {
       msg.innerHTML = `<span class="err">解析成功但内容为空 (可能 pNo 对不上当前数据)</span>`;
       return;
     }
@@ -1578,7 +1724,9 @@
       const confirmMsg =
         `覆盖导入会替换你现有的全部配置：\n` +
         `  当前收藏 ${state.collection.length} 只 → 导入 ${nColl} 只\n` +
-        `  活动猪已有 ${state.ownedEventPigs.size} 条 → 导入 ${nOwned} 条\n\n` +
+        `  活动猪已有 ${state.ownedEventPigs.size} 条 → 导入 ${nOwned} 条\n` +
+        `  小章已有 ${state.smallBadges.size} 条 → 导入 ${nSmall} 条\n` +
+        `  大章已有 ${state.bigBadges.size} 条 → 导入 ${nBig} 条\n\n` +
         `确定要覆盖吗？`;
       if (!confirm(confirmMsg)) return;
     }
@@ -1587,10 +1735,14 @@
     if ($("#drawer").classList.contains("open")) closeDrawer();
     render();
     const parts = [];
-    if (r.addedColl) parts.push(`收藏新增 ${r.addedColl}`);
-    if (r.removedColl) parts.push(`收藏移除 ${r.removedColl}`);
-    if (r.addedOwned) parts.push(`已有新增 ${r.addedOwned}`);
-    if (r.removedOwned) parts.push(`已有移除 ${r.removedOwned}`);
+    if (r.addedColl)    parts.push(`收藏新增 ${r.addedColl}`);
+    if (r.removedColl)   parts.push(`收藏移除 ${r.removedColl}`);
+    if (r.addedOwned)    parts.push(`已有新增 ${r.addedOwned}`);
+    if (r.removedOwned)  parts.push(`已有移除 ${r.removedOwned}`);
+    if (r.addedSmall)    parts.push(`小章新增 ${r.addedSmall}`);
+    if (r.removedSmall)  parts.push(`小章移除 ${r.removedSmall}`);
+    if (r.addedBig)      parts.push(`大章新增 ${r.addedBig}`);
+    if (r.removedBig)    parts.push(`大章移除 ${r.removedBig}`);
     const suffix = parsed.source === "triplets"
       ? ` <span style="color:var(--muted)">· 旧式三元组格式，仅收藏部分</span>`
       : "";
