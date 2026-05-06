@@ -1017,6 +1017,7 @@
         </div>
       </div>
       ${p.description ? `<div class="kv" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
+      ${p.pNo === 143 ? `<div class="kv" style="margin-top:10px; border-color: var(--warn);"><div class="k" style="color: var(--warn);">养成备注</div><div class="v">成猪前体重限制 ≥128.0 kg</div></div>` : ""}
       <div class="section"><h3>获得方式</h3>${acqHTML.join("")}</div>
       <div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>
       <div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>
