@@ -32,13 +32,13 @@
   };
 
   const HUNT_SITES = {
-    3:  "草原 (普通券)", 4:  "山林 (普通券)",
-    5:  "草原 (稀有券)", 6:  "山林 (稀有券)",
-    7:  "日本 (普通券)", 8:  "日本 (稀有券)",
-    9:  "亚洲 (普通券)", 10: "亚洲 (稀有券)",
+    3: "草原 (普通券)", 4: "山林 (普通券)",
+    5: "草原 (稀有券)", 6: "山林 (稀有券)",
+    7: "日本 (普通券)", 8: "日本 (稀有券)",
+    9: "亚洲 (普通券)", 10: "亚洲 (稀有券)",
     11: "欧洲 (普通券)", 12: "欧洲 (稀有券)",
     13: "美洲和西印度群岛 (普通券)", 14: "美洲和西印度群岛 (稀有券)",
-    15: "大洋洲 (普通券)",          16: "大洋洲 (稀有券)",
+    15: "大洋洲 (普通券)", 16: "大洋洲 (稀有券)",
     81: "特别活动狩猎 一月", 82: "特别活动狩猎 二月",
     83: "特别活动狩猎 三月", 84: "特别活动狩猎 四月",
     85: "特别活动狩猎 五月", 86: "特别活动狩猎 六月",
@@ -50,16 +50,16 @@
 
   // hunt region -> [normal_code, rare_code]
   const HUNT_REGION_CODES = {
-    "草原":   [3, 5],
-    "山林":   [4, 6],
-    "日本":   [7, 8],
-    "亚洲":   [9, 10],
-    "欧洲":   [11, 12],
-    "美洲":   [13, 14],
+    "草原": [3, 5],
+    "山林": [4, 6],
+    "日本": [7, 8],
+    "亚洲": [9, 10],
+    "欧洲": [11, 12],
+    "美洲": [13, 14],
     "大洋洲": [15, 16],
   };
   const HUNT_NORMAL_CODES = new Set([3, 4, 7, 9, 11, 13, 15]);
-  const HUNT_RARE_CODES   = new Set([5, 6, 8, 10, 12, 14, 16]);
+  const HUNT_RARE_CODES = new Set([5, 6, 8, 10, 12, 14, 16]);
 
   // eatable id (1~8) -> 饲料名。上游 pigs.json 只存 id, 手工补上映射。
   const FEED_LABELS = {
@@ -87,11 +87,11 @@
   const BLEED_TYPE_TEXT = {
     1: "猪猪广场交配",
     0: "猪猪广场交配 [不能租借公猪]",
-   "-1": "猪猪广场交配 [隐藏, 不能租借公猪]",
+    "-1": "猪猪广场交配 [隐藏, 不能租借公猪]",
     3: "系统图交换所",
     4: "系统图交换所 [不能租借公猪]",
-   "-3": "系统图交换所 (未开放)",
-   "-4": "系统图交换所 [不能租借公猪] (未开放)",
+    "-3": "系统图交换所 (未开放)",
+    "-4": "系统图交换所 [不能租借公猪] (未开放)",
     2: "活动限定系统图 [现时无法获得]",
   };
 
@@ -104,9 +104,9 @@
     collection: loadCollection(),  // array of pNo
     ownedEventPigs: loadOwnedEventPigs(), // Set<pNo>, 仅针对活动猪
     smallBadges: loadBadgeSet(STORAGE_KEY_BADGE_SMALL), // Set<pNo>, 已拿过小章
-    bigBadges:   loadBadgeSet(STORAGE_KEY_BADGE_BIG),   // Set<pNo>, 已拿过大章
-    filter:      { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 收藏 tab
-    atlasFilter: { color: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 全图鉴 tab
+    bigBadges: loadBadgeSet(STORAGE_KEY_BADGE_BIG),   // Set<pNo>, 已拿过大章
+    filter: { color: "", rare: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 收藏 tab
+    atlasFilter: { color: "", rare: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 全图鉴 tab
   };
 
   function loadCollection() {
@@ -156,7 +156,7 @@
     localStorage.setItem(key, JSON.stringify(Array.from(set).sort((a, b) => a - b)));
   }
   function saveSmallBadges() { saveBadgeSet(STORAGE_KEY_BADGE_SMALL, state.smallBadges); }
-  function saveBigBadges()   { saveBadgeSet(STORAGE_KEY_BADGE_BIG,   state.bigBadges); }
+  function saveBigBadges() { saveBadgeSet(STORAGE_KEY_BADGE_BIG, state.bigBadges); }
 
   // ----- picky-eating derivation -----
   // 按 eatable 长度判定挑食程度 (与 arrival_comment 里的 挑食/不挑食 100% 对齐):
@@ -166,9 +166,9 @@
   function pigPicky(p) {
     const ids = (p.eatable || []).filter(i => FEED_LABELS[i]);
     const foods = ids.map(i => FEED_LABELS[i]);
-    if (ids.length === 0) return { level: "none",  label: "不挑食", foods };
-    if (ids.length === 1) return { level: "picky", label: "挑食",   foods };
-    return                       { level: "some",  label: "有点挑食", foods };
+    if (ids.length === 0) return { level: "none", label: "不挑食", foods };
+    if (ids.length === 1) return { level: "picky", label: "挑食", foods };
+    return { level: "some", label: "有点挑食", foods };
   }
 
   // ----- dom helpers -----
@@ -248,7 +248,7 @@
     const w = badgeWeights(pig);
     if (!w) return "";
     const hasSmall = state.smallBadges.has(pig.pNo);
-    const hasBig   = state.bigBadges.has(pig.pNo);
+    const hasBig = state.bigBadges.has(pig.pNo);
     const chip = (kind, ownedAttr, value, op, iconSrc, label) =>
       `<div class="badge-chip badge-${kind}${ownedAttr ? " is-on" : ""}"` +
       ` data-badge-kind="${kind}" data-badge-pno="${pig.pNo}">` +
@@ -259,7 +259,7 @@
       `</div>`;
     return `<div class="meta badge-line">` +
       chip("small", hasSmall, w.small, "≤", "/img/small.png", "小章") +
-      chip("big",   hasBig,   w.big,   "≥", "/img/big.png",   "大章") +
+      chip("big", hasBig, w.big, "≥", "/img/big.png", "大章") +
       `</div>`;
   }
 
@@ -380,7 +380,7 @@
       if (code >= 3 && code <= 16) {
         const site = HUNT_SITES[code] || `siteid=${code}`;
         const a = pickProb(hAny, code), s = pickProb(hSame, code);
-        const ex = (a || s) ? `  [任意 ${((a||0)*100).toFixed(2)}% / 按幼猪 ${((s||0)*100).toFixed(2)}%]` : "";
+        const ex = (a || s) ? `  [任意 ${((a || 0) * 100).toFixed(2)}% / 按幼猪 ${((s || 0) * 100).toFixed(2)}%]` : "";
         groups.hunt.push(site + ex);
       } else if (code >= 81 && code <= 99) {
         const site = HUNT_SITES[code] || `siteid=${code}`;
@@ -431,7 +431,7 @@
         if (!pair || pair.indexOf(code) < 0) continue;
       }
       if (ticket === "normal" && !HUNT_NORMAL_CODES.has(code)) continue;
-      if (ticket === "rare"   && !HUNT_RARE_CODES.has(code))   continue;
+      if (ticket === "rare" && !HUNT_RARE_CODES.has(code)) continue;
       return true;
     }
     return false;
@@ -439,15 +439,16 @@
 
   // ----- render: grid -----
   function filterPigs(pigs, filter) {
-    const { color, method, q, huntRegion, huntTicket, shopRank, graze } = filter;
+    const { color, rare, method, q, huntRegion, huntTicket, shopRank, graze } = filter;
     const ql = (q || "").toLowerCase();
     return pigs.filter(p => {
       if (color && p.color_text !== color) return false;
+      if (rare && String(p.rare) !== rare) return false;
       if (method && !pigHasMethod(p, method)) return false;
       if (method === "hunt" && !pigMatchesHunt(p, huntRegion, huntTicket)) return false;
       if (method === "shop" && !pigMatchesShopRank(p, shopRank)) return false;
       if (graze === "yes" && !p.isExer) return false;
-      if (graze === "no"  &&  p.isExer) return false;
+      if (graze === "no" && p.isExer) return false;
       if (ql) {
         const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
         if (!hay.includes(ql)) return false;
@@ -498,8 +499,8 @@
       p.png ? el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }) : null
     ));
     const grazeBadge = p.isExer
-      ? el("span", { class: "graze yes", title: "放牧" },  "🌿 放牧")
-      : el("span", { class: "graze no",  title: "不放牧" }, "🏠 不放牧");
+      ? el("span", { class: "graze yes", title: "放牧" }, "🌿 放牧")
+      : el("span", { class: "graze no", title: "不放牧" }, "🏠 不放牧");
     const picky = pigPicky(p);
     const pickyText = picky.level === "none"
       ? "🍽️ 不挑食"
@@ -776,13 +777,13 @@
       : base;
     const regionSel = `#${id("huntRegionFilter")}`;
     const ticketSel = `#${id("huntTicketFilter")}`;
-    const shopSel   = `#${id("shopRankFilter")}`;
+    const shopSel = `#${id("shopRankFilter")}`;
     return function update() {
       const m = filterObj.method;
       const showHunt = m === "hunt", showShop = m === "shop";
       $(regionSel).style.display = showHunt ? "" : "none";
       $(ticketSel).style.display = showHunt ? "" : "none";
-      $(shopSel).style.display   = showShop ? "" : "none";
+      $(shopSel).style.display = showShop ? "" : "none";
       if (!showHunt) {
         filterObj.huntRegion = ""; filterObj.huntTicket = "";
         resetChipRow(regionSel); resetChipRow(ticketSel);
@@ -794,23 +795,25 @@
     };
   }
   const updateCollectMethodSub = makeMethodSubUpdater("", state.filter);
-  const updateAtlasMethodSub   = makeMethodSubUpdater("atlas", state.atlasFilter);
+  const updateAtlasMethodSub = makeMethodSubUpdater("atlas", state.atlasFilter);
 
   // 收藏 tab filters (no prefix, legacy IDs)
-  wireFilter("#colorFilter",      state.filter, "color");
-  wireFilter("#grazeFilter",      state.filter, "graze");
-  wireFilter("#methodFilter",     state.filter, "method", updateCollectMethodSub);
+  wireFilter("#colorFilter", state.filter, "color");
+  wireFilter("#rareFilter", state.filter, "rare");
+  wireFilter("#grazeFilter", state.filter, "graze");
+  wireFilter("#methodFilter", state.filter, "method", updateCollectMethodSub);
   wireFilter("#huntRegionFilter", state.filter, "huntRegion");
   wireFilter("#huntTicketFilter", state.filter, "huntTicket");
-  wireFilter("#shopRankFilter",   state.filter, "shopRank");
+  wireFilter("#shopRankFilter", state.filter, "shopRank");
 
   // 全图鉴 tab filters (atlas prefix)
-  wireFilter("#atlasColorFilter",      state.atlasFilter, "color");
-  wireFilter("#atlasGrazeFilter",      state.atlasFilter, "graze");
-  wireFilter("#atlasMethodFilter",     state.atlasFilter, "method", updateAtlasMethodSub);
+  wireFilter("#atlasColorFilter", state.atlasFilter, "color");
+  wireFilter("#atlasRareFilter", state.atlasFilter, "rare");
+  wireFilter("#atlasGrazeFilter", state.atlasFilter, "graze");
+  wireFilter("#atlasMethodFilter", state.atlasFilter, "method", updateAtlasMethodSub);
   wireFilter("#atlasHuntRegionFilter", state.atlasFilter, "huntRegion");
   wireFilter("#atlasHuntTicketFilter", state.atlasFilter, "huntTicket");
-  wireFilter("#atlasShopRankFilter",   state.atlasFilter, "shopRank");
+  wireFilter("#atlasShopRankFilter", state.atlasFilter, "shopRank");
 
   function wireSearch(inputSel, filterObj) {
     let timer = null;
@@ -823,7 +826,7 @@
       }, 200);
     });
   }
-  wireSearch("#search",      state.filter);
+  wireSearch("#search", state.filter);
   wireSearch("#atlasSearch", state.atlasFilter);
 
   // Return true if a pNo resolves to either a 186 pig or an event pig.
@@ -942,8 +945,8 @@
         }).join("");
         recipeHTML.push(
           `<div class="recipe">` +
-            `<div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}${smTag}</div>` +
-            equations +
+          `<div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}${smTag}</div>` +
+          equations +
           `</div>`
         );
       }
@@ -987,8 +990,8 @@
         }).join("");
         parentRecipeHTML.push(
           `<div class="recipe">` +
-            `<div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}</div>` +
-            equations +
+          `<div class="tag">${BLEED_TYPE_TEXT[iv] || `isview=${iv}`}</div>` +
+          equations +
           `</div>`
         );
       }
@@ -1005,11 +1008,11 @@
           <div><b>${escHtml(p.color_text || "")}</b> · <span class="${p.special ? "stars special" : "stars"}">${stars(p.rare, p.special)}</span></div>
           <div class="meta">${posText}</div>
           <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · ${p.isExer ? "🌿 放牧" : "🏠 不放牧"} · 🍚 最少喂 ${p.eat_times || 0} 次 · ${(() => {
-            const k = pigPicky(p);
-            return k.level === "none"
-              ? "🍽️ 不挑食"
-              : `🍽️ ${k.label}: ${escHtml(k.foods.join(" / "))}`;
-          })()}</div>
+        const k = pigPicky(p);
+        return k.level === "none"
+          ? "🍽️ 不挑食"
+          : `🍽️ ${k.label}: ${escHtml(k.foods.join(" / "))}`;
+      })()}</div>
           ${badgeMetaHTML(p)}
         </div>
       </div>
@@ -1102,7 +1105,7 @@
         // Capture so we keep receiving move/up even if finger leaves the drawer
         // (e.g. drags onto the backdrop).
         if (drawer.setPointerCapture && activePointerId !== null) {
-          try { drawer.setPointerCapture(activePointerId); } catch (_) {}
+          try { drawer.setPointerCapture(activePointerId); } catch (_) { }
         }
       }
       if (dragging) {
@@ -1231,7 +1234,7 @@
   $("#themeBtn").addEventListener("click", () => {
     const next = currentTheme() === "dark" ? "light" : "dark";
     updateThemeChrome(next);
-    try { localStorage.setItem(THEME_KEY, next); } catch {}
+    try { localStorage.setItem(THEME_KEY, next); } catch { }
   });
   // Follow system only if the user hasn't clicked (no saved pref).
   if (window.matchMedia) {
@@ -1277,9 +1280,9 @@
 
   // ----- tab switching -----
   const TABS = {
-    atlas:   { panel: "#tabAtlas",   btn: "#tabBtnAtlas" },
+    atlas: { panel: "#tabAtlas", btn: "#tabBtnAtlas" },
     collect: { panel: "#tabCollect", btn: "#tabBtnCollect" },
-    add:     { panel: "#tabAdd",     btn: "#tabBtnAdd" },
+    add: { panel: "#tabAdd", btn: "#tabBtnAdd" },
   };
   function activateTab(name) {
     if (!TABS[name]) name = "atlas";
@@ -1292,9 +1295,9 @@
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
     if (name === "add") renderNameResults();
   }
-  $("#tabBtnAtlas").addEventListener("click",   () => activateTab("atlas"));
+  $("#tabBtnAtlas").addEventListener("click", () => activateTab("atlas"));
   $("#tabBtnCollect").addEventListener("click", () => activateTab("collect"));
-  $("#tabBtnAdd").addEventListener("click",     () => activateTab("add"));
+  $("#tabBtnAdd").addEventListener("click", () => activateTab("add"));
 
   // ----- name search (add-tab) -----
   const nameState = { q: "", results: [] };
@@ -1471,7 +1474,7 @@
       collectionTriplets: triplets.map(t => `${t.book}/${t.page}/${t.slot}`),
       ownedEventPigs: Array.from(state.ownedEventPigs).sort((a, b) => a - b),
       smallBadges: Array.from(state.smallBadges).sort((a, b) => a - b),
-      bigBadges:   Array.from(state.bigBadges).sort((a, b) => a - b),
+      bigBadges: Array.from(state.bigBadges).sort((a, b) => a - b),
     };
   }
 
@@ -1515,7 +1518,7 @@
     const nColl = payload.collection.length;
     const nOwned = payload.ownedEventPigs.length;
     const nSmall = payload.smallBadges.length;
-    const nBig   = payload.bigBadges.length;
+    const nBig = payload.bigBadges.length;
     if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0) {
       msg.innerHTML = `<span class="err">收藏和勾选都为空，没什么可导出</span>`;
       return;
@@ -1592,7 +1595,7 @@
       const collection = [];
       const ownedEventPigs = [];
       const smallBadges = [];
-      const bigBadges   = [];
+      const bigBadges = [];
       // Prefer explicit pNo array; fall back to triplets if only those exist.
       if (Array.isArray(obj.collection)) {
         for (const v of obj.collection) {
@@ -1646,15 +1649,15 @@
 
   function applyImport(parsed, { replace }) {
     // Dedupe and preserve order for collection; event pigs use a Set.
-    const desiredColl  = Array.from(new Set(parsed.collection));
+    const desiredColl = Array.from(new Set(parsed.collection));
     const desiredOwned = new Set(parsed.ownedEventPigs);
     const desiredSmall = new Set(parsed.smallBadges || []);
-    const desiredBig   = new Set(parsed.bigBadges   || []);
+    const desiredBig = new Set(parsed.bigBadges || []);
 
     let addedColl = 0, removedColl = 0;
     let addedOwned = 0, removedOwned = 0;
     let addedSmall = 0, removedSmall = 0;
-    let addedBig   = 0, removedBig   = 0;
+    let addedBig = 0, removedBig = 0;
 
     if (replace) {
       const prevColl = new Set(state.collection);
@@ -1712,10 +1715,10 @@
       msg.innerHTML = `<span class="err">${escHtml(parsed.err)}</span>`;
       return;
     }
-    const nColl  = parsed.collection.length;
+    const nColl = parsed.collection.length;
     const nOwned = parsed.ownedEventPigs.length;
     const nSmall = parsed.smallBadges.length;
-    const nBig   = parsed.bigBadges.length;
+    const nBig = parsed.bigBadges.length;
     if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0) {
       msg.innerHTML = `<span class="err">解析成功但内容为空 (可能 pNo 对不上当前数据)</span>`;
       return;
@@ -1735,14 +1738,14 @@
     if ($("#drawer").classList.contains("open")) closeDrawer();
     render();
     const parts = [];
-    if (r.addedColl)    parts.push(`收藏新增 ${r.addedColl}`);
-    if (r.removedColl)   parts.push(`收藏移除 ${r.removedColl}`);
-    if (r.addedOwned)    parts.push(`已有新增 ${r.addedOwned}`);
-    if (r.removedOwned)  parts.push(`已有移除 ${r.removedOwned}`);
-    if (r.addedSmall)    parts.push(`小章新增 ${r.addedSmall}`);
-    if (r.removedSmall)  parts.push(`小章移除 ${r.removedSmall}`);
-    if (r.addedBig)      parts.push(`大章新增 ${r.addedBig}`);
-    if (r.removedBig)    parts.push(`大章移除 ${r.removedBig}`);
+    if (r.addedColl) parts.push(`收藏新增 ${r.addedColl}`);
+    if (r.removedColl) parts.push(`收藏移除 ${r.removedColl}`);
+    if (r.addedOwned) parts.push(`已有新增 ${r.addedOwned}`);
+    if (r.removedOwned) parts.push(`已有移除 ${r.removedOwned}`);
+    if (r.addedSmall) parts.push(`小章新增 ${r.addedSmall}`);
+    if (r.removedSmall) parts.push(`小章移除 ${r.removedSmall}`);
+    if (r.addedBig) parts.push(`大章新增 ${r.addedBig}`);
+    if (r.removedBig) parts.push(`大章移除 ${r.removedBig}`);
     const suffix = parsed.source === "triplets"
       ? ` <span style="color:var(--muted)">· 旧式三元组格式，仅收藏部分</span>`
       : "";
