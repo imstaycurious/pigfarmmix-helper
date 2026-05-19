@@ -1466,15 +1466,11 @@
   const FOOD_LABELS = { 0: "🍽️ 不挑食", 1: "🍽️ 有点挑食", 2: "🍽️ 挑食" };
   // 响应里第 10 字段 (pigletOrSex)：0=雄 / 1=雌
   const SEX_LABELS = { 0: "雄", 1: "雌" };
-  const SEX_SYMBOLS = { 0: "♂", 1: "♀" };
   const SEX_CLS = { 0: "sex male", 1: "sex female" };
 
   function buildSexBadge(v) {
     if (!(v in SEX_LABELS)) return null;
-    return el("span", { class: SEX_CLS[v] }, [
-      el("span", { class: "sex-sym" }, SEX_SYMBOLS[v]),
-      el("span", { class: "sex-txt" }, SEX_LABELS[v]),
-    ]);
+    return el("span", { class: SEX_CLS[v] }, SEX_LABELS[v]);
   }
 
   function buildAuctionCard(rec) {
