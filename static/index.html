@@ -797,34 +797,20 @@
       white-space: nowrap;
     }
 
-    /* 性别徽章：雄蓝 雌粉，两种视图共用。
-       拆 symbol/text 两个 span 各自 line-height:1，
-       避免 ♂/♀ 跟 CJK 字符基线不一造成的"高低不齐"。 */
+    /* 性别徽章：雄蓝 雌粉。
+       只用 CJK 单字，靠色块区分性别 ——
+       早前混 ♂/♀ 是因为 iOS Safari 把 ♂/♀ 退到 fallback 字体，
+       跟 CJK 字符基线/字号不一致，怎么对齐都有视觉差。 */
     .sex {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      padding: 1px 6px;
+      display: inline-block;
+      padding: 1px 7px;
       margin-left: 6px;
       border-radius: 6px;
       font-size: 11px;
       font-weight: 600;
-      line-height: 1;
+      line-height: 1.4;
       white-space: nowrap;
       vertical-align: middle;
-    }
-
-    .sex .sex-sym {
-      display: inline-flex;
-      align-items: center;
-      font-size: 12px;
-      line-height: 1;
-    }
-
-    .sex .sex-txt {
-      display: inline-flex;
-      align-items: center;
-      line-height: 1;
     }
 
     .sex.male {
@@ -1894,8 +1880,8 @@
       <div class="filter-row" id="auctionSexFilter" data-filter="sex">
         <span class="label">⚥ 性别</span>
         <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="0">♂ 雄</button>
-        <button class="chip" data-value="1">♀ 雌</button>
+        <button class="chip" data-value="0">雄</button>
+        <button class="chip" data-value="1">雌</button>
       </div>
       <div class="filter-row" id="auctionSortFilter" data-filter="sort">
         <span class="label">⌛ 排序</span>
