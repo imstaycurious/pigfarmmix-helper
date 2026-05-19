@@ -1284,6 +1284,7 @@
     atlas: { panel: "#tabAtlas", btn: "#tabBtnAtlas" },
     collect: { panel: "#tabCollect", btn: "#tabBtnCollect" },
     add: { panel: "#tabAdd", btn: "#tabBtnAdd" },
+    auction: { panel: "#tabAuction", btn: "#tabBtnAuction" },
   };
   function activateTab(name) {
     if (!TABS[name]) name = "atlas";
@@ -1295,10 +1296,368 @@
     }
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
     if (name === "add") renderNameResults();
+    if (name === "auction") renderAuctionTab();
   }
   $("#tabBtnAtlas").addEventListener("click", () => activateTab("atlas"));
   $("#tabBtnCollect").addEventListener("click", () => activateTab("collect"));
   $("#tabBtnAdd").addEventListener("click", () => activateTab("add"));
+  $("#tabBtnAuction").addEventListener("click", () => activateTab("auction"));
+
+  // ----- 拍卖场 tab -----
+  const auctionState = {
+    loading: false,
+    records: [],                  // 上次请求成功的记录
+    error: null,                  // 上次请求失败的错误文本
+    fetchedAt: null,              // ms timestamp
+    viewMode: loadAuctionView(),  // "grid" | "list"
+    hasSearched: false,           // 是否主动查询过，影响初始空状态文案
+  };
+  // UI 上"空字符串"= 不限；"0" 是有效筛选值（不挑食/不放牧/公），不能跟"不限"混淆
+  const auctionFilter = {
+    color: "",
+    rare: "",
+    isExer: "",
+    foodtype: "",
+    sex: "",
+    sort: "1",
+  };
+  // 颜色 → 上游 p 字段的视觉色组代码（默认 0=全部）。跟响应里 pNo 字段同空间
+  const COLOR_TO_P = {
+    "肉色": "700",
+    "灰色": "704",
+    "米色": "708",
+    "粉色": "712",
+    "白色": "716",
+    "其他": "720",
+  };
+  let auctionCountdownTimer = null;
+
+  function loadAuctionView() {
+    try {
+      return localStorage.getItem("auction_view_mode_v1") === "list" ? "list" : "grid";
+    } catch {
+      return "grid";
+    }
+  }
+  function saveAuctionView(v) {
+    try { localStorage.setItem("auction_view_mode_v1", v); } catch { /* ignore */ }
+  }
+
+  // 给筛选 chip 装点击处理：高亮 + 写入 auctionFilter，不自动 fetch
+  document.querySelectorAll("#tabAuction .filter-row").forEach(row => {
+    const field = row.dataset.filter;
+    if (!field) return;
+    row.addEventListener("click", e => {
+      const chip = e.target.closest(".chip");
+      if (!chip || !row.contains(chip)) return;
+      auctionFilter[field] = chip.dataset.value || "";
+      row.querySelectorAll(".chip").forEach(c =>
+        c.classList.toggle("active", c === chip));
+    });
+  });
+
+  async function fetchAuctions() {
+    if (auctionState.loading) return;
+    auctionState.loading = true;
+    auctionState.error = null;
+    auctionState.hasSearched = true;
+    renderAuctionTab();
+    try {
+      const qs = new URLSearchParams({ count: "30" });
+      for (const [k, v] of Object.entries(auctionFilter)) {
+        if (v === "") continue;
+        if (k === "color") {
+          // 颜色 → 上游 p 字段的视觉色组代码
+          const code = COLOR_TO_P[v];
+          if (code) qs.set("color", code);
+          continue;
+        }
+        qs.set(k === "isExer" ? "is_exer" : k, v);
+      }
+      const res = await fetch("/api/auction-search?" + qs.toString(), { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.status !== "ok") throw new Error(data.error || "未知错误");
+      auctionState.records = data.records || [];
+      auctionState.fetchedAt = Date.now();
+    } catch (err) {
+      auctionState.error = err && err.message ? err.message : String(err);
+      console.warn("[auction] fetch failed:", err);
+    } finally {
+      auctionState.loading = false;
+      renderAuctionTab();
+    }
+  }
+
+  $("#auctionSearchBtn").addEventListener("click", () => fetchAuctions());
+  $("#auctionViewToggleBtn").addEventListener("click", () => {
+    auctionState.viewMode = auctionState.viewMode === "grid" ? "list" : "grid";
+    saveAuctionView(auctionState.viewMode);
+    renderAuctionTab();
+  });
+
+  // 上游 bType 对应静态数据 pigs.json 的 pNo（pNo 字段是另一个视觉编号，不是品种号）。
+  function lookupPig(bType) {
+    return state.pigsById.get(bType) || state.eventPigsById.get(bType) || null;
+  }
+
+  // 上游 limitdate 比本地时间晚 8 小时（实测）。+8h 后当本地时间渲染。
+  const LIMITDATE_OFFSET_HOURS = 8;
+  function parseLimitdate(s) {
+    if (!s) return null;
+    // "2026-05-20 03:09:50"
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
+    if (!m) return null;
+    const d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+    d.setHours(d.getHours() + LIMITDATE_OFFSET_HOURS);
+    return d;
+  }
+
+  // 上游 weight 是相对基线的偏移量，显示需 +22 还原成 kg。
+  const WEIGHT_OFFSET_KG = 22;
+
+  function formatCountdown(targetMs) {
+    const now = Date.now();
+    const diff = targetMs - now;
+    if (diff <= 0) return { text: "已结束", cls: "urgent" };
+    const sec = Math.floor(diff / 1000);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    let cls = "";
+    if (sec < 600) cls = "urgent";
+    else if (sec < 3600) cls = "soon";
+    if (h > 0) return { text: `${h}h ${m}m`, cls };
+    if (m > 0) return { text: `${m}m ${s}s`, cls };
+    return { text: `${s}s`, cls };
+  }
+
+  function rareStars(n) {
+    const safe = Math.max(0, Math.min(5, n || 0));
+    return "★".repeat(safe) + "☆".repeat(5 - safe);
+  }
+
+  // foodtype: 0=不挑食 / 1=有点挑食 / 2=挑食 (推断, 跟 .so 里 picky 等级一致)
+  const FOOD_LABELS = { 0: "🍽️ 不挑食", 1: "🍽️ 有点挑食", 2: "🍽️ 挑食" };
+  // 响应里第 10 字段我之前命名 pigletOrSex，按筛选 chip 的语义当 sex 用：
+  //   0 = ♂ 公  /  1 = ♀ 母（如有偏差告诉我直接对调）
+  const SEX_LABELS = { 0: "♂ 公", 1: "♀ 母" };
+  const SEX_CLS = { 0: "sex male", 1: "sex female" };
+
+  function buildAuctionCard(rec) {
+    const pig = lookupPig(rec.bType);
+    const name = pig ? pig.name : "未知品种";
+    const subline = pig
+      ? `${pig.color_text || ""}`.trim() || `#${rec.bType}`
+      : `bType=${rec.bType} · pNo=${rec.pNo}`;
+    const displayWeight = (rec.weight + WEIGHT_OFFSET_KG).toFixed(1);
+
+    const img = el("div", { class: "img" },
+      el("img", {
+        src: imgUrl(rec.bType),
+        loading: "lazy",
+        alt: name,
+        onerror: "this.style.display='none'",
+      }),
+    );
+
+    const limit = parseLimitdate(rec.limitdate);
+    const limitMs = limit ? limit.getTime() : 0;
+    const cd = formatCountdown(limitMs);
+    const countdownEl = el("span", {
+      class: "auction-countdown " + cd.cls,
+      "data-limit-ms": String(limitMs),
+    }, "⏱ " + cd.text);
+
+    const bidTagCls = rec.bidcount > 0 ? "auction-bid-tag has-bid" : "auction-bid-tag";
+    const bidTag = el("span", { class: bidTagCls },
+      rec.bidcount > 0 ? `已 ${rec.bidcount} 次出价` : "未出价",
+    );
+
+    const grazeBadge = rec.isExer
+      ? el("span", { class: "graze yes", title: "放牧" }, "🌿")
+      : el("span", { class: "graze no", title: "不放牧" }, "🏠");
+
+    const foodBadge = el("span", { class: "feed" }, FOOD_LABELS[rec.foodtype] || "🍽️ ?");
+
+    const sexLabel = SEX_LABELS[rec.pigletOrSex];
+    const sexBadge = sexLabel
+      ? el("span", { class: SEX_CLS[rec.pigletOrSex] }, sexLabel)
+      : null;
+
+    const body = el("div", { class: "body" }, [
+      el("div", { class: "name" }, [
+        name,
+        sexBadge ? el("span", { class: "name-sex" }, sexBadge) : null,
+      ]),
+      el("div", { class: "sub" }, subline),
+      el("div", { class: "meta-row" }, [
+        el("span", { class: "stars" }, rareStars(rec.rare)),
+        el("span", { class: "badges" }, [foodBadge, grazeBadge]),
+      ]),
+    ]);
+
+    const meta = el("div", { class: "auction-meta" }, [
+      el("div", { class: "auction-row" }, [
+        el("span", { class: "auction-price" }, [
+          String(rec.nowPrice.toLocaleString()),
+          el("span", { class: "pt" }, "pt"),
+        ]),
+        countdownEl,
+      ]),
+      el("div", { class: "auction-row" }, [
+        el("span", { class: "left" }, `⚖ ${displayWeight}kg`),
+        bidTag,
+      ]),
+      el("div", { class: "auction-owner", title: rec.ownername },
+        `出品: ${rec.ownername || "(匿名)"} · #${rec.pigNo}`),
+    ]);
+
+    return el("div", { class: "card" }, [img, body, meta]);
+  }
+
+  function buildAuctionRow(rec) {
+    const pig = lookupPig(rec.bType);
+    const name = pig ? pig.name : "未知品种";
+    const sublineParts = [];
+    if (pig && pig.color_text) sublineParts.push(pig.color_text);
+    else sublineParts.push(`bType=${rec.bType}`);
+    const displayWeight = (rec.weight + WEIGHT_OFFSET_KG).toFixed(1);
+
+    const thumb = el("div", { class: "thumb" },
+      el("img", {
+        src: imgUrl(rec.bType),
+        loading: "lazy",
+        alt: name,
+        onerror: "this.style.display='none'",
+      }),
+    );
+
+    const limit = parseLimitdate(rec.limitdate);
+    const limitMs = limit ? limit.getTime() : 0;
+    const cd = formatCountdown(limitMs);
+    const countdownEl = el("span", {
+      class: "auction-countdown " + cd.cls,
+      "data-limit-ms": String(limitMs),
+    }, "⏱ " + cd.text);
+
+    const metaParts = [
+      `⚖ ${displayWeight}kg`,
+      FOOD_LABELS[rec.foodtype] || "🍽️ ?",
+      rec.isExer ? "🌿 放牧" : "🏠 不放牧",
+      rec.bidcount > 0 ? `已 ${rec.bidcount} 次出价` : "未出价",
+    ];
+
+    const sexLabel = SEX_LABELS[rec.pigletOrSex];
+    const sexCls = SEX_CLS[rec.pigletOrSex];
+    const nameChildren = [name];
+    if (sexLabel) {
+      nameChildren.push(el("span", { class: sexCls }, sexLabel));
+    }
+    nameChildren.push(el("span", { class: "stars" }, rareStars(rec.rare)));
+
+    const info = el("div", { class: "info" }, [
+      el("div", { class: "name" }, nameChildren),
+      el("div", { class: "meta" }, metaParts.join(" · ")),
+      el("div", { class: "owner", title: rec.ownername },
+        `${sublineParts.join(" · ")} · 出品 ${rec.ownername || "(匿名)"} · #${rec.pigNo}`),
+    ]);
+
+    const priceCol = el("div", { class: "price-col" }, [
+      el("div", { class: "price" }, [
+        String(rec.nowPrice.toLocaleString()),
+        el("span", { class: "pt" }, "pt"),
+      ]),
+      countdownEl,
+    ]);
+
+    return el("div", { class: "auction-list-row" }, [thumb, info, priceCol]);
+  }
+
+  function renderAuctionTab() {
+    const box = $("#auctionBody");
+    const statsBar = $("#auctionStatsBar");
+    const toggleBtn = $("#auctionViewToggleBtn");
+    toggleBtn.textContent = auctionState.viewMode === "grid" ? "☰ 列表" : "▦ 看板";
+    box.innerHTML = "";
+    stopAuctionCountdown();
+
+    if (auctionState.loading) {
+      statsBar.textContent = "加载中…";
+      box.appendChild(el("div", { class: "loading" }, [
+        el("div", { class: "spinner" }),
+        el("div", {}, "正在拉取拍卖场数据…"),
+      ]));
+      return;
+    }
+
+    if (auctionState.error) {
+      statsBar.textContent = "加载失败";
+      box.appendChild(el("div", { class: "auction-error" }, [
+        el("div", {}, "❌ " + auctionState.error),
+        el("div", { class: "hint" },
+          "请确认本地 server.py 正在运行：cd 项目根目录后执行 python server.py，" +
+          "然后浏览器打开 http://localhost:5055/"),
+      ]));
+      return;
+    }
+
+    if (!auctionState.records.length) {
+      if (!auctionState.hasSearched) {
+        statsBar.textContent = "未加载";
+        box.appendChild(el("div", { class: "loading" }, [
+          el("div", {}, "选好筛选条件后点 🔍 查询"),
+        ]));
+      } else {
+        statsBar.textContent = "无结果";
+        box.appendChild(el("div", { class: "loading" }, [
+          el("div", {}, "没有符合条件的拍品，调一下筛选再试。"),
+        ]));
+      }
+      return;
+    }
+
+    const fetched = new Date(auctionState.fetchedAt);
+    const fetchedText = fetched.toLocaleTimeString([], {
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+    });
+    statsBar.textContent =
+      `共 ${auctionState.records.length} 条 · 更新于 ${fetchedText}`;
+
+    if (auctionState.viewMode === "list") {
+      const list = el("div", { class: "auction-list" },
+        auctionState.records.map(buildAuctionRow));
+      box.appendChild(list);
+    } else {
+      const grid = el("div", { class: "grid" },
+        auctionState.records.map(buildAuctionCard));
+      box.appendChild(grid);
+    }
+
+    startAuctionCountdown();
+  }
+
+  function startAuctionCountdown() {
+    stopAuctionCountdown();
+    auctionCountdownTimer = setInterval(() => {
+      const nodes = document.querySelectorAll("#auctionBody .auction-countdown");
+      nodes.forEach(node => {
+        const ms = Number(node.getAttribute("data-limit-ms")) || 0;
+        if (!ms) return;
+        const cd = formatCountdown(ms);
+        node.textContent = "⏱ " + cd.text;
+        node.classList.remove("urgent", "soon");
+        if (cd.cls) node.classList.add(cd.cls);
+      });
+    }, 1000);
+  }
+
+  function stopAuctionCountdown() {
+    if (auctionCountdownTimer) {
+      clearInterval(auctionCountdownTimer);
+      auctionCountdownTimer = null;
+    }
+  }
 
   // ----- name search (add-tab) -----
   const nameState = { q: "", results: [] };

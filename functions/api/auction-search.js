@@ -1,0 +1,166 @@
+/**
+ * Cloudflare Pages Function：拍卖场接口代理
+ *
+ * 浏览器直接调上游 http://pig2cnt.j-o-e.jp/auctionSearch_new.php 不通：
+ *   - 站点跑在 HTTPS（CF Pages），明文 HTTP 触发 mixed-content
+ *   - 上游不发 Access-Control-Allow-Origin，CORS 直接挡
+ * Worker 跑在 CF 边缘，**不受**浏览器这两条限制，可以放心 fetch 上游。
+ *
+ * 部署：把这个文件放在仓库根的 functions/api/auction-search.js
+ * 路由：POST /api/auction-search?<query params>
+ *
+ * 跟 server.py 等价，便于本地用 python server.py 调试 / 生产用本 Function。
+ */
+
+const AUCTION_ENDPOINT = "http://pig2cnt.j-o-e.jp/auctionSearch_new.php";
+const DEFAULT_USER_AGENT =
+  "Dalvik/2.1.0 (Linux; U; Android 12; sdk_gphone64_arm64 Build/SE1A.220203.002.A1)";
+
+// 完整 bType 白名单：1-1199 覆盖普通 / 事件 / 配种衍生 / 双特殊 全部段
+const ALL_BTYPES = Array.from({ length: 1199 }, (_, i) => i + 1);
+
+// 响应中每条记录的 15 个逗号分隔字段
+const RECORD_FIELDS = [
+  "pigNo", "nowPrice", "weight", "limitdate", "owner",
+  "rare", "isExer", "foodtype", "pNo", "pigletOrSex",
+  "ownername", "bidownername", "bidowner", "bidcount", "bType",
+];
+
+
+/** e/f 字段必须带尾随逗号才被上游识别为筛选（实测）。空 = 不限。 */
+function csvFilter(v) {
+  return v ? `${v},` : "";
+}
+
+
+function buildAuctionBody({ count, rare, isExer, foodtype, sex, sort, color }) {
+  const fields = [
+    ["p", color || "0"],
+    ["r", rare || "0"],
+    ["e", csvFilter(isExer)],
+    ["f", csvFilter(foodtype)],
+    ["w", "99"],
+    ["d", sort || "1"],
+    ["s", sex || "99"],
+    ["ownerNo", "1123455"],
+    ["cnt", String(count)],
+    ["list", ALL_BTYPES.join(",")],
+    ["cash", String(Math.floor(Math.random() * 100))],
+  ];
+  // URLSearchParams 会把逗号 encode 成 %2C，但 list 和 e/f 都需要原始逗号 →
+  // 用 encodeURIComponent 然后手动 unescape 逗号回去
+  return fields
+    .map(([k, v]) => `${k}=${encodeURIComponent(v).replace(/%2C/g, ",")}`)
+    .join("&");
+}
+
+
+function parseResponse(body) {
+  const cleaned = body.replace(/^﻿/, "").trim();
+  if (!cleaned || cleaned === "-1") return [];
+  const parts = cleaned.split("&");
+  const records = [];
+  for (const raw of parts.slice(1)) {
+    const cols = raw.split(",");
+    if (cols.length !== RECORD_FIELDS.length) continue;
+    const pigNo = parseInt(cols[0], 10);
+    if (Number.isNaN(pigNo)) continue;
+    records.push({
+      pigNo,
+      nowPrice: parseInt(cols[1], 10),
+      weight: parseFloat(cols[2]),
+      limitdate: cols[3],
+      owner: parseInt(cols[4], 10),
+      rare: parseInt(cols[5], 10),
+      isExer: parseInt(cols[6], 10),
+      foodtype: parseInt(cols[7], 10),
+      pNo: parseInt(cols[8], 10),
+      pigletOrSex: parseInt(cols[9], 10),
+      ownername: cols[10],
+      bidownername: cols[11],
+      bidowner: cols[12] ? parseInt(cols[12], 10) : null,
+      bidcount: parseInt(cols[13], 10),
+      bType: parseInt(cols[14], 10),
+    });
+  }
+  return records;
+}
+
+
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+
+export async function onRequestPost(context) {
+  const url = new URL(context.request.url);
+  const sp = url.searchParams;
+  const get = (k, def = "") => sp.get(k) ?? def;
+
+  let count = parseInt(get("count", "30"), 10);
+  if (Number.isNaN(count)) count = 30;
+  count = Math.max(1, Math.min(count, 1000));
+
+  const body = buildAuctionBody({
+    count,
+    rare: get("rare"),
+    isExer: get("is_exer"),
+    foodtype: get("foodtype"),
+    sex: get("sex"),
+    sort: get("sort", "1"),
+    color: get("color"),
+  });
+
+  try {
+    const upstream = await fetch(AUCTION_ENDPOINT, {
+      method: "POST",
+      body,
+      headers: {
+        "User-Agent": DEFAULT_USER_AGENT,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "*/*",
+      },
+      // CF Worker 不会 follow redirect 默认；上游也不重定向，保留默认即可
+    });
+
+    if (!upstream.ok) {
+      return jsonResponse({
+        status: "error",
+        error: `upstream HTTP ${upstream.status}`,
+      });
+    }
+
+    const text = await upstream.text();
+    const records = parseResponse(text);
+    const cleaned = text.replace(/^﻿/, "").trim();
+
+    return jsonResponse({
+      status: "ok",
+      count: records.length,
+      records,
+      fetched_at: new Date().toISOString(),
+      // 上游原始响应前 500 字符，调试用
+      upstream_preview: cleaned.slice(0, 500),
+    });
+  } catch (err) {
+    return jsonResponse({
+      status: "error",
+      error: `${err.name}: ${err.message}`,
+    });
+  }
+}
+
+
+/** 防止有人误用 GET，给一个明确的提示。 */
+export function onRequestGet() {
+  return jsonResponse(
+    { status: "error", error: "method not allowed; use POST" },
+    405,
+  );
+}

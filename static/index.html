@@ -592,6 +592,256 @@
       }
     }
 
+    /* 拍卖场 tab */
+    .auction-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0;
+      flex-wrap: wrap;
+    }
+
+    .auction-toolbar-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* 列表视图 */
+    .auction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .auction-list-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, border-color .15s;
+    }
+
+    .auction-list-row:hover {
+      box-shadow: var(--shadow);
+      border-color: var(--accent-muted);
+    }
+
+    .auction-list-row:active {
+      transform: scale(0.99);
+    }
+
+    .auction-list-row .thumb {
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, var(--card-img-start), var(--card-img-end));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .auction-list-row .thumb img {
+      max-width: 90%;
+      max-height: 90%;
+    }
+
+    .auction-list-row .info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .auction-list-row .info .name {
+      font-weight: 600;
+      font-size: 14px;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .auction-list-row .info .name .stars {
+      font-size: 11px;
+      color: var(--star);
+      margin-left: 6px;
+      letter-spacing: 1px;
+    }
+
+    .auction-list-row .info .meta {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .auction-list-row .info .owner {
+      font-size: 10px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .auction-list-row .price-col {
+      flex-shrink: 0;
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .auction-list-row .price-col .price {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .auction-list-row .price-col .price .pt {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-left: 2px;
+    }
+
+    .auction-list-row .price-col .auction-countdown {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .auction-list-row .price-col .auction-countdown.urgent {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .auction-list-row .price-col .auction-countdown.soon {
+      color: var(--warn);
+    }
+
+    .card .auction-meta {
+      padding: 6px 10px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      border-top: 1px dashed var(--border);
+      margin-top: 4px;
+    }
+
+    .card .auction-price {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--ink);
+      letter-spacing: 0.2px;
+    }
+
+    .card .auction-price .pt {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-left: 2px;
+    }
+
+    .card .auction-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .card .auction-row .left {
+      color: var(--muted);
+    }
+
+    .card .auction-countdown.urgent {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .card .auction-countdown.soon {
+      color: var(--warn);
+    }
+
+    .card .auction-bid-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: var(--chip-bg);
+      color: var(--chip-fg);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .card .auction-bid-tag.has-bid {
+      background: color-mix(in srgb, var(--warn) 20%, transparent);
+      color: var(--warn);
+    }
+
+    .card .auction-owner {
+      font-size: 10px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* 性别徽章：公蓝 母粉，两种视图共用 */
+    .sex {
+      display: inline-block;
+      padding: 0 6px;
+      margin-left: 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .sex.male {
+      background: color-mix(in srgb, #3b82f6 18%, transparent);
+      color: #2563eb;
+    }
+
+    .sex.female {
+      background: color-mix(in srgb, #ec4899 18%, transparent);
+      color: #db2777;
+    }
+
+    [data-theme="dark"] .sex.male {
+      background: color-mix(in srgb, #60a5fa 22%, transparent);
+      color: #93c5fd;
+    }
+
+    [data-theme="dark"] .sex.female {
+      background: color-mix(in srgb, #f472b6 22%, transparent);
+      color: #f9a8d4;
+    }
+
+    .auction-error {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--danger);
+    }
+
+    .auction-error .hint {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
     /* drawer */
     .drawer-bg {
       position: fixed;
@@ -1548,6 +1798,76 @@
     </div>
   </section>
 
+  <!-- ========== TAB: 拍卖场 ========== -->
+  <section class="tab-panel" id="tabAuction" role="tabpanel" aria-labelledby="tabBtnAuction">
+    <div class="filters">
+      <div class="filter-row" id="auctionColorFilter" data-filter="color">
+        <span class="label">🎨 颜色</span>
+        <button class="chip active" data-value="">✨ 全部</button>
+        <button class="chip" data-value="肉色"><span style="color:#ffcba4; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
+          肉色</button>
+        <button class="chip" data-value="灰色"><span style="color:#9e9e9e; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
+          灰色</button>
+        <button class="chip" data-value="米色"><span style="color:#a0522d; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
+          米色</button>
+        <button class="chip" data-value="粉色"><span style="color:#ffb6c1; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
+          粉色</button>
+        <button class="chip" data-value="白色"><span style="color:#ffffff; text-shadow: 0 0 1px rgba(0,0,0,0.3);">●</span>
+          白色</button>
+        <button class="chip" data-value="其他"><span
+            style="color:#8b4513; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span> 其他</button>
+      </div>
+      <div class="filter-row" id="auctionRareFilter" data-filter="rare">
+        <span class="label">⭐ 星级</span>
+        <button class="chip active" data-value="">✨ 全部</button>
+        <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
+        <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
+        <button class="chip" data-value="3"><span style="color:var(--star)">★★★</span></button>
+        <button class="chip" data-value="4"><span style="color:var(--star)">★★★★</span></button>
+        <button class="chip" data-value="5"><span style="color:var(--star)">★★★★★</span></button>
+      </div>
+      <div class="filter-row" id="auctionGrazeFilter" data-filter="isExer">
+        <span class="label">🌿 放牧</span>
+        <button class="chip active" data-value="">✨ 全部</button>
+        <button class="chip" data-value="1">🌿 放牧</button>
+        <button class="chip" data-value="0">🏠 不放牧</button>
+      </div>
+      <div class="filter-row" id="auctionFoodFilter" data-filter="foodtype">
+        <span class="label">🍽️ 偏食</span>
+        <button class="chip active" data-value="">✨ 全部</button>
+        <button class="chip" data-value="1">不挑食</button>
+        <button class="chip" data-value="2">有点挑</button>
+        <button class="chip" data-value="3">挑食</button>
+      </div>
+      <div class="filter-row" id="auctionSexFilter" data-filter="sex">
+        <span class="label">⚥ 性别</span>
+        <button class="chip active" data-value="">✨ 全部</button>
+        <button class="chip" data-value="0">♂ 公</button>
+        <button class="chip" data-value="1">♀ 母</button>
+      </div>
+      <div class="filter-row" id="auctionSortFilter" data-filter="sort">
+        <span class="label">⌛ 排序</span>
+        <button class="chip active" data-value="1">⬇ 最新上架</button>
+        <button class="chip" data-value="0">⬆ 即将结束</button>
+      </div>
+      <div class="auction-toolbar">
+        <span class="stats-bar" id="auctionStatsBar">未加载</span>
+        <div class="auction-toolbar-actions">
+          <button type="button" class="add-btn" id="auctionViewToggleBtn"
+            title="切换视图" aria-label="切换看板 / 列表视图">☰ 列表</button>
+          <button type="button" class="add-btn" id="auctionSearchBtn">🔍 查询</button>
+        </div>
+      </div>
+    </div>
+    <main>
+      <div id="auctionBody">
+        <div class="loading" id="auctionInitialHint">
+          <div>选好筛选条件后点 🔍 查询</div>
+        </div>
+      </div>
+    </main>
+  </section>
+
   <!-- ========== bottom tab bar ========== -->
   <nav class="tabbar" role="tablist">
     <button type="button" class="tab active" id="tabBtnAtlas" role="tab" aria-selected="true" aria-controls="tabAtlas"
@@ -1564,6 +1884,11 @@
       data-tab="add">
       <span class="ico">➕</span>
       <span>添加</span>
+    </button>
+    <button type="button" class="tab" id="tabBtnAuction" role="tab" aria-selected="false" aria-controls="tabAuction"
+      data-tab="auction">
+      <span class="ico">🏷️</span>
+      <span>拍卖场</span>
     </button>
   </nav>
 
