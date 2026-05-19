@@ -1464,10 +1464,18 @@
 
   // foodtype: 0=不挑食 / 1=有点挑食 / 2=挑食 (推断, 跟 .so 里 picky 等级一致)
   const FOOD_LABELS = { 0: "🍽️ 不挑食", 1: "🍽️ 有点挑食", 2: "🍽️ 挑食" };
-  // 响应里第 10 字段我之前命名 pigletOrSex，按筛选 chip 的语义当 sex 用：
-  //   0 = ♂ 公  /  1 = ♀ 母（如有偏差告诉我直接对调）
-  const SEX_LABELS = { 0: "♂ 公", 1: "♀ 母" };
+  // 响应里第 10 字段 (pigletOrSex)：0=雄 / 1=雌
+  const SEX_LABELS = { 0: "雄", 1: "雌" };
+  const SEX_SYMBOLS = { 0: "♂", 1: "♀" };
   const SEX_CLS = { 0: "sex male", 1: "sex female" };
+
+  function buildSexBadge(v) {
+    if (!(v in SEX_LABELS)) return null;
+    return el("span", { class: SEX_CLS[v] }, [
+      el("span", { class: "sex-sym" }, SEX_SYMBOLS[v]),
+      el("span", { class: "sex-txt" }, SEX_LABELS[v]),
+    ]);
+  }
 
   function buildAuctionCard(rec) {
     const pig = lookupPig(rec.bType);
@@ -1505,10 +1513,7 @@
 
     const foodBadge = el("span", { class: "feed" }, FOOD_LABELS[rec.foodtype] || "🍽️ ?");
 
-    const sexLabel = SEX_LABELS[rec.pigletOrSex];
-    const sexBadge = sexLabel
-      ? el("span", { class: SEX_CLS[rec.pigletOrSex] }, sexLabel)
-      : null;
+    const sexBadge = buildSexBadge(rec.pigletOrSex);
 
     const body = el("div", { class: "body" }, [
       el("div", { class: "name" }, [
@@ -1573,12 +1578,9 @@
       rec.bidcount > 0 ? `已 ${rec.bidcount} 次出价` : "未出价",
     ];
 
-    const sexLabel = SEX_LABELS[rec.pigletOrSex];
-    const sexCls = SEX_CLS[rec.pigletOrSex];
+    const sexBadge = buildSexBadge(rec.pigletOrSex);
     const nameChildren = [name];
-    if (sexLabel) {
-      nameChildren.push(el("span", { class: sexCls }, sexLabel));
-    }
+    if (sexBadge) nameChildren.push(sexBadge);
     nameChildren.push(el("span", { class: "stars" }, rareStars(rec.rare)));
 
     const info = el("div", { class: "info" }, [
