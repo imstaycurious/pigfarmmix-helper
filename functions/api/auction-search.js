@@ -131,7 +131,14 @@ async function scrapeAllColors(opts) {
       seen.set(`${rec.pigNo}-${rec.owner}`, rec);
     }
   }
-  return Array.from(seen.values());
+  const merged = Array.from(seen.values());
+  // 按 limitdate 排序，跟 sort 方向对齐（无限滚动要稳定顺序）
+  const asc = opts.sort === "0";
+  merged.sort((a, b) =>
+    asc ? a.limitdate.localeCompare(b.limitdate)
+        : b.limitdate.localeCompare(a.limitdate),
+  );
+  return merged;
 }
 
 
