@@ -98,6 +98,43 @@ function jsonResponse(data, status = 200) {
 }
 
 
+/** 上游单次最多 30 条；按色组 fan-out 才能拿全。 */
+const COLOR_CODES = ["700", "704", "708", "712", "716", "720"];
+
+
+async function fetchOnce(opts) {
+  const body = buildAuctionBody(opts);
+  const r = await fetch(AUCTION_ENDPOINT, {
+    method: "POST",
+    body,
+    headers: {
+      "User-Agent": DEFAULT_USER_AGENT,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Accept": "*/*",
+    },
+  });
+  if (!r.ok) throw new Error(`upstream HTTP ${r.status}`);
+  return parseResponse(await r.text());
+}
+
+
+async function scrapeAllColors(opts) {
+  // 6 个色组并行；任一子请求失败不影响其它色组的结果
+  const results = await Promise.allSettled(
+    COLOR_CODES.map(code => fetchOnce({ ...opts, color: code })),
+  );
+  // 用 (pigNo, owner) 当唯一键去重（理论上色组之间无重叠，留个保险）
+  const seen = new Map();
+  for (const r of results) {
+    if (r.status !== "fulfilled") continue;
+    for (const rec of r.value) {
+      seen.set(`${rec.pigNo}-${rec.owner}`, rec);
+    }
+  }
+  return Array.from(seen.values());
+}
+
+
 export async function onRequestPost(context) {
   const url = new URL(context.request.url);
   const sp = url.searchParams;
@@ -107,7 +144,7 @@ export async function onRequestPost(context) {
   if (Number.isNaN(count)) count = 30;
   count = Math.max(1, Math.min(count, 1000));
 
-  const body = buildAuctionBody({
+  const opts = {
     count,
     rare: get("rare"),
     isExer: get("is_exer"),
@@ -115,38 +152,23 @@ export async function onRequestPost(context) {
     sex: get("sex"),
     sort: get("sort", "1"),
     color: get("color"),
-  });
+  };
 
   try {
-    const upstream = await fetch(AUCTION_ENDPOINT, {
-      method: "POST",
-      body,
-      headers: {
-        "User-Agent": DEFAULT_USER_AGENT,
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "*/*",
-      },
-      // CF Worker 不会 follow redirect 默认；上游也不重定向，保留默认即可
-    });
-
-    if (!upstream.ok) {
-      return jsonResponse({
-        status: "error",
-        error: `upstream HTTP ${upstream.status}`,
-      });
+    let records;
+    if (opts.color) {
+      // 选了具体色组 → 单次请求就够
+      records = await fetchOnce(opts);
+    } else {
+      // 色组=全部 → 并行扫 6 个色组合并去重
+      records = await scrapeAllColors(opts);
     }
-
-    const text = await upstream.text();
-    const records = parseResponse(text);
-    const cleaned = text.replace(/^﻿/, "").trim();
-
     return jsonResponse({
       status: "ok",
       count: records.length,
       records,
       fetched_at: new Date().toISOString(),
-      // 上游原始响应前 500 字符，调试用
-      upstream_preview: cleaned.slice(0, 500),
+      scraped: !opts.color,
     });
   } catch (err) {
     return jsonResponse({
