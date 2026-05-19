@@ -1304,14 +1304,19 @@
   $("#tabBtnAuction").addEventListener("click", () => activateTab("auction"));
 
   // ----- 拍卖场 tab -----
+  const AUCTION_PAGE_SIZE = 30;
   const auctionState = {
     loading: false,
+    loadingMore: false,           // 滚到底部加载更多时为 true
     records: [],                  // 上次请求成功的记录
     error: null,                  // 上次请求失败的错误文本
     fetchedAt: null,              // ms timestamp
     viewMode: loadAuctionView(),  // "grid" | "list"
     hasSearched: false,           // 是否主动查询过，影响初始空状态文案
+    count: AUCTION_PAGE_SIZE,     // 当前向上游请求的 cnt 值
+    atEnd: false,                 // 已无更多 —— count 加大也没新增记录
   };
+  let auctionLoadMoreObserver = null;
   // UI 上"空字符串"= 不限；"0" 是有效筛选值（不挑食/不放牧/公），不能跟"不限"混淆
   const auctionFilter = {
     color: "",
@@ -1356,18 +1361,26 @@
     });
   });
 
-  async function fetchAuctions() {
-    if (auctionState.loading) return;
-    auctionState.loading = true;
+  async function fetchAuctions({ append = false } = {}) {
+    if (auctionState.loading || auctionState.loadingMore) return;
+    if (!append) {
+      // 全新查询：重置分页状态
+      auctionState.count = AUCTION_PAGE_SIZE;
+      auctionState.atEnd = false;
+      auctionState.records = [];
+    }
+    if (append) auctionState.loadingMore = true;
+    else auctionState.loading = true;
     auctionState.error = null;
     auctionState.hasSearched = true;
     renderAuctionTab();
+
+    const prevCount = auctionState.records.length;
     try {
-      const qs = new URLSearchParams({ count: "30" });
+      const qs = new URLSearchParams({ count: String(auctionState.count) });
       for (const [k, v] of Object.entries(auctionFilter)) {
         if (v === "") continue;
         if (k === "color") {
-          // 颜色 → 上游 p 字段的视觉色组代码
           const code = COLOR_TO_P[v];
           if (code) qs.set("color", code);
           continue;
@@ -1378,15 +1391,27 @@
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.status !== "ok") throw new Error(data.error || "未知错误");
-      auctionState.records = data.records || [];
+      const newRecords = data.records || [];
+      // append 时若总数没增长 → 已经到底
+      if (append && newRecords.length <= prevCount) {
+        auctionState.atEnd = true;
+      }
+      auctionState.records = newRecords;
       auctionState.fetchedAt = Date.now();
     } catch (err) {
       auctionState.error = err && err.message ? err.message : String(err);
       console.warn("[auction] fetch failed:", err);
     } finally {
       auctionState.loading = false;
+      auctionState.loadingMore = false;
       renderAuctionTab();
     }
+  }
+
+  async function loadMoreAuctions() {
+    if (auctionState.loading || auctionState.loadingMore || auctionState.atEnd) return;
+    auctionState.count += AUCTION_PAGE_SIZE;
+    await fetchAuctions({ append: true });
   }
 
   $("#auctionSearchBtn").addEventListener("click", () => fetchAuctions());
@@ -1634,7 +1659,35 @@
       box.appendChild(grid);
     }
 
+    // 底部 sentinel + 加载更多状态
+    const footer = el("div", { class: "auction-footer" }, [
+      auctionState.loadingMore
+        ? el("div", { class: "loading-more" }, [
+            el("div", { class: "spinner small" }), el("div", {}, "加载更多…"),
+          ])
+        : auctionState.atEnd
+          ? el("div", { class: "load-end" }, `— 没有更多了 (cnt=${auctionState.count}) —`)
+          : el("div", { class: "auction-sentinel" }, ""),
+    ]);
+    box.appendChild(footer);
+
+    setupAuctionLoadMore();
     startAuctionCountdown();
+  }
+
+  function setupAuctionLoadMore() {
+    if (auctionLoadMoreObserver) {
+      auctionLoadMoreObserver.disconnect();
+      auctionLoadMoreObserver = null;
+    }
+    const sentinel = document.querySelector("#auctionBody .auction-sentinel");
+    if (!sentinel) return;
+    auctionLoadMoreObserver = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) loadMoreAuctions();
+      }
+    }, { rootMargin: "240px" });
+    auctionLoadMoreObserver.observe(sentinel);
   }
 
   function startAuctionCountdown() {
