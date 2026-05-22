@@ -10,19 +10,20 @@
 //   - 已浏览过的猪头像从缓存读取
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
-const CACHE = "pigfarm-v42";
+const CACHE = "pigfarm-v50";
 const SHELL = [
   "/",
   "/index.html",
   "/app.js",
+  "/css/app.css",
   "/manifest.webmanifest",
   "/icon-192.png",
   "/icon-512.png",
   "/icon-maskable.png",
   "/img/small.png",
   "/img/big.png",
-  "/data/pigs.json",
-  "/data/pigs_event.json",
+  "/data/pigs_full.json",
+  "/data/pigs_full_zhs.json",
 ];
 
 self.addEventListener("install", e => {
@@ -46,8 +47,8 @@ self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
 
-  // pigs.json: stale-while-revalidate (fast, but fetch fresh in background)
-  if (url.pathname === "/data/pigs.json") {
+  // pigs_full(_zhs).json: stale-while-revalidate (fast, but fetch fresh in background)
+  if (url.pathname === "/data/pigs_full.json" || url.pathname === "/data/pigs_full_zhs.json") {
     e.respondWith(
       caches.open(CACHE).then(async cache => {
         const hit = await cache.match(e.request);

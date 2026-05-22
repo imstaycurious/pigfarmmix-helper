@@ -1,7 +1,8 @@
 /**
  * 养猪场mix图鉴助手 — 纯静态客户端
  *
- * 加载一次 /data/pigs.json (~640KB, 186 只)
+ * 加载一次 /data/pigs_full.json (~2.5MB, 621 只),客户端分流为
+ * pigsById (186 主图鉴) + eventPigsById (425 活动猪)
  * Tabs: 全图鉴 (默认) / 收藏 / 添加
  * 用户收藏 (pNo 列表) 持久化在 localStorage
  * 筛选/搜索全在客户端, 全图鉴与收藏各有独立的 filter 状态
@@ -10,15 +11,28 @@
   "use strict";
 
   const STORAGE_KEY = "pig_collection_v1";
-  // 独立于 186 主猪收藏的 "活动猪已有" 勾选。抽屉里 "它能配出的崽"
+  // 独立于 186 主猪收藏的 "活动猪已拥有" 勾选。抽屉里 "它能配出的崽"
   // 如果产出是活动猪，旁边会有一个勾选框让用户标记是否已获得。
   const STORAGE_KEY_OWNED_EVENT = "pig_owned_event_v1";
   // 体型徽章独立持久化: 每只猪 (含活动猪) 都有「小章」「大章」两个独立目标，
   // 用 Set<pNo> 各自存一份，对称于 ownedEventPigs 的形状，便于简洁的 import/export。
   const STORAGE_KEY_BADGE_SMALL = "pig_badge_small_v1";
   const STORAGE_KEY_BADGE_BIG = "pig_badge_big_v1";
-  const DATA_URL = "/data/pigs.json";
-  const EVENT_DATA_URL = "/data/pigs_event.json";
+  // 集齐 186 后解锁的隐藏图鉴。这些 pNo 在 186图鉴 的 typeno=6 第3页里, 上游
+  // 标的 isview=2 表示隐藏。解锁前完全不出现在任何 UI / 抽屉 / 配种引用里。
+  const HIDDEN_PNOS = new Set([904, 905, 920, 921]);
+  const STORAGE_KEY_HIDDEN_UNLOCK = "pig_hidden_unlocked_v1";
+  // 数据有两份: 上游原始繁体 (pigs_full.json) + zhconv 转的简体 (pigs_full_zhs.json)
+  // 切换按钮 (#langBtn) 持久化偏好,默认简体
+  const LANG_KEY = "lang_v1";
+  const DATA_URL_BY_LANG = {
+    zhs: "/data/pigs_full_zhs.json",
+    zht: "/data/pigs_full.json",
+  };
+  function currentLang() {
+    try { return localStorage.getItem(LANG_KEY) === "zht" ? "zht" : "zhs"; }
+    catch { return "zhs"; }
+  }
   // Local front-facing portrait per pig, downloaded by tools/download_portraits.py.
   const IMG_BASE = "/img/pigs/";
 
@@ -84,6 +98,12 @@
     6: "野猪色",
   };
 
+  // 上游 pig.color (1~6) -> 文本。给非主图鉴 (book=7 活动猪) 的兜底用,
+  // 因为它们不参与 BOOK_COLOR_TEXT 的派生。
+  const COLOR_TEXT = {
+    1: "肉色", 2: "灰色", 3: "米色", 4: "粉红", 5: "白色", 6: "野猪色",
+  };
+
   const BLEED_TYPE_TEXT = {
     1: "猪猪广场交配",
     0: "猪猪广场交配 [不能租借公猪]",
@@ -105,8 +125,14 @@
     ownedEventPigs: loadOwnedEventPigs(), // Set<pNo>, 仅针对活动猪
     smallBadges: loadBadgeSet(STORAGE_KEY_BADGE_SMALL), // Set<pNo>, 已拿过小章
     bigBadges: loadBadgeSet(STORAGE_KEY_BADGE_BIG),   // Set<pNo>, 已拿过大章
-    filter: { color: "", rare: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 收藏 tab
-    atlasFilter: { color: "", rare: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "" }, // 全图鉴 tab
+    hiddenUnlocked: loadHiddenUnlocked(),  // 集齐 186 触发的彩蛋图鉴是否已解锁
+    hiddenPigsById: new Map(),              // 隐藏猪的完整数据 (4 只), 解锁后并入 pigsById
+    atlasFilter: { color: "", rare: "", method: "", q: "", huntRegion: "", huntTicket: "", shopRank: "", graze: "", picky: "" }, // 186图鉴 tab
+    eventFilter: { color: "", rare: "", q: "", graze: "", picky: "" }, // Events图鉴 tab
+    // 我的 tab 有两层导航: mineView = "menu" | "main" | "event" | "add"
+    // 主/活动子视图共享 mineFilter; 子视图决定数据源 (186 vs 活动)
+    mineView: "menu",
+    mineFilter: { owned: "", small: "", big: "", q: "" },
   };
 
   function loadCollection() {
@@ -158,6 +184,58 @@
   function saveSmallBadges() { saveBadgeSet(STORAGE_KEY_BADGE_SMALL, state.smallBadges); }
   function saveBigBadges() { saveBadgeSet(STORAGE_KEY_BADGE_BIG, state.bigBadges); }
 
+  function loadHiddenUnlocked() {
+    try { return localStorage.getItem(STORAGE_KEY_HIDDEN_UNLOCK) === "1"; }
+    catch { return false; }
+  }
+  function saveHiddenUnlocked() {
+    try { localStorage.setItem(STORAGE_KEY_HIDDEN_UNLOCK, state.hiddenUnlocked ? "1" : "0"); }
+    catch { }
+  }
+
+  // ----- 拥有/徽章 写入封装 (带联动) -----
+  // 判定一只猪是不是活动猪 (走 ownedEventPigs 而非 collection)
+  function isEventPigId(pNo) {
+    return !state.pigsById.has(pNo) && state.eventPigsById.has(pNo);
+  }
+  // 标记/取消一只猪的"已拥有"。取消时联动清掉小章/大章。
+  function setPigOwned(pNo, owned) {
+    if (isEventPigId(pNo)) {
+      if (owned) state.ownedEventPigs.add(pNo);
+      else state.ownedEventPigs.delete(pNo);
+      saveOwnedEventPigs();
+    } else {
+      const i = state.collection.indexOf(pNo);
+      if (owned && i < 0) state.collection.push(pNo);
+      else if (!owned && i >= 0) state.collection.splice(i, 1);
+      saveCollection();
+    }
+    // 取消已拥有 → 联动清掉这只猪的小章/大章
+    if (!owned) {
+      let changed = false;
+      if (state.smallBadges.has(pNo)) { state.smallBadges.delete(pNo); saveSmallBadges(); changed = true; }
+      if (state.bigBadges.has(pNo)) { state.bigBadges.delete(pNo); saveBigBadges(); changed = true; }
+      void changed;
+    }
+    // 标记拥有 → 顺手检查是否集齐 186 触发彩蛋
+    if (owned && !isEventPigId(pNo)) checkAndUnlockHidden();
+  }
+  // 标记/取消小章或大章。标记时联动把猪自动标为已拥有。
+  function setPigBadge(pNo, kind, on) {
+    const set = kind === "small" ? state.smallBadges : state.bigBadges;
+    if (on) set.add(pNo);
+    else set.delete(pNo);
+    if (kind === "small") saveSmallBadges();
+    else saveBigBadges();
+    // 勾上徽章 → 联动把猪标为已拥有 (若还没标)
+    if (on) {
+      const alreadyOwned = isEventPigId(pNo)
+        ? state.ownedEventPigs.has(pNo)
+        : state.collection.includes(pNo);
+      if (!alreadyOwned) setPigOwned(pNo, true);
+    }
+  }
+
   // ----- picky-eating derivation -----
   // 按 eatable 长度判定挑食程度 (与 arrival_comment 里的 挑食/不挑食 100% 对齐):
   //   0 种 -> 不挑食
@@ -196,6 +274,44 @@
     t.classList.add("show");
     clearTimeout(toast._t);
     toast._t = setTimeout(() => t.classList.remove("show"), ms);
+  }
+
+  // 集齐 186 后的解锁庆祝弹窗 — 动态注入, 点关闭按钮 / 背景 / Esc 消失
+  function showUnlockCelebration() {
+    // 防止重复弹
+    if (document.getElementById("celebrationModal")) return;
+    const names = Array.from(state.hiddenPigsById.values())
+      .map(p => p.name)
+      .filter(Boolean);
+    const modal = document.createElement("div");
+    modal.id = "celebrationModal";
+    modal.className = "celebration-bg";
+    modal.innerHTML = `
+      <div class="celebration-card" role="dialog" aria-modal="true" aria-labelledby="celebrationTitle">
+        <div class="celebration-confetti">🎉 ✨ 🎊 ✨ 🎉</div>
+        <div class="celebration-crown">👑</div>
+        <h2 id="celebrationTitle">恭喜你 · 大成就解锁!</h2>
+        <p class="celebration-line">你已集齐 <b>主图鉴 186 只</b>,养猪场名册圆满 ✨</p>
+        <p class="celebration-sub">作为奖赏,隐藏图鉴「皇室成员」向你开放:</p>
+        <ul class="celebration-list">
+          ${names.map(n => `<li>👑 ${escHtml(n)}</li>`).join("")}
+        </ul>
+        <p class="celebration-foot">现在到 <b>186图鉴 → 野猪图鉴第 3 页</b> 可以看到他们 🐷</p>
+        <button type="button" class="add-btn celebration-ok" id="celebrationOk">收下这份荣耀 ✨</button>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add("show"));
+    const close = () => {
+      modal.classList.remove("show");
+      setTimeout(() => modal.remove(), 220);
+      document.removeEventListener("keydown", onKey);
+    };
+    const onKey = e => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    modal.addEventListener("click", e => {
+      if (e.target === modal || e.target.id === "celebrationOk") close();
+    });
   }
 
   // Every pig has one canonical portrait at /img/pigs/{pNo}.png.
@@ -255,7 +371,7 @@
       `<img class="badge-icon" src="${iconSrc}" alt="${label}">` +
       `<span class="badge-text">${op} ${fmtKg(value)} kg</span>` +
       `<button type="button" class="badge-state" data-badge-kind="${kind}" data-badge-pno="${pig.pNo}"` +
-      ` aria-pressed="${ownedAttr}" title="点击切换是否已获得${label}">${ownedAttr ? "☑ 已有" : "☐ 未有"}</button>` +
+      ` aria-pressed="${ownedAttr}" title="点击切换是否已获得${label}">${ownedAttr ? "☑ 已拥有" : "☐ 未拥有"}</button>` +
       `</div>`;
     return `<div class="meta badge-line">` +
       chip("small", hasSmall, w.small, "≤", "/img/small.png", "小章") +
@@ -268,45 +384,122 @@
     return glyph.repeat(Math.min(6, rare || 0));
   }
 
+  // 上游 eatable_time 字段语义 (按玩家实测):
+  //   0   → 默认最短间隔 58 分钟 (绝大多数猪)
+  //   0.5 → 30 分钟
+  //   N≥1 → N 小时
+  function feedIntervalText(eatable_time) {
+    if (eatable_time == null) return "?";
+    if (eatable_time === 0) return "58 分钟";
+    if (eatable_time < 1) return `${Math.round(eatable_time * 60)} 分钟`;
+    return `${eatable_time} 小时`;
+  }
+
   // ----- data load -----
+  // 把上游原始 list.typeno/listno 推导成 book/page/slot/color_text
+  // (旧 pigs.json 由 scrape_all.py 的 enrich() 预先生成,
+  // 新 pigs_full.json 是原始数据,需要客户端补)。
+  function enrichPig(p) {
+    const info = p.list || {};
+    const typeno = info.typeno;
+    const listno = info.listno;
+    if (typeno && typeno >= 1 && typeno <= 6 && listno) {
+      p.book = typeno;
+      p.page = Math.ceil(listno / 6);
+      p.slot = ((listno - 1) % 6) + 1;
+    } else if (typeno === 7 && listno) {
+      p.book = 7;
+      p.page = null;
+      p.slot = null;
+    } else {
+      p.book = typeno;
+      p.page = null;
+      p.slot = null;
+    }
+    const bookColor = BOOK_COLOR_TEXT[p.book];
+    if (bookColor) {
+      p.color_text = bookColor;
+    } else if (p.special) {
+      p.color_text = "特别";
+    } else if (COLOR_TEXT[p.color]) {
+      p.color_text = COLOR_TEXT[p.color];
+    }
+    return p;
+  }
+
   async function loadData() {
-    // 并行请求 186 本体和活动猪。活动猪只用于丰富抽屉（反向配种产出 +
-    // 作为 186 配方里的亲本/产出），不进入全图鉴 / 收藏 / 添加流程。
-    const [mainRes, evRes] = await Promise.all([
-      fetch(DATA_URL),
-      fetch(EVENT_DATA_URL).catch(() => null),
-    ]);
-    if (!mainRes.ok) throw new Error("加载数据失败: " + mainRes.status);
-    const bundle = await mainRes.json();
+    // 每次重新加载时根据当前语言挑选 URL,允许运行时切换
+    const res = await fetch(DATA_URL_BY_LANG[currentLang()]);
+    if (!res.ok) throw new Error("加载数据失败: " + res.status);
+    const bundle = await res.json();
     if (!bundle || !Array.isArray(bundle.pigs)) throw new Error("数据格式错误");
 
-    for (const p of bundle.pigs) {
-      // color_text 的真实分类按图鉴 book (== list.typeno, 1~6) 而非 p.color 字段:
-      // 图鉴 6 (野猪) 里的猪上游 color 字段会被标成 1, 但实际应归为 "野猪色"。
-      const bookColor = BOOK_COLOR_TEXT[p.book];
-      if (bookColor) p.color_text = bookColor;
-      state.pigsById.set(p.pNo, p);
-      if (p.list && p.list.typeno && p.list.listno) {
-        state.pigsByListKey.set(`${p.list.typeno}-${p.list.listno}`, p.pNo);
+    // 从 pigs_full.json 派生:
+    //   - pigsById   = typeno 1~6 + isview=1 的 186 只主图鉴 (进入全图鉴/收藏/添加)
+    //   - eventPigsById = typeno=7 的活动猪 (进入新 Events tab + 抽屉反向配种)
+    //   - 其他 (isview=0/2、typeno=False) 只入 eventPigsById, 不参与主流程
+    //   - 隐藏 pNo (HIDDEN_PNOS) 单独入 hiddenPigsById, 解锁后才并入 pigsById
+    for (const raw of bundle.pigs) {
+      const p = enrichPig(raw);
+      const info = p.list || {};
+      if (HIDDEN_PNOS.has(p.pNo)) {
+        state.hiddenPigsById.set(p.pNo, p);
+        continue;
+      }
+      const isMain = info.typeno >= 1 && info.typeno <= 6 && info.isview === 1;
+      if (isMain) {
+        state.pigsById.set(p.pNo, p);
+        if (info.typeno && info.listno) {
+          state.pigsByListKey.set(`${info.typeno}-${info.listno}`, p.pNo);
+        }
+      } else {
+        state.eventPigsById.set(p.pNo, p);
       }
     }
 
-    if (evRes && evRes.ok) {
-      try {
-        const evBundle = await evRes.json();
-        if (evBundle && Array.isArray(evBundle.pigs)) {
-          for (const p of evBundle.pigs) state.eventPigsById.set(p.pNo, p);
-        }
-      } catch (err) {
-        console.warn("活动猪数据解析失败:", err);
-      }
-    } else {
-      console.warn("未加载活动猪数据 (pigs_event.json), 抽屉反向配种将不含活动猪产出");
-    }
+    // 已解锁过 → 把隐藏图鉴并进主图鉴
+    if (state.hiddenUnlocked) mergeHiddenIntoMain();
 
     buildBreedingIndex();
     state.dataLoaded = true;
     return bundle;
+  }
+
+  // 把隐藏猪并入 pigsById + pigsByListKey (不触发庆祝弹窗)
+  function mergeHiddenIntoMain() {
+    for (const p of state.hiddenPigsById.values()) {
+      state.pigsById.set(p.pNo, p);
+      const info = p.list || {};
+      if (info.typeno && info.listno) {
+        state.pigsByListKey.set(`${info.typeno}-${info.listno}`, p.pNo);
+      }
+    }
+  }
+
+  // 集齐 186 主图鉴的判定 (彩蛋触发条件)
+  function basePigPNos() {
+    const out = [];
+    for (const pNo of state.pigsById.keys()) {
+      if (!HIDDEN_PNOS.has(pNo)) out.push(pNo);
+    }
+    return out;
+  }
+  function checkAndUnlockHidden() {
+    if (state.hiddenUnlocked) return false;
+    if (!state.dataLoaded) return false;
+    const base = basePigPNos();
+    if (base.length === 0) return false;
+    const ownedSet = new Set(state.collection);
+    for (const pNo of base) {
+      if (!ownedSet.has(pNo)) return false;
+    }
+    // 全集齐 → 解锁
+    state.hiddenUnlocked = true;
+    saveHiddenUnlocked();
+    mergeHiddenIntoMain();
+    buildBreedingIndex();
+    showUnlockCelebration();
+    return true;
   }
 
   // Reverse breeding index: pNo -> Array<{ partner, isview, any, result }>.
@@ -439,7 +632,7 @@
 
   // ----- render: grid -----
   function filterPigs(pigs, filter) {
-    const { color, rare, method, q, huntRegion, huntTicket, shopRank, graze } = filter;
+    const { color, rare, method, q, huntRegion, huntTicket, shopRank, graze, picky } = filter;
     const ql = (q || "").toLowerCase();
     return pigs.filter(p => {
       if (color && p.color_text !== color) return false;
@@ -449,6 +642,7 @@
       if (method === "shop" && !pigMatchesShopRank(p, shopRank)) return false;
       if (graze === "yes" && !p.isExer) return false;
       if (graze === "no" && p.isExer) return false;
+      if (picky && pigPicky(p).level !== picky) return false;
       if (ql) {
         const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
         if (!hay.includes(ql)) return false;
@@ -463,37 +657,113 @@
     );
   }
 
-  function currentCollectionPigs() {
-    const pigs = [];
-    for (const pNo of state.collection) {
-      const p = state.pigsById.get(pNo);
-      if (p) pigs.push(p);
+  // 我的 tab: 把 186 主图鉴 + 活动猪并到一起,按 mineFilter 筛
+  //   type:  ""|main|event  - 类型
+  //   owned: ""|yes|no       - 是否已拥有 (186 看 collection, 活动看 ownedEventPigs)
+  //   small: ""|yes|no       - 小章是否已拿
+  //   big:   ""|yes|no       - 大章是否已拿
+  //   q:     搜索 (name + description)
+  function pigIsOwned(p) {
+    if (p.book === 7) return state.ownedEventPigs.has(p.pNo);
+    return state.collection.includes(p.pNo);
+  }
+  function currentMinePigs() {
+    const { owned, small, big, q } = state.mineFilter;
+    const ql = (q || "").toLowerCase();
+    const out = [];
+    // 数据源由当前子视图决定: main 只看 186, event 只看活动猪
+    const sources = [];
+    if (state.mineView === "main") sources.push(state.pigsById.values());
+    else if (state.mineView === "event") sources.push(state.eventPigsById.values());
+    // mineView=menu/add 时不渲染列表, sources 留空即可
+    for (const iter of sources) {
+      for (const p of iter) {
+        const isOwn = pigIsOwned(p);
+        if (owned === "yes" && !isOwn) continue;
+        if (owned === "no" && isOwn) continue;
+        const hasSmall = state.smallBadges.has(p.pNo);
+        const hasBig = state.bigBadges.has(p.pNo);
+        if (small === "yes" && !hasSmall) continue;
+        if (small === "no" && hasSmall) continue;
+        if (big === "yes" && !hasBig) continue;
+        if (big === "no" && hasBig) continue;
+        if (ql) {
+          const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
+          if (!hay.includes(ql)) continue;
+        }
+        out.push(p);
+      }
     }
-    return sortPigs(filterPigs(pigs, state.filter));
+    // 排序: 主图鉴在前(按 book/page/slot), 活动在后(按 pNo)
+    out.sort((a, b) => {
+      const aMain = a.book && a.book <= 6 ? 0 : 1;
+      const bMain = b.book && b.book <= 6 ? 0 : 1;
+      if (aMain !== bMain) return aMain - bMain;
+      if (aMain === 0) {
+        return (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot) || (a.pNo - b.pNo);
+      }
+      return a.pNo - b.pNo;
+    });
+    return out;
   }
 
   function currentAtlasPigs() {
     return sortPigs(filterPigs([...state.pigsById.values()], state.atlasFilter));
   }
 
-  // Shared card renderer. `showRemove` shows the × (收藏 tab); `showCollected`
-  // draws a green tick + border when the pig is already in the collection
-  // (全图鉴 tab).
+  // 活动猪过滤: 颜色 / 星级 / 放牧 / 挑食 / 搜索;
+  // 已拥有/未拥有的视图在 我的 tab 里看。按 pNo 升序展示。
+  function filterEventPigs(pigs, filter) {
+    const { color, rare, q, graze, picky } = filter;
+    const ql = (q || "").toLowerCase();
+    return pigs.filter(p => {
+      if (color && p.color_text !== color) return false;
+      if (rare && String(p.rare) !== rare) return false;
+      if (graze === "yes" && !p.isExer) return false;
+      if (graze === "no" && p.isExer) return false;
+      if (picky && pigPicky(p).level !== picky) return false;
+      if (ql) {
+        const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
+        if (!hay.includes(ql)) return false;
+      }
+      return true;
+    });
+  }
+
+  function currentEventPigs() {
+    const pigs = filterEventPigs([...state.eventPigsById.values()], state.eventFilter);
+    return pigs.sort((a, b) => (a.pNo - b.pNo));
+  }
+
+  // Shared card renderer。统一行为:
+  //   - 角上恒有「☑ 已拥有 / ☐ 未拥有」按钮(186 改 collection, 活动改 ownedEventPigs)
+  //   - 已拥有的卡片画绿色边框 (.collected)
+  //   - opts.showBadges = true 时在卡片底部展示小章/大章 chip (可点切换)
+  // opts:
+  //   showCollected (default true) - 是否高亮已拥有的卡 + 显示角标。
+  //                                  关掉用于纯只读列表。
+  //   showBadges    (default false) - 是否在底部显示徽章 chip。
   function buildCard(p, opts) {
-    const { showRemove = false, showCollected = false } = opts || {};
+    const { showCollected = true, showBadges = false } = opts || {};
     const posText = p.book && p.book <= 6
-      ? `图鉴${p.book} 页${p.page} #${p.slot}` : "";
-    const isColl = state.collection.includes(p.pNo);
+      ? `图鉴${p.book} 页${p.page} #${p.slot}`
+      : (p.book === 7 ? "Events图鉴" : "");
+    const isEvent = p.book === 7 || !state.pigsById.has(p.pNo);
+    const isOwn = isEvent
+      ? state.ownedEventPigs.has(p.pNo)
+      : state.collection.includes(p.pNo);
     const children = [];
-    if (showRemove) {
+    if (showCollected) {
       children.push(el("button", {
-        class: "remove",
-        "aria-label": "移除",
-        onclick: ev => { ev.stopPropagation(); removePig(p.pNo); },
-      }, "×"));
-    }
-    if (showCollected && isColl) {
-      children.push(el("span", { class: "tick", "aria-label": "已收藏" }, "✓"));
+        class: "card-owned-toggle" + (isOwn ? " is-on" : ""),
+        "aria-pressed": String(isOwn),
+        title: isOwn ? "已拥有 — 点击取消" : "标记为已拥有",
+        onclick: ev => {
+          ev.stopPropagation();
+          setPigOwned(p.pNo, !isOwn);
+          render();
+        },
+      }, isOwn ? "☑ 已拥有" : "☐ 未拥有"));
     }
     children.push(el("div", { class: "img" },
       p.png ? el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }) : null
@@ -514,6 +784,37 @@
       class: "feed",
       title: `最少喂食 ${feedN} 次`,
     }, `🍚 ${feedN}次`);
+    // 小章 / 大章 chip: 始终显示, 默认空 chip;showBadges=true 时可点击切换
+    const w = badgeWeights(p);
+    const hasSm = state.smallBadges.has(p.pNo);
+    const hasBg = state.bigBadges.has(p.pNo);
+    const makeBadgeChip = (kind, has, weight, op, iconSrc, label) => {
+      const cls = `card-badge-chip ${kind}${has ? " is-on" : ""}`;
+      const attrs = {
+        class: cls,
+        title: `${label}: ${op} ${fmtKg(weight)}kg${has ? " · 已拥有" : ""}`,
+      };
+      if (showBadges) {
+        attrs.onclick = ev => {
+          ev.stopPropagation();
+          const set = kind === "small" ? state.smallBadges : state.bigBadges;
+          setPigBadge(p.pNo, kind, !set.has(p.pNo));
+          render();
+        };
+      }
+      const tag = showBadges ? "button" : "span";
+      return el(tag, attrs, [
+        el("img", { class: "card-badge-img", src: iconSrc, alt: label }),
+        el("span", { class: "card-badge-w" }, `${op}${fmtKg(weight)}`),
+        has ? el("span", { class: "card-badge-tick" }, "☑") : null,
+      ]);
+    };
+    const badgeRow = w
+      ? el("div", { class: "card-badge-row" + (showBadges ? " interactive" : "") }, [
+          makeBadgeChip("small", hasSm, w.small, "≤", "/img/small.png", "小章"),
+          makeBadgeChip("big", hasBg, w.big, "≥", "/img/big.png", "大章"),
+        ])
+      : null;
     children.push(el("div", { class: "body" }, [
       el("div", { class: "name" }, `#${p.pNo} ${p.name}`),
       el("div", { class: "sub" }, `${p.color_text || ""} · ${posText}`),
@@ -522,15 +823,32 @@
         el("span", { class: "badges" }, [feedBadge, grazeBadge].filter(Boolean)),
       ]),
       pickyEl,
+      badgeRow,
     ]));
     return el("div", {
-      class: "card" + (showCollected && isColl ? " collected" : ""),
+      class: "card" + (showCollected && isOwn ? " collected" : ""),
       onclick: () => showDetail(p.pNo),
     }, children);
   }
 
-  function renderCollectionBody() {
-    const box = $("#body");
+  function renderMineMenuCounts() {
+    // 主菜单的两张猪图鉴卡片右下角显示拥有数 / 总数
+    const m = $("#mineMenuMainCount");
+    const e = $("#mineMenuEventCount");
+    if (m) m.textContent = state.dataLoaded
+      ? `已拥有 ${state.collection.length} / ${state.pigsById.size} 只`
+      : "加载中…";
+    if (e) e.textContent = state.dataLoaded
+      ? `已拥有 ${state.ownedEventPigs.size} / ${state.eventPigsById.size} 只`
+      : "加载中…";
+  }
+
+  function renderMineBody() {
+    renderMineMenuCounts();
+    // mineView=menu/add 时列表不需要渲染 (DOM 已隐藏)
+    if (state.mineView !== "main" && state.mineView !== "event") return;
+    const box = $("#mineBody");
+    if (!box) return;
     box.innerHTML = "";
 
     if (!state.dataLoaded) {
@@ -541,31 +859,28 @@
       return;
     }
 
-    if (state.collection.length === 0) {
-      box.appendChild(el("div", { class: "empty" }, [
-        el("div", { class: "big" }, "🐽"),
-        el("div", { class: "title" }, "你的收藏还是空的"),
-        el("div", { class: "hint" }, "到「全图鉴」点开一头猪即可加入收藏，或到「添加」页批量录入"),
-        el("div", {
-          class: "arrow",
-          style: "cursor:pointer",
-          onclick: () => activateTab("atlas"),
-        }, "�"),
-      ]));
-      return;
-    }
-
-    const pigs = currentCollectionPigs();
+    const pigs = currentMinePigs();
     if (pigs.length === 0) {
-      box.appendChild(el("div", { class: "empty" }, [
-        el("div", { class: "title" }, "没有符合筛选条件的猪"),
-        el("div", { class: "hint" }, "试试换个颜色/获得方式，或清空搜索词"),
-      ]));
+      const f = state.mineFilter;
+      const hasFilter = f.q || f.owned || f.small || f.big;
+      const tabName = state.mineView === "event" ? "Events图鉴" : "186图鉴";
+      if (!hasFilter) {
+        box.appendChild(el("div", { class: "empty" }, [
+          el("div", { class: "big" }, "🐽"),
+          el("div", { class: "title" }, `${tabName} 还没有数据`),
+          el("div", { class: "hint" }, `到 ${tabName} tab 点开一头猪,角上点「☐ 未拥有」就能加进来`),
+        ]));
+      } else {
+        box.appendChild(el("div", { class: "empty" }, [
+          el("div", { class: "title" }, "没有符合筛选条件的猪"),
+          el("div", { class: "hint" }, "调一下上面的「拥有 / 小章 / 大章」或清空搜索词"),
+        ]));
+      }
       return;
     }
 
     const grid = el("div", { class: "grid" });
-    for (const p of pigs) grid.appendChild(buildCard(p, { showRemove: true }));
+    for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true, showBadges: true }));
     box.appendChild(grid);
   }
 
@@ -592,32 +907,39 @@
     }
 
     const grid = el("div", { class: "grid" });
-    for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true }));
+    for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true, showBadges: true }));
+    box.appendChild(grid);
+  }
+
+  function renderEventsBody() {
+    const box = $("#eventBody");
+    if (!box) return;
+    box.innerHTML = "";
+
+    if (!state.dataLoaded) {
+      box.appendChild(el("div", { class: "loading" }, [
+        el("div", { class: "spinner" }),
+        "正在加载图鉴数据…",
+      ]));
+      return;
+    }
+
+    const pigs = currentEventPigs();
+    if (pigs.length === 0) {
+      box.appendChild(el("div", { class: "empty" }, [
+        el("div", { class: "title" }, "没有符合筛选条件的活动猪"),
+        el("div", { class: "hint" }, "试试换个颜色 / 星级,或清空搜索词"),
+      ]));
+      return;
+    }
+
+    const grid = el("div", { class: "grid" });
+    for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true, showBadges: true }));
     box.appendChild(grid);
   }
 
   function renderStatsBar() {
-    $("#count").textContent = state.dataLoaded
-      ? `${state.collection.length} 只收藏 / 共 ${state.pigsById.size} 只`
-      : "加载中…";
-
-    // 收藏 tab: 颜色分布
-    const sb = $("#statsBar");
-    sb.innerHTML = "";
-    if (state.collection.length > 0) {
-      const byColor = {};
-      for (const pNo of state.collection) {
-        const p = state.pigsById.get(pNo);
-        if (!p) continue;
-        const c = p.color_text || "?";
-        byColor[c] = (byColor[c] || 0) + 1;
-      }
-      const colorBits = Object.entries(byColor).sort((a, b) => b[1] - a[1])
-        .map(([c, n]) => `${c} ${n}`).join(" · ");
-      if (colorBits) sb.appendChild(text("颜色: " + colorBits));
-    }
-
-    // 全图鉴 tab: 当前筛选结果 / 总数 · 已收藏
+    // 186图鉴 tab: 当前筛选结果 / 总数 · 已拥有
     const asb = $("#atlasStatsBar");
     if (asb) {
       if (!state.dataLoaded) {
@@ -626,32 +948,95 @@
         const total = state.pigsById.size;
         const shown = currentAtlasPigs().length;
         const coll = state.collection.length;
-        asb.textContent = `显示 ${shown} / 共 ${total} 只 · 已收藏 ${coll}`;
+        asb.textContent = `显示 ${shown} / 共 ${total} 只 · 已拥有 ${coll}`;
+      }
+    }
+
+    // Events图鉴 tab: 当前筛选结果 / 共 425 · 已拥有
+    const esb = $("#eventStatsBar");
+    if (esb) {
+      if (!state.dataLoaded) {
+        esb.textContent = "";
+      } else {
+        const total = state.eventPigsById.size;
+        const shown = currentEventPigs().length;
+        const owned = state.ownedEventPigs.size;
+        esb.textContent = `显示 ${shown} / 共 ${total} 只 · 已拥有 ${owned}`;
+      }
+    }
+
+    // 我的 tab: 当前筛选结果 + 总览
+    const msb = $("#mineStatsBar");
+    if (msb) {
+      if (!state.dataLoaded || (state.mineView !== "main" && state.mineView !== "event")) {
+        msb.textContent = "";
+      } else {
+        const shown = currentMinePigs().length;
+        const isMain = state.mineView === "main";
+        const total = isMain ? state.pigsById.size : state.eventPigsById.size;
+        const own = isMain ? state.collection.length : state.ownedEventPigs.size;
+        // 小章/大章: 只统计属于当前子视图范围的猪
+        const inScope = isMain
+          ? (pNo) => state.pigsById.has(pNo)
+          : (pNo) => state.eventPigsById.has(pNo);
+        let sm = 0, bg = 0;
+        for (const pNo of state.smallBadges) if (inScope(pNo)) sm++;
+        for (const pNo of state.bigBadges) if (inScope(pNo)) bg++;
+        msb.textContent = `显示 ${shown} 只 · 已拥有 ${own}/${total} · 小章 ${sm} · 大章 ${bg}`;
       }
     }
   }
 
   $("#clearBtn").addEventListener("click", () => {
-    if (state.collection.length === 0) {
-      toast("收藏已经是空的");
+    const nColl = state.collection.length;
+    const nEv = state.ownedEventPigs.size;
+    const nSm = state.smallBadges.size;
+    const nBg = state.bigBadges.size;
+    const wasUnlocked = state.hiddenUnlocked;
+    const total = nColl + nEv + nSm + nBg + (wasUnlocked ? 1 : 0);
+    if (total === 0) {
+      toast("记录已经是空的");
       return;
     }
-    if (!confirm(`确定要清空全部 ${state.collection.length} 只收藏？`)) return;
+    if (!confirm("确定要清空全部记录吗?")) return;
     state.collection = [];
+    state.ownedEventPigs = new Set();
+    state.smallBadges = new Set();
+    state.bigBadges = new Set();
     saveCollection();
+    saveOwnedEventPigs();
+    saveSmallBadges();
+    saveBigBadges();
+    // 重置隐藏图鉴解锁状态 + 把 4 只皇室猪从 pigsById / pigsByListKey 抽回去
+    if (state.hiddenUnlocked) {
+      state.hiddenUnlocked = false;
+      saveHiddenUnlocked();
+      for (const pNo of HIDDEN_PNOS) {
+        const p = state.pigsById.get(pNo);
+        if (!p) continue;
+        state.pigsById.delete(pNo);
+        const info = p.list || {};
+        if (info.typeno && info.listno) {
+          state.pigsByListKey.delete(`${info.typeno}-${info.listno}`);
+        }
+      }
+      buildBreedingIndex();
+    }
+    if ($("#drawer").classList.contains("open")) closeDrawer();
     render();
-    toast("已清空收藏");
+    toast("已清空全部记录");
   });
 
   function render() {
     renderStatsBar();
-    renderCollectionBody();
     renderAtlasBody();
-    // sync 添加-tab 收藏管理 count
+    renderEventsBody();
+    renderMineBody();
+    // sync 我的 tab 收藏管理 count
     const mc = $("#manageCount");
-    if (mc) mc.textContent = `当前收藏 ${state.collection.length} 只`;
+    if (mc) mc.textContent = `186 已拥有 ${state.collection.length} 只 · Events 已拥有 ${state.ownedEventPigs.size} 只 · 小章 ${state.smallBadges.size} · 大章 ${state.bigBadges.size}`;
     // keep name-search results fresh (e.g. "已添加" tag)
-    if ($("#tabAdd").classList.contains("active")) renderNameResults();
+    if ($("#tabMine") && $("#tabMine").classList.contains("active")) renderNameResults();
   }
 
   // ----- triplet add flow -----
@@ -794,26 +1179,51 @@
       }
     };
   }
-  const updateCollectMethodSub = makeMethodSubUpdater("", state.filter);
   const updateAtlasMethodSub = makeMethodSubUpdater("atlas", state.atlasFilter);
 
-  // 收藏 tab filters (no prefix, legacy IDs)
-  wireFilter("#colorFilter", state.filter, "color");
-  wireFilter("#rareFilter", state.filter, "rare");
-  wireFilter("#grazeFilter", state.filter, "graze");
-  wireFilter("#methodFilter", state.filter, "method", updateCollectMethodSub);
-  wireFilter("#huntRegionFilter", state.filter, "huntRegion");
-  wireFilter("#huntTicketFilter", state.filter, "huntTicket");
-  wireFilter("#shopRankFilter", state.filter, "shopRank");
-
-  // 全图鉴 tab filters (atlas prefix)
+  // 186图鉴 tab filters (atlas prefix)
   wireFilter("#atlasColorFilter", state.atlasFilter, "color");
   wireFilter("#atlasRareFilter", state.atlasFilter, "rare");
   wireFilter("#atlasGrazeFilter", state.atlasFilter, "graze");
+  wireFilter("#atlasPickyFilter", state.atlasFilter, "picky");
   wireFilter("#atlasMethodFilter", state.atlasFilter, "method", updateAtlasMethodSub);
   wireFilter("#atlasHuntRegionFilter", state.atlasFilter, "huntRegion");
   wireFilter("#atlasHuntTicketFilter", state.atlasFilter, "huntTicket");
   wireFilter("#atlasShopRankFilter", state.atlasFilter, "shopRank");
+
+  // Events图鉴 tab filters
+  wireFilter("#eventColorFilter", state.eventFilter, "color");
+  wireFilter("#eventRareFilter", state.eventFilter, "rare");
+  wireFilter("#eventGrazeFilter", state.eventFilter, "graze");
+  wireFilter("#eventPickyFilter", state.eventFilter, "picky");
+
+  // 我的 tab filters (子视图共用)
+  wireFilter("#mineOwnedFilter", state.mineFilter, "owned");
+  wireFilter("#mineSmallFilter", state.mineFilter, "small");
+  wireFilter("#mineBigFilter", state.mineFilter, "big");
+
+  // 我的 tab 两层导航: menu (默认) → main / event / add
+  function setMineView(view) {
+    state.mineView = view;
+    const menu = $("#mineMenu");
+    const listView = $("#mineListView");
+    const addView = $("#mineAddView");
+    const subhead = $("#mineSubHead");
+    menu.style.display = view === "menu" ? "" : "none";
+    listView.style.display = (view === "main" || view === "event") ? "" : "none";
+    addView.style.display = view === "add" ? "" : "none";
+    subhead.style.display = view === "menu" ? "none" : "";
+    render(); // 重新渲染列表 + 菜单上的统计
+  }
+  // 菜单卡片点击
+  document.querySelectorAll("#mineMenu .mine-menu-card").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const v = btn.dataset.mineView;
+      if (v) setMineView(v);
+    });
+  });
+  // 返回按钮
+  $("#mineBackBtn").addEventListener("click", () => setMineView("menu"));
 
   function wireSearch(inputSel, filterObj) {
     let timer = null;
@@ -826,8 +1236,9 @@
       }, 200);
     });
   }
-  wireSearch("#search", state.filter);
   wireSearch("#atlasSearch", state.atlasFilter);
+  wireSearch("#eventSearch", state.eventFilter);
+  wireSearch("#mineSearch", state.mineFilter);
 
   // Return true if a pNo resolves to either a 186 pig or an event pig.
   function isKnownPig(pNo) {
@@ -857,17 +1268,13 @@
       posText = `活动图鉴`;
     }
 
-    // Event pigs don't participate in the 186-only collection list, so we
-    // replace the add/remove button with a muted caption on their drawers.
-    const inColl = !isEventPig && state.collection.includes(p.pNo);
-    let collectBtn;
-    if (isEventPig) {
-      collectBtn = `<div class="hint-strip" style="flex:1;color:var(--muted);font-size:13px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-align:center">活动猪不列入全图鉴 / 收藏</div>`;
-    } else if (inColl) {
-      collectBtn = `<button type="button" class="add-btn danger" id="drawerCollectBtn">从收藏中移除</button>`;
-    } else {
-      collectBtn = `<button type="button" class="add-btn" id="drawerCollectBtn">加入收藏</button>`;
-    }
+    // 统一: 主猪 + 活动猪都用同一个 已拥有/未拥有 切换按钮
+    const isOwn = isEventPig
+      ? state.ownedEventPigs.has(p.pNo)
+      : state.collection.includes(p.pNo);
+    const collectBtn = isOwn
+      ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">☑ 已拥有 — 点击取消</button>`
+      : `<button type="button" class="add-btn" id="drawerCollectBtn">☐ 未拥有 — 点击标记</button>`;
 
     const groups = deriveAcquisitions(p);
     const acqOrder = ["shop", "hunt", "hunt_event", "fail", "feed_special"];
@@ -894,7 +1301,7 @@
       byView.get(k).push(b);
     }
     // --- A + B = C 等式渲染 helpers -------------------------------------
-    // 每个 .slot 展示 [图 + 名字 + (可选) 借猪费 / 概率 / 已有勾选]; 父母 slot
+    // 每个 .slot 展示 [图 + 名字 + (可选) 借猪费 / 概率 / 已拥有勾选]; 父母 slot
     // 若有已知 pNo 会带 data-pno 以支持点击跳转。"任意猪" 没有具体 pNo, 显示
     // 一个占位空盒。"产出" slot (右侧) 额外附概率; 若为当前猪本身, 加 is-self
     // 高亮; 活动猪再挂一个 owned-toggle。
@@ -917,7 +1324,7 @@
       let ownedToggle = "";
       if (k.pNo && state.eventPigsById.has(k.pNo)) {
         const isOwned = state.ownedEventPigs.has(k.pNo);
-        ownedToggle = `<span class="owned-toggle${isOwned ? " is-on" : ""}" data-owned-pno="${k.pNo}" role="checkbox" aria-checked="${isOwned}" title="标记是否已获得此活动猪">${isOwned ? "☑ 已有" : "☐ 未有"}</span>`;
+        ownedToggle = `<span class="owned-toggle${isOwned ? " is-on" : ""}" data-owned-pno="${k.pNo}" role="checkbox" aria-checked="${isOwned}" title="标记是否已获得此活动猪">${isOwned ? "☑ 已拥有" : "☐ 未拥有"}</span>`;
       }
       return `<div class="slot out${isSelf ? " is-self" : ""}"${linkAttr(k.pNo)}>` +
         (img ? `<img src="${img}" loading="lazy" alt="${escHtml(k.name || "")}">` : `<div class="slot-img-placeholder" aria-hidden="true">?</div>`) +
@@ -1007,7 +1414,7 @@
         <div class="info">
           <div><b>${escHtml(p.color_text || "")}</b> · <span class="${p.special ? "stars special" : "stars"}">${stars(p.rare, p.special)}</span></div>
           <div class="meta">${posText}</div>
-          <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · ${p.isExer ? "🌿 放牧" : "🏠 不放牧"} · 🍚 最少喂 ${p.eat_times || 0} 次 · ${(() => {
+          <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · ${p.isExer ? "🌿 放牧" : "🏠 不放牧"} · 🍚 最少喂 ${p.eat_times || 0} 次${p.eat_times > 0 ? ` · ⏱️ 喂食间隔 ${feedIntervalText(p.eatable_time)}` : ""}${p.lifespan ? ` · 📅 成猪 ${p.lifespan} 小时` : ""} · ${(() => {
         const k = pigPicky(p);
         return k.level === "none"
           ? "🍽️ 不挑食"
@@ -1023,22 +1430,14 @@
       <div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>
     `;
     // Wire the collect/uncollect button inside the drawer. Rebuilds the
-    // drawer in place so the button label flips without closing the sheet.
-    // (Event pigs have no button, just a muted caption.)
+    // 切换已拥有/未拥有 (主猪 + 活动猪都走 setPigOwned, 取消时联动清掉徽章)
     const cbtn = $("#drawerCollectBtn");
     if (cbtn) {
       cbtn.addEventListener("click", () => {
-        if (state.collection.includes(p.pNo)) {
-          const i = state.collection.indexOf(p.pNo);
-          state.collection.splice(i, 1);
-          saveCollection();
-          render();
-          toast(`已移除: ${p.name}`);
-        } else {
-          const res = addByPNo(p.pNo);
-          if (res.ok) { toast(res.msg); render(); }
-          else if (res.msg) toast(res.msg);
-        }
+        const wasOwn = isOwn;
+        setPigOwned(p.pNo, !wasOwn);
+        toast(wasOwn ? `已取消: ${p.name}` : `已标记拥有: ${p.name}`);
+        render();
         showDetail(p.pNo); // re-render drawer so the button label flips
       });
     }
@@ -1174,35 +1573,21 @@
       const kind = badgeStateBtn.dataset.badgeKind;
       if (!pNo || (kind !== "small" && kind !== "big")) return;
       const set = kind === "small" ? state.smallBadges : state.bigBadges;
-      if (set.has(pNo)) set.delete(pNo);
-      else set.add(pNo);
-      if (kind === "small") saveSmallBadges();
-      else saveBigBadges();
-      const nowOn = set.has(pNo);
-      const badgeChip = badgeStateBtn.closest(".badge-chip");
-      if (badgeChip) badgeChip.classList.toggle("is-on", nowOn);
-      badgeStateBtn.setAttribute("aria-pressed", String(nowOn));
-      badgeStateBtn.textContent = nowOn ? "☑ 已有" : "☐ 未有";
+      setPigBadge(pNo, kind, !set.has(pNo));
+      // 联动可能改了 owned 状态 → 整个抽屉重渲染最简洁
+      render();
+      if (currentDetailPNo) showDetail(currentDetailPNo);
       return;
     }
-    // "已有" 勾选优先处理，且不触发导航。
+    // 配种产出 slot 的 "已拥有" 勾选 (针对该 slot 指向的猪本身)
     const chk = e.target.closest("[data-owned-pno]");
     if (chk) {
       e.stopPropagation();
       const pNo = parseInt(chk.dataset.ownedPno, 10);
       if (!pNo) return;
-      if (state.ownedEventPigs.has(pNo)) state.ownedEventPigs.delete(pNo);
-      else state.ownedEventPigs.add(pNo);
-      saveOwnedEventPigs();
-      // 同步抽屉里所有指向同一活动猪的勾选，避免一只活动猪在多处出现时状态不一致
-      const nowOwned = state.ownedEventPigs.has(pNo);
-      $("#drawerContent")
-        .querySelectorAll(`[data-owned-pno="${pNo}"]`)
-        .forEach(el => {
-          el.classList.toggle("is-on", nowOwned);
-          el.setAttribute("aria-checked", String(nowOwned));
-          el.textContent = nowOwned ? "☑ 已有" : "☐ 未有";
-        });
+      setPigOwned(pNo, !state.ownedEventPigs.has(pNo));
+      render();
+      if (currentDetailPNo) showDetail(currentDetailPNo);
       return;
     }
     const t = e.target.closest("[data-pno]");
@@ -1213,6 +1598,38 @@
     showDetail(target);
     // keep the scroll position comfortable when deep-diving a lineage
     $("#drawerContent").scrollTop = 0;
+  });
+
+  // ----- 简/繁切换 -----
+  function updateLangButton() {
+    const btn = $("#langBtn");
+    if (!btn) return;
+    const lang = currentLang();
+    // 按钮显示的是「点一下会切到这个语言」, 跟 theme 按钮风格一致
+    btn.textContent = lang === "zhs" ? "繁" : "简";
+    btn.setAttribute("aria-label", lang === "zhs" ? "切换为繁体" : "切换为简体");
+    btn.title = lang === "zhs" ? "当前简体, 点击切换为繁体" : "当前繁体, 点击切换为简体";
+  }
+  updateLangButton();
+  $("#langBtn").addEventListener("click", async () => {
+    const next = currentLang() === "zhs" ? "zht" : "zhs";
+    try { localStorage.setItem(LANG_KEY, next); } catch { }
+    updateLangButton();
+    // 清掉已加载的数据,重新拉对应语言版本
+    state.dataLoaded = false;
+    state.pigsById.clear();
+    state.eventPigsById.clear();
+    state.pigsByListKey.clear();
+    state.breedByParent = new Map();
+    render();
+    try {
+      await loadData();
+      render();
+      toast(next === "zhs" ? "已切换为简体" : "已切换为繁体");
+    } catch (err) {
+      console.error(err);
+      toast("切换失败: " + err.message);
+    }
   });
 
   // ----- theme toggle -----
@@ -1282,9 +1699,9 @@
   // ----- tab switching -----
   const TABS = {
     atlas: { panel: "#tabAtlas", btn: "#tabBtnAtlas" },
-    collect: { panel: "#tabCollect", btn: "#tabBtnCollect" },
-    add: { panel: "#tabAdd", btn: "#tabBtnAdd" },
+    events: { panel: "#tabEvents", btn: "#tabBtnEvents" },
     auction: { panel: "#tabAuction", btn: "#tabBtnAuction" },
+    mine: { panel: "#tabMine", btn: "#tabBtnMine" },
   };
   function activateTab(name) {
     if (!TABS[name]) name = "atlas";
@@ -1295,13 +1712,13 @@
       $(ids.btn).setAttribute("aria-selected", String(active));
     }
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
-    if (name === "add") renderNameResults();
+    if (name === "mine") renderNameResults();
     if (name === "auction") renderAuctionTab();
   }
   $("#tabBtnAtlas").addEventListener("click", () => activateTab("atlas"));
-  $("#tabBtnCollect").addEventListener("click", () => activateTab("collect"));
-  $("#tabBtnAdd").addEventListener("click", () => activateTab("add"));
+  $("#tabBtnEvents").addEventListener("click", () => activateTab("events"));
   $("#tabBtnAuction").addEventListener("click", () => activateTab("auction"));
+  $("#tabBtnMine").addEventListener("click", () => activateTab("mine"));
 
   // ----- 拍卖场 tab -----
   const AUCTION_PAGE_SIZE = 30;
@@ -1473,6 +1890,34 @@
     return el("span", { class: SEX_CLS[v] }, SEX_LABELS[v]);
   }
 
+  // 拍卖场卡片/列表行用的「我是否拥有 + 大小章」一行 chip
+  function buildAuctionOwnershipRow(pNo) {
+    if (!pNo) return null;
+    const known = state.pigsById.has(pNo) || state.eventPigsById.has(pNo);
+    if (!known) return null;
+    const owned = isEventPigId(pNo)
+      ? state.ownedEventPigs.has(pNo)
+      : state.collection.includes(pNo);
+    const sm = state.smallBadges.has(pNo);
+    const bg = state.bigBadges.has(pNo);
+    return el("div", { class: "auction-own-row" }, [
+      el("span", { class: "auction-own-chip pig" + (owned ? " is-on" : "") },
+        owned ? "☑ 已拥有" : "☐ 未拥有"),
+      el("img", {
+        src: "/img/small.png",
+        class: "auction-own-badge" + (sm ? " is-on" : ""),
+        alt: "小章",
+        title: sm ? "已拿小章" : "未拿小章",
+      }),
+      el("img", {
+        src: "/img/big.png",
+        class: "auction-own-badge" + (bg ? " is-on" : ""),
+        alt: "大章",
+        title: bg ? "已拿大章" : "未拿大章",
+      }),
+    ]);
+  }
+
   function buildAuctionCard(rec) {
     const pig = lookupPig(rec.bType);
     const name = pig ? pig.name : "未知品种";
@@ -1511,6 +1956,7 @@
 
     const sexBadge = buildSexBadge(rec.pigletOrSex);
 
+    const ownRow = buildAuctionOwnershipRow(rec.bType);
     const body = el("div", { class: "body" }, [
       el("div", { class: "name" }, [
         name,
@@ -1521,6 +1967,7 @@
         el("span", { class: "stars" }, rareStars(rec.rare)),
         el("span", { class: "badges" }, [foodBadge, grazeBadge]),
       ]),
+      ownRow,
     ]);
 
     const meta = el("div", { class: "auction-meta" }, [
@@ -1579,11 +2026,13 @@
     if (sexBadge) nameChildren.push(sexBadge);
     nameChildren.push(el("span", { class: "stars" }, rareStars(rec.rare)));
 
+    const ownRow = buildAuctionOwnershipRow(rec.bType);
     const info = el("div", { class: "info" }, [
       el("div", { class: "name" }, nameChildren),
       el("div", { class: "meta" }, metaParts.join(" · ")),
       el("div", { class: "owner", title: rec.ownername },
         `${sublineParts.join(" · ")} · 出品 ${rec.ownername || "(匿名)"} · #${rec.pigNo}`),
+      ownRow,
     ]);
 
     const priceCol = el("div", { class: "price-col" }, [
@@ -1618,9 +2067,6 @@
       statsBar.textContent = "加载失败";
       box.appendChild(el("div", { class: "auction-error" }, [
         el("div", {}, "❌ " + auctionState.error),
-        el("div", { class: "hint" },
-          "请确认本地 server.py 正在运行：cd 项目根目录后执行 python server.py，" +
-          "然后浏览器打开 http://localhost:5055/"),
       ]));
       return;
     }
@@ -1863,29 +2309,34 @@
 
   // ----- export / import flow -----
   // 导出的 JSON 结构。version 用于日后兼容性升级。
+  //
+  // v1 (老版): collection / collectionTriplets 装的是 "未拥有" 列表 (inverted)
+  // v2 (本版): owned186Pigs / owned186Triplets 装的是 "已拥有" 列表 (positive),
+  //            语义跟 ownedEventPigs / smallBadges / bigBadges 一致。
+  //
+  // 导入时按 version 字段或具体字段存在性自动判定语义,详见 parseImportText。
   const EXPORT_TYPE = "pigfarm-helper-backup";
-  const EXPORT_VERSION = 1;
+  const EXPORT_VERSION = 2;
 
   function buildExportPayload() {
-    // 收藏用 pNo 数组；也附带 triplets 方便人眼阅读 / 老格式粘贴回来。
-    const triplets = [];
+    // 主图鉴按 book/page/slot 排序后只输出 pNo 列表 (owned186Triplets 已废弃,
+    // pNo 是唯一可靠标识; 导入侧仍保留 triplets 兼容)
+    const sortedMain = [];
     for (const pNo of state.collection) {
       const p = state.pigsById.get(pNo);
-      if (p && p.book && p.page && p.slot) {
-        triplets.push({ pNo, book: p.book, page: p.page, slot: p.slot });
-      }
+      if (p) sortedMain.push(p);
     }
-    triplets.sort((a, b) =>
-      (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot));
+    sortedMain.sort((a, b) =>
+      (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot) || (a.pNo - b.pNo));
     return {
       type: EXPORT_TYPE,
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
-      collection: triplets.map(t => t.pNo),
-      collectionTriplets: triplets.map(t => `${t.book}/${t.page}/${t.slot}`),
+      owned186Pigs: sortedMain.map(p => p.pNo),
       ownedEventPigs: Array.from(state.ownedEventPigs).sort((a, b) => a - b),
       smallBadges: Array.from(state.smallBadges).sort((a, b) => a - b),
       bigBadges: Array.from(state.bigBadges).sort((a, b) => a - b),
+      hiddenUnlocked: state.hiddenUnlocked,
     };
   }
 
@@ -1926,27 +2377,28 @@
     const payload = buildExportPayload();
     const txt = JSON.stringify(payload, null, 2);
     out.value = txt;
-    const nColl = payload.collection.length;
+    const nColl = payload.owned186Pigs.length;
     const nOwned = payload.ownedEventPigs.length;
     const nSmall = payload.smallBadges.length;
     const nBig = payload.bigBadges.length;
     if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0) {
-      msg.innerHTML = `<span class="err">收藏和勾选都为空，没什么可导出</span>`;
+      msg.innerHTML = `<span class="err">记录为空, 没什么可导出</span>`;
       return;
     }
+    const summary = `186 已拥有 ${nColl} · Events 已拥有 ${nOwned} · 小章 ${nSmall} · 大章 ${nBig}`;
     if (alsoCopy) {
       copyText(txt).then(ok => {
         if (ok) {
-          msg.innerHTML = `<span class="ok">已复制到剪贴板：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条，小章 ${nSmall} 条，大章 ${nBig} 条</span>`;
+          msg.innerHTML = `<span class="ok">已复制到剪贴板: ${summary}</span>`;
           toast(`已复制到剪贴板`);
         } else {
           out.focus(); out.select();
-          msg.innerHTML = `<span class="err">复制失败，请手动选中上方文本复制</span>`;
+          msg.innerHTML = `<span class="err">复制失败, 请手动选中上方文本复制</span>`;
         }
       });
     } else {
       out.focus(); out.select();
-      msg.innerHTML = `<span class="ok">已导出：收藏 ${nColl} 条，活动猪已有 ${nOwned} 条，小章 ${nSmall} 条，大章 ${nBig} 条</span>`;
+      msg.innerHTML = `<span class="ok">已导出: ${summary}</span>`;
     }
   }
 
@@ -1957,8 +2409,8 @@
       return;
     }
     const payload = buildExportPayload();
-    if (payload.collection.length === 0 && payload.ownedEventPigs.length === 0 && payload.smallBadges.length === 0 && payload.bigBadges.length === 0) {
-      msg.innerHTML = `<span class="err">收藏和勾选都为空，没什么可导出</span>`;
+    if (payload.owned186Pigs.length === 0 && payload.ownedEventPigs.length === 0 && payload.smallBadges.length === 0 && payload.bigBadges.length === 0) {
+      msg.innerHTML = `<span class="err">记录为空, 没什么可导出</span>`;
       return;
     }
     const txt = JSON.stringify(payload, null, 2);
@@ -1981,15 +2433,20 @@
     }
   }
 
-  // 解析导入文本，返回 { collection: number[], ownedEventPigs: number[] } 或 { err }。
-  // 支持两种格式:
-  //   1) JSON (来自本工具的导出)
-  //   2) 旧式「图鉴/页/格」三元组列表 (每行一条，可带 # 注释)
+  // 解析导入文本,返回 { collection, ownedEventPigs, smallBadges, bigBadges,
+  //                       hiddenUnlocked?, source, formatVersion } 或 { err }。
+  //
+  // 兼容三种来源:
+  //   A) v2+ JSON (本版): owned186Pigs / owned186Triplets 是 "已拥有" 列表 → 直读
+  //   B) v1 JSON (老版):  collection / collectionTriplets 是 "未拥有" 列表 → 翻转
+  //                        owned = base 186 pNos − collection
+  //   C) 三元组裸文本 (老式按格添加): 视为 "已拥有" 列表 → 直读
+  //
+  // 解析所有非主图鉴字段 (ownedEventPigs, smallBadges, bigBadges) 都是 positive 语义,两版一致。
   function parseImportText(raw) {
     const txt = (raw || "").trim();
     if (!txt) return { err: "输入为空" };
 
-    // Try JSON first
     if (txt.startsWith("{") || txt.startsWith("[")) {
       let obj;
       try {
@@ -2003,47 +2460,79 @@
       if (obj.type && obj.type !== EXPORT_TYPE) {
         return { err: `不是本工具的备份文件 (type=${obj.type})` };
       }
+
+      const fileVersion = Number.parseInt(obj.version, 10) || 1;
+      const hasV2 = Array.isArray(obj.owned186Pigs) || Array.isArray(obj.owned186Triplets);
+      const isV2 = hasV2 || fileVersion >= 2;
+
       const collection = [];
-      const ownedEventPigs = [];
-      const smallBadges = [];
-      const bigBadges = [];
-      // Prefer explicit pNo array; fall back to triplets if only those exist.
-      if (Array.isArray(obj.collection)) {
-        for (const v of obj.collection) {
-          const n = Number.parseInt(v, 10);
-          if (Number.isInteger(n) && state.pigsById.has(n)) collection.push(n);
+      const tripletToPNo = (s) => {
+        const m = String(s).match(/^(\d+)[\/\s,.;]+(\d+)[\/\s,.;]+(\d+)$/);
+        if (!m) return null;
+        const key = `${+m[1]}-${(+m[2] - 1) * 6 + +m[3]}`;
+        return state.pigsByListKey.get(key) || null;
+      };
+
+      if (isV2) {
+        // v2: 直读 已拥有 列表
+        if (Array.isArray(obj.owned186Pigs)) {
+          for (const v of obj.owned186Pigs) {
+            const n = Number.parseInt(v, 10);
+            if (Number.isInteger(n) && state.pigsById.has(n)) collection.push(n);
+          }
+        } else if (Array.isArray(obj.owned186Triplets)) {
+          for (const s of obj.owned186Triplets) {
+            const pNo = tripletToPNo(s);
+            if (pNo) collection.push(pNo);
+          }
         }
-      } else if (Array.isArray(obj.collectionTriplets)) {
-        for (const s of obj.collectionTriplets) {
-          const m = String(s).match(/^(\d+)[\/\s,.;]+(\d+)[\/\s,.;]+(\d+)$/);
-          if (!m) continue;
-          const key = `${+m[1]}-${(+m[2] - 1) * 6 + +m[3]}`;
-          const pNo = state.pigsByListKey.get(key);
-          if (pNo) collection.push(pNo);
+      } else {
+        // v1: collection 字段是 未拥有 列表, 翻转 (排除隐藏猪)
+        const unowned = new Set();
+        if (Array.isArray(obj.collection)) {
+          for (const v of obj.collection) {
+            const n = Number.parseInt(v, 10);
+            if (Number.isInteger(n)) unowned.add(n);
+          }
+        } else if (Array.isArray(obj.collectionTriplets)) {
+          for (const s of obj.collectionTriplets) {
+            const pNo = tripletToPNo(s);
+            if (pNo) unowned.add(pNo);
+          }
+        }
+        for (const pNo of state.pigsById.keys()) {
+          if (HIDDEN_PNOS.has(pNo)) continue;
+          if (!unowned.has(pNo)) collection.push(pNo);
         }
       }
+
+      const ownedEventPigs = [];
       if (Array.isArray(obj.ownedEventPigs)) {
         for (const v of obj.ownedEventPigs) {
           const n = Number.parseInt(v, 10);
           if (Number.isInteger(n) && state.eventPigsById.has(n)) ownedEventPigs.push(n);
         }
       }
+      const smallBadges = [];
       if (Array.isArray(obj.smallBadges)) {
         for (const v of obj.smallBadges) {
           const n = Number.parseInt(v, 10);
           if (Number.isInteger(n) && (state.pigsById.has(n) || state.eventPigsById.has(n))) smallBadges.push(n);
         }
       }
+      const bigBadges = [];
       if (Array.isArray(obj.bigBadges)) {
         for (const v of obj.bigBadges) {
           const n = Number.parseInt(v, 10);
           if (Number.isInteger(n) && (state.pigsById.has(n) || state.eventPigsById.has(n))) bigBadges.push(n);
         }
       }
-      return { collection, ownedEventPigs, smallBadges, bigBadges, source: "json" };
+      const hiddenUnlocked = obj.hiddenUnlocked === true ? true : undefined;
+      return { collection, ownedEventPigs, smallBadges, bigBadges,
+               hiddenUnlocked, source: "json", formatVersion: isV2 ? 2 : 1 };
     }
 
-    // Fallback: legacy triplet list (collection-only)
+    // Fallback: 三元组裸文本 (positive — 用户手动列出 "已拥有" 的)
     const items = parseBatchLines(txt);
     if (items.length === 0) return { err: "没有可识别的 JSON 或三元组内容" };
     const collection = [];
@@ -2055,7 +2544,8 @@
       const pNo = state.pigsByListKey.get(`${b}-${(p - 1) * 6 + s}`);
       if (pNo) collection.push(pNo); else skipped++;
     }
-    return { collection, ownedEventPigs: [], smallBadges: [], bigBadges: [], source: "triplets", skipped };
+    return { collection, ownedEventPigs: [], smallBadges: [], bigBadges: [],
+             source: "triplets", formatVersion: 2, skipped };
   }
 
   function applyImport(parsed, { replace }) {
@@ -2111,7 +2601,18 @@
     saveOwnedEventPigs();
     saveSmallBadges();
     saveBigBadges();
-    return { addedColl, removedColl, addedOwned, removedOwned, addedSmall, removedSmall, addedBig, removedBig };
+    // hiddenUnlocked: 备份里如果带 true 就尊重它(已解锁过的就别再藏起来),
+    // 反之不动 (覆盖导入不强制 re-lock,避免误清成就)
+    let unlocked = false;
+    if (parsed.hiddenUnlocked === true && !state.hiddenUnlocked) {
+      state.hiddenUnlocked = true;
+      saveHiddenUnlocked();
+      mergeHiddenIntoMain();
+      buildBreedingIndex();
+      unlocked = true;
+    }
+    return { addedColl, removedColl, addedOwned, removedOwned,
+             addedSmall, removedSmall, addedBig, removedBig, unlocked };
   }
 
   function runImport(replace) {
@@ -2135,34 +2636,60 @@
       return;
     }
     if (replace) {
+      const fmtHint = parsed.formatVersion === 1
+        ? `\n\n已识别为 v1 老版备份`
+        : "";
       const confirmMsg =
-        `覆盖导入会替换你现有的全部配置：\n` +
-        `  当前收藏 ${state.collection.length} 只 → 导入 ${nColl} 只\n` +
-        `  活动猪已有 ${state.ownedEventPigs.size} 条 → 导入 ${nOwned} 条\n` +
-        `  小章已有 ${state.smallBadges.size} 条 → 导入 ${nSmall} 条\n` +
-        `  大章已有 ${state.bigBadges.size} 条 → 导入 ${nBig} 条\n\n` +
-        `确定要覆盖吗？`;
+        `覆盖导入会替换你现有的全部记录:\n` +
+        `  186 已拥有 ${state.collection.length} → 导入 ${nColl}\n` +
+        `  Events 已拥有 ${state.ownedEventPigs.size} → 导入 ${nOwned}\n` +
+        `  小章 ${state.smallBadges.size} → 导入 ${nSmall}\n` +
+        `  大章 ${state.bigBadges.size} → 导入 ${nBig}` + fmtHint + `\n\n` +
+        `确定要覆盖吗?`;
       if (!confirm(confirmMsg)) return;
     }
     const r = applyImport(parsed, { replace });
-    // 抽屉里可能在显示活动猪的「已有」勾选，导入后直接关掉以避免 UI 不同步。
+    // 抽屉里可能在显示活动猪的「已拥有」勾选，导入后直接关掉以避免 UI 不同步。
     if ($("#drawer").classList.contains("open")) closeDrawer();
+    // 导入后只要 186 满了就提示解锁 —— 不管之前是否解锁过,
+    // 这样用户从备份恢复时也能看到反馈。
+    const allBaseOwned = (() => {
+      const ownedSet = new Set(state.collection);
+      for (const pNo of state.pigsById.keys()) {
+        if (HIDDEN_PNOS.has(pNo)) continue;
+        if (!ownedSet.has(pNo)) return false;
+      }
+      return state.pigsById.size > HIDDEN_PNOS.size; // 至少有数据
+    })();
+    if (allBaseOwned) {
+      if (!state.hiddenUnlocked) {
+        state.hiddenUnlocked = true;
+        saveHiddenUnlocked();
+        mergeHiddenIntoMain();
+        buildBreedingIndex();
+        r.unlocked = true;
+      }
+      showUnlockCelebration();
+    }
     render();
     const parts = [];
-    if (r.addedColl) parts.push(`收藏新增 ${r.addedColl}`);
-    if (r.removedColl) parts.push(`收藏移除 ${r.removedColl}`);
-    if (r.addedOwned) parts.push(`已有新增 ${r.addedOwned}`);
-    if (r.removedOwned) parts.push(`已有移除 ${r.removedOwned}`);
+    if (r.addedColl) parts.push(`186新增 ${r.addedColl}`);
+    if (r.removedColl) parts.push(`186移除 ${r.removedColl}`);
+    if (r.addedOwned) parts.push(`Events新增 ${r.addedOwned}`);
+    if (r.removedOwned) parts.push(`Events移除 ${r.removedOwned}`);
     if (r.addedSmall) parts.push(`小章新增 ${r.addedSmall}`);
     if (r.removedSmall) parts.push(`小章移除 ${r.removedSmall}`);
     if (r.addedBig) parts.push(`大章新增 ${r.addedBig}`);
     if (r.removedBig) parts.push(`大章移除 ${r.removedBig}`);
-    const suffix = parsed.source === "triplets"
-      ? ` <span style="color:var(--muted)">· 旧式三元组格式，仅收藏部分</span>`
-      : "";
+    const tags = [];
+    if (parsed.source === "triplets") tags.push("三元组裸文本");
+    else if (parsed.formatVersion === 1) tags.push("v1 老版 · 已自动反转 collection");
+    else tags.push("v2 新版");
+    if (r.unlocked) tags.push("隐藏图鉴已解锁");
+    const suffix = ` <span style="color:var(--muted)">· ${tags.join(" · ")}</span>`;
     msg.innerHTML = parts.length
-      ? `<span class="ok">导入完成：${parts.join(" · ")}</span>${suffix}`
-      : `<span class="ok">导入完成：没有变化 (全部已存在)</span>${suffix}`;
+      ? `<span class="ok">导入完成: ${parts.join(" · ")}</span>${suffix}`
+      : `<span class="ok">导入完成: 没有变化 (全部已存在)</span>${suffix}`;
     toast("导入完成");
   }
 
@@ -2196,6 +2723,9 @@
   render(); // initial loading state
   loadData()
     .then(() => {
+      // 启动时已经 owned 186 但 hiddenUnlocked 还是 false (比如导入备份场景)
+      // → 解锁并弹庆祝。注意这里 hiddenUnlocked=true 时 loadData 已经把隐藏并入了。
+      checkAndUnlockHidden();
       render();
     })
     .catch(err => {
