@@ -12,7 +12,12 @@
  * 跟 server.py 等价，便于本地用 python server.py 调试 / 生产用本 Function。
  */
 
-const AUCTION_ENDPOINT = "http://pig2cnt.j-o-e.jp/auctionSearch_new.php";
+// 上游有两套：台服 (pig2cnt) 默认；日服 (pig2) 由 ?server=jp 切换
+const AUCTION_ENDPOINTS = {
+  tw: "http://pig2cnt.j-o-e.jp/auctionSearch_new.php",
+  jp: "http://pig2.j-o-e.jp/auctionSearch_new.php",
+};
+const DEFAULT_SERVER = "tw";
 const DEFAULT_USER_AGENT =
   "Dalvik/2.1.0 (Linux; U; Android 12; sdk_gphone64_arm64 Build/SE1A.220203.002.A1)";
 
@@ -104,7 +109,8 @@ const COLOR_CODES = ["700", "704", "708", "712", "716", "720"];
 
 async function fetchOnce(opts) {
   const body = buildAuctionBody(opts);
-  const r = await fetch(AUCTION_ENDPOINT, {
+  const endpoint = AUCTION_ENDPOINTS[opts.server] || AUCTION_ENDPOINTS[DEFAULT_SERVER];
+  const r = await fetch(endpoint, {
     method: "POST",
     body,
     headers: {
@@ -151,6 +157,9 @@ export async function onRequestPost(context) {
   if (Number.isNaN(count)) count = 30;
   count = Math.max(1, Math.min(count, 1000));
 
+  const serverParam = get("server", DEFAULT_SERVER);
+  const server = AUCTION_ENDPOINTS[serverParam] ? serverParam : DEFAULT_SERVER;
+
   const opts = {
     count,
     rare: get("rare"),
@@ -159,6 +168,7 @@ export async function onRequestPost(context) {
     sex: get("sex"),
     sort: get("sort", "1"),
     color: get("color"),
+    server,
   };
 
   try {
