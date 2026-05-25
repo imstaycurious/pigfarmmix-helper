@@ -321,17 +321,11 @@
   }
 
   // ----- badge weight (体型徽章) display formula -----
-  // Upstream API stores `bigWeight` / `smallWeight` as raw "growth points"
-  // values. The pigfarmmix.net web UI renders the in-game scale numbers by
-  // adding a fixed +120 kg adult-baseline offset, plus a per-pig override
-  // for three known oversized breeds (reverse-engineered from ctrl.js's
-  // `f = f - 120` and the `case 50/508/528: weight += 180/200` switch).
-  // Without this, the numbers shown in the drawer don't match what players
-  // actually see on the in-game scale.
+  // Upstream API stores `bigWeight` / `smallWeight` as raw "growth points".
+  // The in-game scale adds a fixed +120 kg adult-baseline offset.
   const WEIGHT_OFFSET_BASE = 120;
-  const WEIGHT_OFFSET_OVERRIDE = { 50: 180, 508: 180, 528: 200 };
-  function badgeOffset(pNo) {
-    return WEIGHT_OFFSET_BASE + (WEIGHT_OFFSET_OVERRIDE[pNo] || 0);
+  function badgeOffset(_pNo) {
+    return WEIGHT_OFFSET_BASE;
   }
   // Format a weight value to one decimal, trimming a useless trailing ".0"
   // when it'd just add visual noise (e.g. 175 vs 175.0 — keep the .0 for
