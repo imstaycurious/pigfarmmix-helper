@@ -760,7 +760,7 @@
       }, isOwn ? "☑ 已拥有" : "☐ 未拥有"));
     }
     children.push(el("div", { class: "img" },
-      p.png ? el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }) : null
+      el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name })
     ));
     const grazeBadge = p.isExer
       ? el("span", { class: "graze yes", title: "放牧" }, "🌿 放牧")
@@ -1418,7 +1418,7 @@
         </div>
       </div>
       ${p.description ? `<div class="kv" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
-      ${p.pNo === 143 ? `<div class="kv" style="margin-top:10px; border-color: var(--warn);"><div class="k" style="color: var(--warn);">养成备注</div><div class="v">成猪前体重限制 ≥128.0 kg</div></div>` : ""}
+      ${p.breed_note ? `<div class="kv" style="margin-top:10px; border-color: var(--warn);"><div class="k" style="color: var(--warn);">备注</div><div class="v">${escHtml(p.breed_note)}</div></div>` : ""}
       <div class="section"><h3>获得方式</h3>${acqHTML.join("")}</div>
       <div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>
       <div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>
@@ -2207,7 +2207,7 @@
           }
         },
       }, [
-        p.png ? el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }) : el("div", { style: "width:36px;height:36px" }),
+        el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }),
         el("div", { class: "meta" }, [
           el("div", { class: "r-name" }, `#${p.pNo} ${p.name}`),
           el("div", { class: "r-sub" }, `${p.color_text || ""}${posText ? " · " + posText : ""}`),
