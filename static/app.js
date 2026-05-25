@@ -1732,6 +1732,7 @@
     hasSearched: false,           // 是否主动查询过，影响初始空状态文案
     count: AUCTION_PAGE_SIZE,     // 当前向上游请求的 cnt 值
     atEnd: false,                 // 已无更多 —— count 加大也没新增记录
+    server: "tw",                 // "tw" 台服 / "jp" 日服 —— 上次查询用的服务器
   };
   let auctionLoadMoreObserver = null;
   // UI 上"空字符串"= 不限；"0" 是有效筛选值（不挑食/不放牧/公），不能跟"不限"混淆
@@ -1778,13 +1779,14 @@
     });
   });
 
-  async function fetchAuctions({ append = false } = {}) {
+  async function fetchAuctions({ append = false, server } = {}) {
     if (auctionState.loading || auctionState.loadingMore) return;
     if (!append) {
-      // 全新查询：重置分页状态
+      // 全新查询：重置分页状态。server 由调用者传入；append 时沿用 state.server
       auctionState.count = AUCTION_PAGE_SIZE;
       auctionState.atEnd = false;
       auctionState.records = [];
+      if (server) auctionState.server = server;
     }
     if (append) auctionState.loadingMore = true;
     else auctionState.loading = true;
@@ -1794,7 +1796,10 @@
 
     const prevCount = auctionState.records.length;
     try {
-      const qs = new URLSearchParams({ count: String(auctionState.count) });
+      const qs = new URLSearchParams({
+        count: String(auctionState.count),
+        server: auctionState.server,
+      });
       for (const [k, v] of Object.entries(auctionFilter)) {
         if (v === "") continue;
         if (k === "color") {
@@ -1831,7 +1836,8 @@
     await fetchAuctions({ append: true });
   }
 
-  $("#auctionSearchBtn").addEventListener("click", () => fetchAuctions());
+  $("#auctionSearchBtnTw").addEventListener("click", () => fetchAuctions({ server: "tw" }));
+  $("#auctionSearchBtnJp").addEventListener("click", () => fetchAuctions({ server: "jp" }));
   $("#auctionViewToggleBtn").addEventListener("click", () => {
     auctionState.viewMode = auctionState.viewMode === "grid" ? "list" : "grid";
     saveAuctionView(auctionState.viewMode);
@@ -2090,8 +2096,9 @@
     const fetchedText = fetched.toLocaleTimeString([], {
       hour: "2-digit", minute: "2-digit", second: "2-digit",
     });
+    const serverLabel = auctionState.server === "jp" ? "日服" : "台服";
     statsBar.textContent =
-      `共 ${auctionState.records.length} 条 · 更新于 ${fetchedText}`;
+      `${serverLabel} · 共 ${auctionState.records.length} 条 · 更新于 ${fetchedText}`;
 
     if (auctionState.viewMode === "list") {
       const list = el("div", { class: "auction-list" },
