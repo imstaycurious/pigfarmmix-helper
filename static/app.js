@@ -95,13 +95,13 @@
     3: "米色",
     4: "粉红",
     5: "白色",
-    6: "野猪色",
+    6: "其他",
   };
 
   // 上游 pig.color (1~6) -> 文本。给非主图鉴 (book=7 活动猪) 的兜底用,
   // 因为它们不参与 BOOK_COLOR_TEXT 的派生。
   const COLOR_TEXT = {
-    1: "肉色", 2: "灰色", 3: "米色", 4: "粉红", 5: "白色", 6: "野猪色",
+    1: "肉色", 2: "灰色", 3: "米色", 4: "粉红", 5: "白色", 6: "其他",
   };
 
   const BLEED_TYPE_TEXT = {
@@ -374,8 +374,13 @@
   }
 
   function stars(rare, special) {
-    const glyph = special ? "✦" : "★";
-    return glyph.repeat(Math.min(6, rare || 0));
+    // 与拍卖场对齐: 满槽 5 颗,实心 ★ + 空心 ☆。
+    // 6 星 (活动猪最高档) 直接显示 6 颗实心,没有空槽。
+    // 活动猪 special=true 沿用 .stars.special 颜色区分。
+    const n = rare || 0;
+    if (n >= 6) return "★".repeat(6);
+    const filled = Math.max(0, Math.min(5, n));
+    return "★".repeat(filled) + "☆".repeat(5 - filled);
   }
 
   // 上游 eatable_time 字段语义 (按玩家实测):
@@ -416,7 +421,7 @@
     } else if (COLOR_TEXT[p.color]) {
       p.color_text = COLOR_TEXT[p.color];
     } else if (p.special) {
-      p.color_text = "特别";
+      p.color_text = "其他";
     }
     return p;
   }
@@ -766,18 +771,19 @@
       ? el("span", { class: "graze yes", title: "放牧" }, "🌿 放牧")
       : el("span", { class: "graze no", title: "不放牧" }, "🏠 不放牧");
     const picky = pigPicky(p);
-    const pickyText = picky.level === "none"
+    const pickyTitle = picky.level === "none"
       ? "🍽️ 不挑食"
       : `🍽️ ${picky.label}: ${picky.foods.join(" / ")}`;
-    const pickyEl = el("div", {
+    const pickyLabel = picky.level === "none" ? "🍽️ 不挑食" : `🍽️ ${picky.label}`;
+    const pickyEl = el("span", {
       class: "picky " + picky.level,
-      title: pickyText,
-    }, pickyText);
+      title: pickyTitle,
+    }, pickyLabel);
     const feedN = p.eat_times || 0;
     const feedBadge = el("span", {
       class: "feed",
       title: `最少喂食 ${feedN} 次`,
-    }, `🍚 ${feedN}次`);
+    }, `🍚 ${feedN}`);
     // 小章 / 大章 chip: 始终显示, 默认空 chip;showBadges=true 时可点击切换
     const w = badgeWeights(p);
     const hasSm = state.smallBadges.has(p.pNo);
@@ -810,13 +816,15 @@
         ])
       : null;
     children.push(el("div", { class: "body" }, [
-      el("div", { class: "name" }, `#${p.pNo} ${p.name}`),
-      el("div", { class: "sub" }, `${p.color_text || ""} · ${posText}`),
-      el("div", { class: "meta-row" }, [
-        el("span", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
-        el("span", { class: "badges" }, [feedBadge, grazeBadge].filter(Boolean)),
+      el("div", { class: "name" }, [
+        el("span", { class: "pno" }, `#${p.pNo}`),
+        ` ${p.name}`,
       ]),
-      pickyEl,
+      el("div", { class: "stars-row" + (p.special ? " special" : "") }, [
+        el("span", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
+      ]),
+      el("div", { class: "sub" }, `${p.color_text || ""}${posText ? " · " + posText : ""}`),
+      el("div", { class: "chip-row" }, [feedBadge, grazeBadge, pickyEl].filter(Boolean)),
       badgeRow,
     ]));
     return el("div", {
@@ -1400,25 +1408,57 @@
     const parentBlock = parentRecipeHTML.length > 0
       ? parentRecipeHTML.join("")
       : `<div class="kv">没有已知的配种产出 (可能仅作为被配出的结果)</div>`;
+    const picky = pigPicky(p);
+    const pickyChipText = picky.level === "none" ? "不挑食" : picky.label;
+    const pickyChipTitle = picky.level === "none"
+      ? "不挑食"
+      : `${picky.label}: ${picky.foods.join(" / ")}`;
+    const pickyChipClass = picky.level === "none"
+      ? "chip"
+      : (picky.level === "picky" ? "chip danger" : "chip warn");
+    const grazeChip = p.isExer
+      ? `<span class="chip ok"><span class="chip-icon">🌿</span><span class="chip-v">放牧</span></span>`
+      : `<span class="chip"><span class="chip-icon">🏠</span><span class="chip-v">不放牧</span></span>`;
+    const feedChip = `<span class="chip"><span class="chip-k">🍚 最少喂</span><span class="chip-v">${p.eat_times || 0} 次</span></span>`;
+    const intervalChip = (p.eat_times || 0) > 0
+      ? `<span class="chip"><span class="chip-k">⏱️ 喂食间隔</span><span class="chip-v">${escHtml(feedIntervalText(p.eatable_time))}</span></span>`
+      : "";
+    const lifespanChip = p.lifespan
+      ? `<span class="chip"><span class="chip-k">📅 成猪</span><span class="chip-v">${p.lifespan} 小时</span></span>`
+      : "";
+    const rentChip = `<span class="chip"><span class="chip-k">借猪</span><span class="chip-v">${p.rent}pt</span></span>`;
+    const priceChip = `<span class="chip"><span class="chip-k">售价</span><span class="chip-v">${p.price}pt</span></span>`;
+    const pickyChip = `<span class="${pickyChipClass}" title="${escHtml(pickyChipTitle)}"><span class="chip-icon">🍽️</span><span class="chip-v">${escHtml(pickyChipText)}</span></span>`;
+    const pickyDetail = picky.level !== "none"
+      ? `<div class="hero-foods"><span class="hero-foods-k">挑食食材</span><span class="hero-foods-v">${escHtml(picky.foods.join(" / "))}</span></div>`
+      : "";
+
     box.innerHTML = `
       <h2>#${p.pNo} ${escHtml(p.name)}</h2>
       <div class="drawer-actions">${collectBtn}</div>
       <div class="hero">
         ${pigImg ? `<img src="${pigImg}" alt="${escHtml(p.name)}">` : ""}
         <div class="info">
-          <div><b>${escHtml(p.color_text || "")}</b> · <span class="${p.special ? "stars special" : "stars"}">${stars(p.rare, p.special)}</span></div>
-          <div class="meta">${posText}</div>
-          <div class="meta">借猪 ${p.rent}pt · 售价 ${p.price}pt · ${p.isExer ? "🌿 放牧" : "🏠 不放牧"} · 🍚 最少喂 ${p.eat_times || 0} 次${p.eat_times > 0 ? ` · ⏱️ 喂食间隔 ${feedIntervalText(p.eatable_time)}` : ""}${p.lifespan ? ` · 📅 成猪 ${p.lifespan} 小时` : ""} · ${(() => {
-        const k = pigPicky(p);
-        return k.level === "none"
-          ? "🍽️ 不挑食"
-          : `🍽️ ${k.label}: ${escHtml(k.foods.join(" / "))}`;
-      })()}</div>
+          <div class="hero-title">
+            <span class="hero-color">${escHtml(p.color_text || "")}</span>
+            <span class="${p.special ? "stars special" : "stars"}">${stars(p.rare, p.special)}</span>
+          </div>
+          ${posText ? `<div class="hero-pos">${escHtml(posText)}</div>` : ""}
+          <div class="hero-chips">
+            ${rentChip}
+            ${priceChip}
+            ${grazeChip}
+            ${feedChip}
+            ${intervalChip}
+            ${lifespanChip}
+            ${pickyChip}
+          </div>
+          ${pickyDetail}
           ${badgeMetaHTML(p)}
         </div>
       </div>
-      ${p.description ? `<div class="kv" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
-      ${p.breed_note ? `<div class="kv" style="margin-top:10px; border-color: var(--warn);"><div class="k" style="color: var(--warn);">备注</div><div class="v">${escHtml(p.breed_note)}</div></div>` : ""}
+      ${p.description ? `<div class="kv note" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
+      ${p.breed_note ? `<div class="kv note warn" style="margin-top:10px"><div class="k">备注</div><div class="v">${escHtml(p.breed_note)}</div></div>` : ""}
       <div class="section"><h3>获得方式</h3>${acqHTML.join("")}</div>
       <div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>
       <div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>
@@ -1875,7 +1915,9 @@
   }
 
   function rareStars(n) {
-    const safe = Math.max(0, Math.min(5, n || 0));
+    const v = n || 0;
+    if (v >= 6) return "★".repeat(6);
+    const safe = Math.max(0, Math.min(5, v));
     return "★".repeat(safe) + "☆".repeat(5 - safe);
   }
 
