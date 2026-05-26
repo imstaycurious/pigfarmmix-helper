@@ -413,10 +413,10 @@
     const bookColor = BOOK_COLOR_TEXT[p.book];
     if (bookColor) {
       p.color_text = bookColor;
-    } else if (p.special) {
-      p.color_text = "特别";
     } else if (COLOR_TEXT[p.color]) {
       p.color_text = COLOR_TEXT[p.color];
+    } else if (p.special) {
+      p.color_text = "特别";
     }
     return p;
   }
