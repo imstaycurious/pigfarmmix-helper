@@ -1482,6 +1482,28 @@
       color: var(--warn);
     }
 
+    .kv.note.hints {
+      border-left-color: var(--star-special);
+    }
+
+    .kv.note.hints .k {
+      color: var(--star-special);
+    }
+
+    .hints-list {
+      margin: 0;
+      padding-left: 16px;
+      line-height: 1.9;
+    }
+
+    .kv.note.tip {
+      border-left-color: var(--ok);
+    }
+
+    .kv.note.tip .k {
+      color: var(--ok);
+    }
+
     /* 体型徽章 inline meta line — sits inside the drawer hero `info` column,
      rendered via badgeMetaHTML(). Each chip is a click-to-toggle button:
      - default state: outlined, threshold weight + "未获得"

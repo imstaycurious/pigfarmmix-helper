@@ -1642,9 +1642,11 @@
       </div>
       ${p.description ? `<div class="kv note" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
       ${p.breed_note ? `<div class="kv note warn" style="margin-top:10px"><div class="k">备注</div><div class="v">${escHtml(p.breed_note)}</div></div>` : ""}
+      ${p.hints && p.hints.length > 0 ? `<div class="kv note hints" style="margin-top:10px"><div class="k">提示</div><div class="v"><ul class="hints-list">${p.hints.map(h => `<li>${escHtml(h)}</li>`).join("")}</ul></div></div>` : ""}
+      ${p.tip ? `<div class="kv note tip" style="margin-top:6px"><div class="k">建议</div><div class="v">${escHtml(p.tip)}</div></div>` : ""}
       <div class="section"><h3>获得方式</h3>${acqHTML.join("")}</div>
-      <div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>
-      <div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>
+      ${p.rare !== 6 ? `<div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>` : ""}
+      ${p.rare !== 6 || bleeds.length > 0 ? `<div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>` : ""}
     `;
     // Wire the collect/uncollect button inside the drawer. Rebuilds the
     // 切换已拥有/未拥有 (主猪 + 活动猪都走 setPigOwned, 取消时联动清掉徽章)
