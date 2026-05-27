@@ -643,7 +643,7 @@
       if (graze === "no" && p.isExer) return false;
       if (picky && pigPicky(p).level !== picky) return false;
       if (ql) {
-        const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
+        const hay = ((p.name || "") + " " + (p.description || "") + " " + (p.pNo ?? "")).toLowerCase();
         if (!hay.includes(ql)) return false;
       }
       return true;
@@ -687,7 +687,7 @@
         if (big === "yes" && !hasBig) continue;
         if (big === "no" && hasBig) continue;
         if (ql) {
-          const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
+          const hay = ((p.name || "") + " " + (p.description || "") + " " + (p.pNo ?? "")).toLowerCase();
           if (!hay.includes(ql)) continue;
         }
         out.push(p);
@@ -722,7 +722,7 @@
       if (graze === "no" && p.isExer) return false;
       if (picky && pigPicky(p).level !== picky) return false;
       if (ql) {
-        const hay = ((p.name || "") + " " + (p.description || "")).toLowerCase();
+        const hay = ((p.name || "") + " " + (p.description || "") + " " + (p.pNo ?? "")).toLowerCase();
         if (!hay.includes(ql)) return false;
       }
       return true;
@@ -1762,7 +1762,6 @@
     records: [],                  // 上次请求成功的记录
     error: null,                  // 上次请求失败的错误文本
     fetchedAt: null,              // ms timestamp
-    viewMode: loadAuctionView(),  // "grid" | "list"
     hasSearched: false,           // 是否主动查询过，影响初始空状态文案
     count: AUCTION_PAGE_SIZE,     // 当前向上游请求的 cnt 值
     atEnd: false,                 // 已无更多 —— count 加大也没新增记录
@@ -1788,17 +1787,6 @@
     "其他": "720",
   };
   let auctionCountdownTimer = null;
-
-  function loadAuctionView() {
-    try {
-      return localStorage.getItem("auction_view_mode_v1") === "list" ? "list" : "grid";
-    } catch {
-      return "grid";
-    }
-  }
-  function saveAuctionView(v) {
-    try { localStorage.setItem("auction_view_mode_v1", v); } catch { /* ignore */ }
-  }
 
   // 给筛选 chip 装点击处理：高亮 + 写入 auctionFilter，不自动 fetch
   document.querySelectorAll("#tabAuction .filter-row").forEach(row => {
@@ -1872,11 +1860,6 @@
 
   $("#auctionSearchBtnTw").addEventListener("click", () => fetchAuctions({ server: "tw" }));
   $("#auctionSearchBtnJp").addEventListener("click", () => fetchAuctions({ server: "jp" }));
-  $("#auctionViewToggleBtn").addEventListener("click", () => {
-    auctionState.viewMode = auctionState.viewMode === "grid" ? "list" : "grid";
-    saveAuctionView(auctionState.viewMode);
-    renderAuctionTab();
-  });
 
   // 上游 bType 对应静态数据 pigs.json 的 pNo（pNo 字段是另一个视觉编号，不是品种号）。
   function lookupPig(bType) {
@@ -1960,77 +1943,6 @@
     ]);
   }
 
-  function buildAuctionCard(rec) {
-    const pig = lookupPig(rec.bType);
-    const name = pig ? pig.name : "未知品种";
-    const subline = pig
-      ? `${pig.color_text || ""}`.trim() || `#${rec.bType}`
-      : `bType=${rec.bType} · pNo=${rec.pNo}`;
-    const displayWeight = (rec.weight + WEIGHT_OFFSET_KG).toFixed(1);
-
-    const img = el("div", { class: "img" },
-      el("img", {
-        src: imgUrl(rec.bType),
-        loading: "lazy",
-        alt: name,
-        onerror: "this.style.display='none'",
-      }),
-    );
-
-    const limit = parseLimitdate(rec.limitdate);
-    const limitMs = limit ? limit.getTime() : 0;
-    const cd = formatCountdown(limitMs);
-    const countdownEl = el("span", {
-      class: "auction-countdown " + cd.cls,
-      "data-limit-ms": String(limitMs),
-    }, "⏱ " + cd.text);
-
-    const bidTagCls = rec.bidcount > 0 ? "auction-bid-tag has-bid" : "auction-bid-tag";
-    const bidTag = el("span", { class: bidTagCls },
-      rec.bidcount > 0 ? `已 ${rec.bidcount} 次出价` : "未出价",
-    );
-
-    const grazeBadge = rec.isExer
-      ? el("span", { class: "graze yes", title: "放牧" }, "🌿")
-      : el("span", { class: "graze no", title: "不放牧" }, "🏠");
-
-    const foodBadge = el("span", { class: "feed" }, FOOD_LABELS[rec.foodtype] || "🍽️ ?");
-
-    const sexBadge = buildSexBadge(rec.pigletOrSex);
-
-    const ownRow = buildAuctionOwnershipRow(rec.bType);
-    const body = el("div", { class: "body" }, [
-      el("div", { class: "name" }, [
-        name,
-        sexBadge ? el("span", { class: "name-sex" }, sexBadge) : null,
-      ]),
-      el("div", { class: "sub" }, subline),
-      el("div", { class: "meta-row" }, [
-        el("span", { class: "stars" }, rareStars(rec.rare)),
-        el("span", { class: "badges" }, [foodBadge, grazeBadge]),
-      ]),
-      ownRow,
-    ]);
-
-    const meta = el("div", { class: "auction-meta" }, [
-      el("div", { class: "auction-row" }, [
-        el("span", { class: "auction-price" }, [
-          String(rec.nowPrice.toLocaleString()),
-          el("span", { class: "pt" }, "pt"),
-        ]),
-        countdownEl,
-      ]),
-      el("div", { class: "auction-row" }, [
-        el("span", { class: "left" }, `⚖ ${displayWeight}kg`),
-        bidTag,
-      ]),
-      el("div", { class: "auction-owner", title: rec.ownername },
-        `出品: ${rec.ownername || "(匿名)"} · #${rec.pigNo}`),
-    ]);
-
-    return el("div", { class: "card" }, [img, body, meta]);
-  }
-
   function buildAuctionRow(rec) {
     const pig = lookupPig(rec.bType);
     const name = pig ? pig.name : "未知品种";
@@ -2085,14 +1997,17 @@
       countdownEl,
     ]);
 
-    return el("div", { class: "auction-list-row" }, [thumb, info, priceCol]);
+    return el("div", {
+      class: "auction-list-row",
+      onclick: () => {
+        if (lookupPig(rec.bType)) showDetail(rec.bType);
+      },
+    }, [thumb, info, priceCol]);
   }
 
   function renderAuctionTab() {
     const box = $("#auctionBody");
     const statsBar = $("#auctionStatsBar");
-    const toggleBtn = $("#auctionViewToggleBtn");
-    toggleBtn.textContent = auctionState.viewMode === "grid" ? "☰ 列表" : "▦ 看板";
     box.innerHTML = "";
     stopAuctionCountdown();
 
@@ -2136,15 +2051,9 @@
     statsBar.textContent =
       `${serverLabel} · 共 ${auctionState.records.length} 条 · 更新于 ${fetchedText}`;
 
-    if (auctionState.viewMode === "list") {
-      const list = el("div", { class: "auction-list" },
-        auctionState.records.map(buildAuctionRow));
-      box.appendChild(list);
-    } else {
-      const grid = el("div", { class: "grid" },
-        auctionState.records.map(buildAuctionCard));
-      box.appendChild(grid);
-    }
+    const list = el("div", { class: "auction-list" },
+      auctionState.records.map(buildAuctionRow));
+    box.appendChild(list);
 
     // 底部 sentinel + 加载更多状态
     const footer = el("div", { class: "auction-footer" }, [
