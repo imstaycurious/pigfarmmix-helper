@@ -2099,6 +2099,9 @@
 
   // 上游 weight 是相对基线的偏移量，显示需 +22 还原成 kg。
   const WEIGHT_OFFSET_KG = 22;
+  // 成猪体重 = 显示体重 + 98 = (rec.weight + 22) + 98 = rec.weight + 120
+  // 在 rec.weight 这个 raw scale 上,成猪 offset 就是 22+98=120 — 用于判断能否冲小/大章
+  const ADULT_OFFSET_KG = WEIGHT_OFFSET_KG + 98;
 
   function formatCountdown(targetMs) {
     const now = Date.now();
@@ -2162,6 +2165,37 @@
     ]);
   }
 
+  // 章别预测 chip: 根据"成猪体重 = weight + 98"预估这只幼猪能冲哪种章
+  //   adult < small  → 还有机会拿小章 (距上限还可涨 X kg)
+  //   adult ≥ small  → 错过小章, 还差 X kg 到大章
+  // 游戏机制下 adult 不会 ≥ 大章阈值, 所以无须第三种情况。
+  // 该品种数据里没 weight 字段 (badgeWeights == null) → 不显示。
+  function buildBadgeForecast(rec, pig) {
+    if (!pig) return null;
+    const w = badgeWeights(pig);
+    if (!w) return null;
+    const adult = (rec.weight || 0) + ADULT_OFFSET_KG;
+    const adultStr = adult.toFixed(1);
+    if (adult < w.small) {
+      const delta = (w.small - adult).toFixed(1);
+      return el("span", {
+        class: "auction-forecast small-ok",
+        title: `预测成猪 ${adultStr}kg · 小章 ≤ ${fmtKg(w.small)}kg`,
+      }, [
+        el("img", { src: "/img/small.png", class: "auction-forecast-icon", alt: "小章" }),
+        `可拿小章 · 还能涨 ${delta} kg`,
+      ]);
+    }
+    const delta = (w.big - adult).toFixed(1);
+    return el("span", {
+      class: "auction-forecast big-todo",
+      title: `预测成猪 ${adultStr}kg · 大章 ≥ ${fmtKg(w.big)}kg (小章已错过)`,
+    }, [
+      el("img", { src: "/img/big.png", class: "auction-forecast-icon", alt: "大章" }),
+      `距大章 ${delta} kg`,
+    ]);
+  }
+
   function buildAuctionRow(rec) {
     const pig = lookupPig(rec.bType);
     const name = pig ? pig.name : "未知品种";
@@ -2200,6 +2234,8 @@
     nameChildren.push(el("span", { class: "stars" }, rareStars(rec.rare)));
 
     const ownRow = buildAuctionOwnershipRow(rec.bType);
+    const forecast = buildBadgeForecast(rec, pig);
+    if (ownRow && forecast) ownRow.appendChild(forecast);
     const info = el("div", { class: "info" }, [
       el("div", { class: "name" }, nameChildren),
       el("div", { class: "meta" }, metaParts.join(" · ")),
