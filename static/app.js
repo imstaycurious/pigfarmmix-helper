@@ -858,16 +858,7 @@
 
   // ----- 进度面板 (我的 tab → menu view) -----
   // 把 186 主图鉴 + 活动猪按几个维度聚合,显示每个维度下"已拥有/总数"进度条。
-  // 维度选择: 186 按图鉴/星级/颜色; 活动按星级/颜色 (活动猪没有"图鉴位置"概念)
-  const BOOK_LABELS_PROG = {
-    1: "1 · 肉色图鉴",
-    2: "2 · 灰色图鉴",
-    3: "3 · 米色图鉴",
-    4: "4 · 粉红图鉴",
-    5: "5 · 白色图鉴",
-    6: "6 · 野猪图鉴",
-    hidden: "👑 隐藏图鉴",
-  };
+  // 维度选择: 186 按章别/星级/颜色; 活动按章别/星级/颜色
   const COLOR_ORDER_PROG = ["肉色", "灰色", "米色", "粉红", "白色", "其他"];
   const COLOR_DOT_PROG = {
     "肉色": "#ffcba4",
@@ -887,26 +878,38 @@
   }
   function buildProgressBuckets() {
     const main = {
-      byBook: new Map(),
       byRare: new Map(),
       byColor: new Map(),
+      byBadge: new Map(),
     };
     const ownedMain = new Set(state.collection);
     for (const p of state.pigsById.values()) {
       const isOwn = ownedMain.has(p.pNo);
-      const bookKey = HIDDEN_PNOS.has(p.pNo) ? "hidden" : p.book;
-      bucketAdd(main.byBook, bookKey, isOwn);
       bucketAdd(main.byRare, p.rare, isOwn);
       bucketAdd(main.byColor, p.color_text, isOwn);
+      // 小章/大章: 只统计有 weight 字段的猪 (否则该猪不参与章别系统)
+      if (typeof p.smallWeight === "number") {
+        bucketAdd(main.byBadge, "small", state.smallBadges.has(p.pNo));
+      }
+      if (typeof p.bigWeight === "number") {
+        bucketAdd(main.byBadge, "big", state.bigBadges.has(p.pNo));
+      }
     }
     const event = {
       byRare: new Map(),
       byColor: new Map(),
+      byBadge: new Map(),
     };
     for (const p of state.eventPigsById.values()) {
       const isOwn = state.ownedEventPigs.has(p.pNo);
       bucketAdd(event.byRare, p.rare, isOwn);
       bucketAdd(event.byColor, p.color_text, isOwn);
+      if (typeof p.smallWeight === "number") {
+        bucketAdd(event.byBadge, "small", state.smallBadges.has(p.pNo));
+      }
+      if (typeof p.bigWeight === "number") {
+        bucketAdd(event.byBadge, "big", state.bigBadges.has(p.pNo));
+      }
     }
     return { main, event };
   }
@@ -943,24 +946,33 @@
     }
     const { main, event } = buildProgressBuckets();
 
-    const bookOrder = [1, 2, 3, 4, 5, 6];
-    if (state.hiddenUnlocked) bookOrder.push("hidden");
     const rareOrder = [5, 4, 3, 2, 1];   // 5★ 在前,玩家更关心稀有
     const eventRareOrder = [6, 5, 4, 3, 2, 1];
+    const badgeOrder = ["small", "big"];
 
-    const starsLabel = n => `<span class="mp-stars">${stars(n, false)}</span>`;
+    const starsLabel = (n, isEvent = false) => {
+      // Events 里 3 星及以上用紫色 (--star-special), 与 Events 筛选 chip 一致
+      const cls = isEvent && n >= 3 ? "mp-stars special" : "mp-stars";
+      return `<span class="${cls}">${stars(n, false)}</span>`;
+    };
     const colorLabel = c => {
       const dot = COLOR_DOT_PROG[c];
       return dot
         ? `<span class="mp-color-dot" style="background:${dot}"></span>${escHtml(c)}`
         : escHtml(c);
     };
+    const badgeLabel = k => {
+      const src = k === "small" ? "/img/small.png" : "/img/big.png";
+      const name = k === "small" ? "小章" : "大章";
+      return `<img src="${src}" class="badge-icon-tiny" alt="${name}"> ${name}`;
+    };
 
-    const mainBookRows = bucketsToRows(main.byBook, bookOrder, k => BOOK_LABELS_PROG[k] || `图鉴 ${k}`);
-    const mainRareRows = bucketsToRows(main.byRare, rareOrder, starsLabel);
+    const mainRareRows = bucketsToRows(main.byRare, rareOrder, n => starsLabel(n, false));
     const mainColorRows = bucketsToRows(main.byColor, COLOR_ORDER_PROG, colorLabel);
-    const eventRareRows = bucketsToRows(event.byRare, eventRareOrder, starsLabel);
+    const mainBadgeRows = bucketsToRows(main.byBadge, badgeOrder, badgeLabel);
+    const eventRareRows = bucketsToRows(event.byRare, eventRareOrder, n => starsLabel(n, true));
     const eventColorRows = bucketsToRows(event.byColor, COLOR_ORDER_PROG, colorLabel);
+    const eventBadgeRows = bucketsToRows(event.byBadge, badgeOrder, badgeLabel);
 
     // 顶部总览数字
     const mainOwned = state.collection.length;
@@ -977,7 +989,7 @@
           <span class="mp-summary-stat">${mainOwned}/${mainTotal} · ${mainPct}%</span>
         </summary>
         <div class="mp-body">
-          ${progressGroupHTML("按图鉴", mainBookRows)}
+          ${progressGroupHTML("按章别", mainBadgeRows)}
           ${progressGroupHTML("按星级", mainRareRows)}
           ${progressGroupHTML("按颜色", mainColorRows)}
         </div>
@@ -990,6 +1002,7 @@
           <span class="mp-summary-stat">${eventOwned}/${eventTotal} · ${eventPct}%</span>
         </summary>
         <div class="mp-body">
+          ${progressGroupHTML("按章别", eventBadgeRows)}
           ${progressGroupHTML("按星级", eventRareRows)}
           ${progressGroupHTML("按颜色", eventColorRows)}
         </div>

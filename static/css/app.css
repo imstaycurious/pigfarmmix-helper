@@ -785,6 +785,9 @@
       color: var(--star);
       letter-spacing: -1px;
     }
+    .mp-stars.special {
+      color: var(--star-special);
+    }
     @media (min-width: 600px) {
       .mp-row {
         grid-template-columns: 110px 1fr 70px;
