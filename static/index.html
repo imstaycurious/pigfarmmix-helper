@@ -51,7 +51,7 @@
     <div class="filters">
       <input class="search" id="atlasSearch" type="search" placeholder="在186图鉴中搜索名称 / 描述…">
       <div class="filter-row" id="atlasColorFilter">
-        <span class="label">🎨 颜色</span>
+        <span class="label">🎨</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="肉色"><span style="color:#ffcba4; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
           肉色</button>
@@ -67,7 +67,7 @@
             style="color:#8b4513; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span> 其他</button>
       </div>
       <div class="filter-row" id="atlasRareFilter">
-        <span class="label">⭐ 星级</span>
+        <span class="label">⭐</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
         <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
@@ -76,20 +76,20 @@
         <button class="chip" data-value="5"><span style="color:var(--star)">★★★★★</span></button>
       </div>
       <div class="filter-row" id="atlasGrazeFilter">
-        <span class="label">🌿 放牧</span>
+        <span class="label">🌿</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="yes">🌿 放牧</button>
         <button class="chip" data-value="no">🏠 不放牧</button>
       </div>
       <div class="filter-row" id="atlasPickyFilter">
-        <span class="label">🍽️ 挑食</span>
+        <span class="label">🍽️</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="none">😋 不挑食</button>
         <button class="chip" data-value="some">😐 有点挑食</button>
         <button class="chip" data-value="picky">😖 挑食</button>
       </div>
       <div class="filter-row" id="atlasMethodFilter">
-        <span class="label">📥 获得</span>
+        <span class="label">📥</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="shop">🏪 商店进货</button>
         <button class="chip" data-value="hunt">🏹 狩猎</button>
@@ -97,14 +97,14 @@
         <button class="chip" data-value="fail">💔 养成失败</button>
       </div>
       <div class="filter-row" id="atlasShopRankFilter" style="display:none">
-        <span class="label">🏅 进货等级</span>
+        <span class="label">🏅</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="A">🥇 A 级</button>
         <button class="chip" data-value="B">🥈 B 级</button>
         <button class="chip" data-value="C">🥉 C 级</button>
       </div>
       <div class="filter-row" id="atlasHuntRegionFilter" style="display:none">
-        <span class="label">🗺️ 场所</span>
+        <span class="label">🗺️</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="草原">🌾 草原</button>
         <button class="chip" data-value="山林">🌲 山林</button>
@@ -115,7 +115,7 @@
         <button class="chip" data-value="大洋洲">🦘 大洋洲</button>
       </div>
       <div class="filter-row" id="atlasHuntTicketFilter" style="display:none">
-        <span class="label">🎫 券</span>
+        <span class="label">🎫</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="normal">🎫 普通券</button>
         <button class="chip" data-value="rare">🎟️ 稀有券</button>
@@ -138,10 +138,16 @@
     <!-- 子视图顶部返回按钮 (mineView != menu 时显示) -->
     <div class="mine-subhead" id="mineSubHead" style="display:none">
       <button type="button" class="mine-back-btn" id="mineBackBtn" aria-label="返回我的菜单">← 返回</button>
+      <span class="mine-subhead-title" id="mineSubHeadTitle"></span>
     </div>
 
     <!-- 一级菜单 (默认) -->
     <div class="mine-menu" id="mineMenu">
+      <button type="button" class="mine-menu-card" data-mine-view="progress">
+        <span class="mine-menu-ico">📊</span>
+        <span class="mine-menu-title">进度总览</span>
+        <span class="mine-menu-sub" id="mineMenuProgressSub">按图鉴 / 星级 / 颜色 分组进度</span>
+      </button>
       <button type="button" class="mine-menu-card" data-mine-view="main">
         <span class="mine-menu-ico">📖</span>
         <span class="mine-menu-title">186图鉴</span>
@@ -159,27 +165,32 @@
       </button>
     </div>
 
+    <!-- 子视图: 进度总览 (由 JS 渲染, 默认全部展开) -->
+    <div class="mine-progress-view" id="mineProgressView" style="display:none">
+      <div class="mine-progress" id="mineProgress"></div>
+    </div>
+
     <!-- 子视图: 186图鉴 + Events图鉴 共享同一组 filters + grid -->
     <div class="mine-list-view" id="mineListView" style="display:none">
       <div class="filters">
         <input class="search" id="mineSearch" type="search" placeholder="搜索名称 / 描述…">
         <div class="filter-row" id="mineOwnedFilter">
-          <span class="label">🐽 拥有</span>
+          <span class="label">🐽</span>
           <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="yes">☑ 已拥有</button>
-          <button class="chip" data-value="no">☐ 未拥有</button>
+          <button class="chip" data-value="yes">✅ 已拥有</button>
+          <button class="chip" data-value="no">⬜ 未拥有</button>
         </div>
         <div class="filter-row" id="mineSmallFilter">
-          <span class="label"><img src="/img/small.png" class="badge-icon-tiny" alt="小章"> 小章</span>
+          <span class="label"><img src="/img/small.png" class="badge-icon-tiny" alt="小章"></span>
           <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="yes">☑ 已拥有</button>
-          <button class="chip" data-value="no">☐ 未拥有</button>
+          <button class="chip" data-value="yes">✅ 已拥有</button>
+          <button class="chip" data-value="no">⬜ 未拥有</button>
         </div>
         <div class="filter-row" id="mineBigFilter">
-          <span class="label"><img src="/img/big.png" class="badge-icon-tiny" alt="大章"> 大章</span>
+          <span class="label"><img src="/img/big.png" class="badge-icon-tiny" alt="大章"></span>
           <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="yes">☑ 已拥有</button>
-          <button class="chip" data-value="no">☐ 未拥有</button>
+          <button class="chip" data-value="yes">✅ 已拥有</button>
+          <button class="chip" data-value="no">⬜ 未拥有</button>
         </div>
         <div class="stats-bar" id="mineStatsBar"></div>
       </div>
@@ -275,7 +286,7 @@
     <div class="filters">
       <input class="search" id="eventSearch" type="search" placeholder="在Events图鉴中搜索名称 / 描述…">
       <div class="filter-row" id="eventColorFilter">
-        <span class="label">🎨 颜色</span>
+        <span class="label">🎨</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="肉色"><span style="color:#ffcba4; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
           肉色</button>
@@ -291,7 +302,7 @@
           其他</button>
       </div>
       <div class="filter-row" id="eventRareFilter">
-        <span class="label">⭐ 星级</span>
+        <span class="label">⭐</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
         <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
@@ -301,13 +312,13 @@
         <button class="chip" data-value="6"><span style="color:var(--star-special)">★★★★★★</span></button>
       </div>
       <div class="filter-row" id="eventGrazeFilter">
-        <span class="label">🌿 放牧</span>
+        <span class="label">🌿</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="yes">🌿 放牧</button>
         <button class="chip" data-value="no">🏠 不放牧</button>
       </div>
       <div class="filter-row" id="eventPickyFilter">
-        <span class="label">🍽️ 挑食</span>
+        <span class="label">🍽️</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="none">😋 不挑食</button>
         <button class="chip" data-value="some">😐 有点挑食</button>
@@ -329,7 +340,7 @@
   <section class="tab-panel" id="tabAuction" role="tabpanel" aria-labelledby="tabBtnAuction">
     <div class="filters">
       <div class="filter-row" id="auctionColorFilter" data-filter="color">
-        <span class="label">🎨 颜色</span>
+        <span class="label">🎨</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="肉色"><span style="color:#ffcba4; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
           肉色</button>
@@ -345,7 +356,7 @@
             style="color:#8b4513; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span> 其他</button>
       </div>
       <div class="filter-row" id="auctionRareFilter" data-filter="rare">
-        <span class="label">⭐ 星级</span>
+        <span class="label">⭐</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
         <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
@@ -354,28 +365,36 @@
         <button class="chip" data-value="5"><span style="color:var(--star)">★★★★★</span></button>
       </div>
       <div class="filter-row" id="auctionGrazeFilter" data-filter="isExer">
-        <span class="label">🌿 放牧</span>
+        <span class="label">🌿</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="1">🌿 放牧</button>
         <button class="chip" data-value="0">🏠 不放牧</button>
       </div>
       <div class="filter-row" id="auctionFoodFilter" data-filter="foodtype">
-        <span class="label">🍽️ 偏食</span>
+        <span class="label">🍽️</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="1">😋 不挑食</button>
         <button class="chip" data-value="2">😐 有点挑食</button>
         <button class="chip" data-value="3">😖 挑食</button>
       </div>
       <div class="filter-row" id="auctionSexFilter" data-filter="sex">
-        <span class="label">🚻 性别</span>
+        <span class="label">🚻</span>
         <button class="chip active" data-value="">✨ 全部</button>
         <button class="chip" data-value="0">🚹 雄</button>
         <button class="chip" data-value="1">🚺 雌</button>
       </div>
       <div class="filter-row" id="auctionSortFilter" data-filter="sort">
-        <span class="label">⌛ 排序</span>
+        <span class="label">⌛</span>
         <button class="chip active" data-value="1">⬇ 最新上架</button>
         <button class="chip" data-value="0">⬆ 即将结束</button>
+      </div>
+      <div class="filter-row" id="auctionOwnFilter" data-filter="own">
+        <span class="label">🐽</span>
+        <button class="chip active" data-value="">✨ 全部</button>
+        <button class="chip" data-value="no">⬜ 未拥有</button>
+        <button class="chip" data-value="yes">✅ 已拥有</button>
+        <button class="chip" data-value="no_small"><img src="/img/small.png" class="badge-icon-tiny" alt="小章"> 缺小章</button>
+        <button class="chip" data-value="no_big"><img src="/img/big.png" class="badge-icon-tiny" alt="大章"> 缺大章</button>
       </div>
       <div class="auction-toolbar">
         <span class="stats-bar" id="auctionStatsBar">未加载</span>

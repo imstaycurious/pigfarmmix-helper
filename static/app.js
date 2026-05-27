@@ -365,7 +365,7 @@
       `<img class="badge-icon" src="${iconSrc}" alt="${label}">` +
       `<span class="badge-text">${op} ${fmtKg(value)} kg</span>` +
       `<button type="button" class="badge-state" data-badge-kind="${kind}" data-badge-pno="${pig.pNo}"` +
-      ` aria-pressed="${ownedAttr}" title="点击切换是否已获得${label}">${ownedAttr ? "☑ 已拥有" : "☐ 未拥有"}</button>` +
+      ` aria-pressed="${ownedAttr}" title="点击切换是否已获得${label}">${ownedAttr ? "✅ 已拥有" : "⬜ 未拥有"}</button>` +
       `</div>`;
     return `<div class="meta badge-line">` +
       chip("small", hasSmall, w.small, "≤", "/img/small.png", "小章") +
@@ -735,7 +735,7 @@
   }
 
   // Shared card renderer。统一行为:
-  //   - 角上恒有「☑ 已拥有 / ☐ 未拥有」按钮(186 改 collection, 活动改 ownedEventPigs)
+  //   - 角上恒有「✅ 已拥有 / ⬜ 未拥有」按钮(186 改 collection, 活动改 ownedEventPigs)
   //   - 已拥有的卡片画绿色边框 (.collected)
   //   - opts.showBadges = true 时在卡片底部展示小章/大章 chip (可点切换)
   // opts:
@@ -762,7 +762,7 @@
           setPigOwned(p.pNo, !isOwn);
           render();
         },
-      }, isOwn ? "☑ 已拥有" : "☐ 未拥有"));
+      }, isOwn ? "✅ 已拥有" : "⬜ 未拥有"));
     }
     children.push(el("div", { class: "img" },
       el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name })
@@ -837,16 +837,174 @@
     // 主菜单的两张猪图鉴卡片右下角显示拥有数 / 总数
     const m = $("#mineMenuMainCount");
     const e = $("#mineMenuEventCount");
+    const pg = $("#mineMenuProgressSub");
     if (m) m.textContent = state.dataLoaded
       ? `已拥有 ${state.collection.length} / ${state.pigsById.size} 只`
       : "加载中…";
     if (e) e.textContent = state.dataLoaded
       ? `已拥有 ${state.ownedEventPigs.size} / ${state.eventPigsById.size} 只`
       : "加载中…";
+    if (pg) {
+      if (!state.dataLoaded) {
+        pg.textContent = "加载中…";
+      } else {
+        const allOwn = state.collection.length + state.ownedEventPigs.size;
+        const allTot = state.pigsById.size + state.eventPigsById.size;
+        const pct = allTot > 0 ? ((allOwn / allTot) * 100).toFixed(1) : "0.0";
+        pg.textContent = `按图鉴 / 星级 / 颜色 · 整体 ${allOwn}/${allTot} · ${pct}%`;
+      }
+    }
+  }
+
+  // ----- 进度面板 (我的 tab → menu view) -----
+  // 把 186 主图鉴 + 活动猪按几个维度聚合,显示每个维度下"已拥有/总数"进度条。
+  // 维度选择: 186 按图鉴/星级/颜色; 活动按星级/颜色 (活动猪没有"图鉴位置"概念)
+  const BOOK_LABELS_PROG = {
+    1: "1 · 肉色图鉴",
+    2: "2 · 灰色图鉴",
+    3: "3 · 米色图鉴",
+    4: "4 · 粉红图鉴",
+    5: "5 · 白色图鉴",
+    6: "6 · 野猪图鉴",
+    hidden: "👑 隐藏图鉴",
+  };
+  const COLOR_ORDER_PROG = ["肉色", "灰色", "米色", "粉红", "白色", "其他"];
+  const COLOR_DOT_PROG = {
+    "肉色": "#ffcba4",
+    "灰色": "#9e9e9e",
+    "米色": "#a0522d",
+    "粉红": "#ffb6c1",
+    "白色": "#ffffff",
+    "其他": "#8b4513",
+  };
+
+  function bucketAdd(map, key, isOwn) {
+    if (key == null || key === "") return;
+    let cur = map.get(key);
+    if (!cur) { cur = { total: 0, owned: 0 }; map.set(key, cur); }
+    cur.total++;
+    if (isOwn) cur.owned++;
+  }
+  function buildProgressBuckets() {
+    const main = {
+      byBook: new Map(),
+      byRare: new Map(),
+      byColor: new Map(),
+    };
+    const ownedMain = new Set(state.collection);
+    for (const p of state.pigsById.values()) {
+      const isOwn = ownedMain.has(p.pNo);
+      const bookKey = HIDDEN_PNOS.has(p.pNo) ? "hidden" : p.book;
+      bucketAdd(main.byBook, bookKey, isOwn);
+      bucketAdd(main.byRare, p.rare, isOwn);
+      bucketAdd(main.byColor, p.color_text, isOwn);
+    }
+    const event = {
+      byRare: new Map(),
+      byColor: new Map(),
+    };
+    for (const p of state.eventPigsById.values()) {
+      const isOwn = state.ownedEventPigs.has(p.pNo);
+      bucketAdd(event.byRare, p.rare, isOwn);
+      bucketAdd(event.byColor, p.color_text, isOwn);
+    }
+    return { main, event };
+  }
+  // 单行进度: <label> <bar> <count>。集齐时 bar/count 加 .full 高亮。
+  function progressRowHTML(label, bucket) {
+    const pct = bucket.total > 0 ? (bucket.owned / bucket.total) * 100 : 0;
+    const full = bucket.total > 0 && bucket.owned >= bucket.total;
+    return `<div class="mp-row${full ? " full" : ""}">` +
+      `<span class="mp-label">${label}</span>` +
+      `<div class="mp-bar"><div class="mp-bar-fill" style="width:${pct.toFixed(1)}%"></div></div>` +
+      `<span class="mp-count">${bucket.owned}/${bucket.total}${full ? " ✓" : ""}</span>` +
+      `</div>`;
+  }
+  function progressGroupHTML(title, rowsHTML) {
+    if (!rowsHTML) return "";
+    return `<div class="mp-group">` +
+      `<div class="mp-group-title">${title}</div>` +
+      rowsHTML +
+      `</div>`;
+  }
+  // Map<key, bucket> + keyOrder + 标签转换 → 拼一段 row HTML
+  function bucketsToRows(map, keyOrder, labelFn) {
+    return keyOrder
+      .filter(k => map.has(k))
+      .map(k => progressRowHTML(labelFn(k), map.get(k)))
+      .join("");
+  }
+  function renderProgressPanel() {
+    const root = $("#mineProgress");
+    if (!root) return;
+    if (!state.dataLoaded) {
+      root.innerHTML = "";
+      return;
+    }
+    const { main, event } = buildProgressBuckets();
+
+    const bookOrder = [1, 2, 3, 4, 5, 6];
+    if (state.hiddenUnlocked) bookOrder.push("hidden");
+    const rareOrder = [5, 4, 3, 2, 1];   // 5★ 在前,玩家更关心稀有
+    const eventRareOrder = [6, 5, 4, 3, 2, 1];
+
+    const starsLabel = n => `<span class="mp-stars">${stars(n, false)}</span>`;
+    const colorLabel = c => {
+      const dot = COLOR_DOT_PROG[c];
+      return dot
+        ? `<span class="mp-color-dot" style="background:${dot}"></span>${escHtml(c)}`
+        : escHtml(c);
+    };
+
+    const mainBookRows = bucketsToRows(main.byBook, bookOrder, k => BOOK_LABELS_PROG[k] || `图鉴 ${k}`);
+    const mainRareRows = bucketsToRows(main.byRare, rareOrder, starsLabel);
+    const mainColorRows = bucketsToRows(main.byColor, COLOR_ORDER_PROG, colorLabel);
+    const eventRareRows = bucketsToRows(event.byRare, eventRareOrder, starsLabel);
+    const eventColorRows = bucketsToRows(event.byColor, COLOR_ORDER_PROG, colorLabel);
+
+    // 顶部总览数字
+    const mainOwned = state.collection.length;
+    const mainTotal = state.pigsById.size;
+    const eventOwned = state.ownedEventPigs.size;
+    const eventTotal = state.eventPigsById.size;
+    const mainPct = mainTotal > 0 ? (mainOwned / mainTotal * 100).toFixed(1) : "0.0";
+    const eventPct = eventTotal > 0 ? (eventOwned / eventTotal * 100).toFixed(1) : "0.0";
+
+    const mainSection = `
+      <details class="mp-section" open>
+        <summary>
+          <span class="mp-summary-title">📖 186图鉴</span>
+          <span class="mp-summary-stat">${mainOwned}/${mainTotal} · ${mainPct}%</span>
+        </summary>
+        <div class="mp-body">
+          ${progressGroupHTML("按图鉴", mainBookRows)}
+          ${progressGroupHTML("按星级", mainRareRows)}
+          ${progressGroupHTML("按颜色", mainColorRows)}
+        </div>
+      </details>
+    `;
+    const eventSection = `
+      <details class="mp-section" open>
+        <summary>
+          <span class="mp-summary-title">🎉 Events图鉴</span>
+          <span class="mp-summary-stat">${eventOwned}/${eventTotal} · ${eventPct}%</span>
+        </summary>
+        <div class="mp-body">
+          ${progressGroupHTML("按星级", eventRareRows)}
+          ${progressGroupHTML("按颜色", eventColorRows)}
+        </div>
+      </details>
+    `;
+
+    root.innerHTML = `
+      ${mainSection}
+      ${eventSection}
+    `;
   }
 
   function renderMineBody() {
     renderMineMenuCounts();
+    renderProgressPanel();
     // mineView=menu/add 时列表不需要渲染 (DOM 已隐藏)
     if (state.mineView !== "main" && state.mineView !== "event") return;
     const box = $("#mineBody");
@@ -870,7 +1028,7 @@
         box.appendChild(el("div", { class: "empty" }, [
           el("div", { class: "big" }, "🐽"),
           el("div", { class: "title" }, `${tabName} 还没有数据`),
-          el("div", { class: "hint" }, `到 ${tabName} tab 点开一头猪,角上点「☐ 未拥有」就能加进来`),
+          el("div", { class: "hint" }, `到 ${tabName} tab 点开一头猪,角上点「⬜ 未拥有」就能加进来`),
         ]));
       } else {
         box.appendChild(el("div", { class: "empty" }, [
@@ -1205,16 +1363,28 @@
   wireFilter("#mineBigFilter", state.mineFilter, "big");
 
   // 我的 tab 两层导航: menu (默认) → main / event / add
+  // 子视图标题 (显示在 mineSubHead 返回按钮右侧)
+  const MINE_VIEW_TITLES = {
+    main: "📖 186图鉴",
+    event: "🎉 Events图鉴",
+    progress: "📊 进度总览",
+    add: "➕ 导入/导出",
+  };
+
   function setMineView(view) {
     state.mineView = view;
     const menu = $("#mineMenu");
     const listView = $("#mineListView");
     const addView = $("#mineAddView");
+    const progressView = $("#mineProgressView");
     const subhead = $("#mineSubHead");
+    const subheadTitle = $("#mineSubHeadTitle");
     menu.style.display = view === "menu" ? "" : "none";
     listView.style.display = (view === "main" || view === "event") ? "" : "none";
     addView.style.display = view === "add" ? "" : "none";
+    if (progressView) progressView.style.display = view === "progress" ? "" : "none";
     subhead.style.display = view === "menu" ? "none" : "";
+    if (subheadTitle) subheadTitle.textContent = MINE_VIEW_TITLES[view] || "";
     render(); // 重新渲染列表 + 菜单上的统计
   }
   // 菜单卡片点击
@@ -1275,8 +1445,8 @@
       ? state.ownedEventPigs.has(p.pNo)
       : state.collection.includes(p.pNo);
     const collectBtn = isOwn
-      ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">☑ 已拥有 — 点击取消</button>`
-      : `<button type="button" class="add-btn" id="drawerCollectBtn">☐ 未拥有 — 点击标记</button>`;
+      ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">✅ 已拥有 — 点击取消</button>`
+      : `<button type="button" class="add-btn" id="drawerCollectBtn">⬜ 未拥有 — 点击标记</button>`;
 
     const groups = deriveAcquisitions(p);
     const acqOrder = ["shop", "hunt", "hunt_event", "fail", "feed_special"];
@@ -1326,7 +1496,7 @@
       let ownedToggle = "";
       if (k.pNo && state.eventPigsById.has(k.pNo)) {
         const isOwned = state.ownedEventPigs.has(k.pNo);
-        ownedToggle = `<span class="owned-toggle${isOwned ? " is-on" : ""}" data-owned-pno="${k.pNo}" role="checkbox" aria-checked="${isOwned}" title="标记是否已获得此活动猪">${isOwned ? "☑ 已拥有" : "☐ 未拥有"}</span>`;
+        ownedToggle = `<span class="owned-toggle${isOwned ? " is-on" : ""}" data-owned-pno="${k.pNo}" role="checkbox" aria-checked="${isOwned}" title="标记是否已获得此活动猪">${isOwned ? "✅ 已拥有" : "⬜ 未拥有"}</span>`;
       }
       return `<div class="slot out${isSelf ? " is-self" : ""}"${linkAttr(k.pNo)}>` +
         (img ? `<img src="${img}" loading="lazy" alt="${escHtml(k.name || "")}">` : `<div class="slot-img-placeholder" aria-hidden="true">?</div>`) +
@@ -1776,6 +1946,13 @@
     foodtype: "",
     sex: "",
     sort: "1",
+    // own 是本地筛选 (上游不支持), fetchAuctions 时跳过, renderAuctionTab 时按它过滤
+    //   ""        全部
+    //   "no"      未拥有 (含未知品种)
+    //   "yes"     已拥有
+    //   "no_small" 已拥有但缺小章
+    //   "no_big"   已拥有但缺大章
+    own: "",
   };
   // 颜色 → 上游 p 字段的视觉色组代码（默认 0=全部）。跟响应里 pNo 字段同空间
   const COLOR_TO_P = {
@@ -1788,7 +1965,8 @@
   };
   let auctionCountdownTimer = null;
 
-  // 给筛选 chip 装点击处理：高亮 + 写入 auctionFilter，不自动 fetch
+  // 给筛选 chip 装点击处理：高亮 + 写入 auctionFilter，不自动 fetch。
+  // own 是例外：它是本地筛选,切换时直接 re-render (避免玩家还要再点一次 🔍)
   document.querySelectorAll("#tabAuction .filter-row").forEach(row => {
     const field = row.dataset.filter;
     if (!field) return;
@@ -1798,6 +1976,9 @@
       auctionFilter[field] = chip.dataset.value || "";
       row.querySelectorAll(".chip").forEach(c =>
         c.classList.toggle("active", c === chip));
+      if (field === "own" && auctionState.records.length) {
+        renderAuctionTab();
+      }
     });
   });
 
@@ -1824,6 +2005,8 @@
       });
       for (const [k, v] of Object.entries(auctionFilter)) {
         if (v === "") continue;
+        // own 是本地筛选,不上传给上游
+        if (k === "own") continue;
         if (k === "color") {
           const code = COLOR_TO_P[v];
           if (code) qs.set("color", code);
@@ -1864,6 +2047,29 @@
   // 上游 bType 对应静态数据 pigs.json 的 pNo（pNo 字段是另一个视觉编号，不是品种号）。
   function lookupPig(bType) {
     return state.pigsById.get(bType) || state.eventPigsById.get(bType) || null;
+  }
+
+  // 拍卖场本地"我的拥有状态"过滤。上游不支持这维度,所以拿到 records 后再筛。
+  //   no       → 未拥有 (含数据里查不到的未知品种,这种情况一律视为"我没有")
+  //   yes      → 已拥有
+  //   no_small → 已拥有但缺小章 (帮玩家定位"补章"的目标)
+  //   no_big   → 已拥有但缺大章
+  function filterAuctionByOwn(records, own) {
+    if (!own) return records;
+    return records.filter(rec => {
+      const pNo = rec.bType;
+      const known = state.pigsById.has(pNo) || state.eventPigsById.has(pNo);
+      const owned = known && (
+        isEventPigId(pNo)
+          ? state.ownedEventPigs.has(pNo)
+          : state.collection.includes(pNo)
+      );
+      if (own === "no") return !owned;
+      if (own === "yes") return owned;
+      if (own === "no_small") return owned && !state.smallBadges.has(pNo);
+      if (own === "no_big") return owned && !state.bigBadges.has(pNo);
+      return true;
+    });
   }
 
   // 上游 limitdate 比本地时间晚 8 小时（实测）。+8h 后当本地时间渲染。
@@ -1927,7 +2133,7 @@
     const bg = state.bigBadges.has(pNo);
     return el("div", { class: "auction-own-row" }, [
       el("span", { class: "auction-own-chip pig" + (owned ? " is-on" : "") },
-        owned ? "☑ 已拥有" : "☐ 未拥有"),
+        owned ? "✅ 已拥有" : "⬜ 未拥有"),
       el("img", {
         src: "/img/small.png",
         class: "auction-own-badge" + (sm ? " is-on" : ""),
@@ -2048,12 +2254,24 @@
       hour: "2-digit", minute: "2-digit", second: "2-digit",
     });
     const serverLabel = auctionState.server === "jp" ? "日服" : "台服";
-    statsBar.textContent =
-      `${serverLabel} · 共 ${auctionState.records.length} 条 · 更新于 ${fetchedText}`;
 
-    const list = el("div", { class: "auction-list" },
-      auctionState.records.map(buildAuctionRow));
-    box.appendChild(list);
+    // 本地按"我的拥有状态"过滤,不影响 auctionState.records (无限滚动还要拉更多)
+    const shown = filterAuctionByOwn(auctionState.records, auctionFilter.own);
+    const filterHint = auctionFilter.own
+      ? ` · 筛后 ${shown.length} 条`
+      : "";
+    statsBar.textContent =
+      `${serverLabel} · 共 ${auctionState.records.length} 条${filterHint} · 更新于 ${fetchedText}`;
+
+    if (shown.length === 0 && auctionFilter.own) {
+      box.appendChild(el("div", { class: "loading" }, [
+        el("div", {}, "当前结果里没有符合「我的」筛选的拍品 — 切换条件或多加载几条试试"),
+      ]));
+    } else {
+      const list = el("div", { class: "auction-list" },
+        shown.map(buildAuctionRow));
+      box.appendChild(list);
+    }
 
     // 底部 sentinel + 加载更多状态
     const footer = el("div", { class: "auction-footer" }, [
