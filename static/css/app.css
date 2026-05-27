@@ -2065,6 +2065,41 @@
       box-shadow: 0 0 0 2px var(--ok), 0 0 6px color-mix(in srgb, var(--ok) 50%, transparent);
     }
 
+    /* 章别预测 chip: 提示这只幼猪长大后能冲哪种章, 跟 ownership row 同行显示 */
+    .auction-forecast {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 11px;
+      line-height: 1.4;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .auction-forecast-icon {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
+    }
+    /* 能冲小章 → 绿色, 玩家最想看到的情况 */
+    .auction-forecast.small-ok {
+      color: var(--ok);
+      border-color: var(--ok);
+      background: color-mix(in srgb, var(--ok) 14%, transparent);
+    }
+    /* 错过小章, 还差 X kg 到大章 → 黄色提示 */
+    .auction-forecast.big-todo {
+      color: var(--warn);
+      border-color: var(--warn);
+      background: color-mix(in srgb, var(--warn) 14%, transparent);
+    }
+    .auction-forecast.big-todo .auction-forecast-icon {
+      /* 小章已错过, 大章图标稍降透明度提示"还没到" */
+      opacity: 0.7;
+    }
+
     /* ===== 集齐 186 解锁庆祝弹窗 ===== */
     .celebration-bg {
       position: fixed;
