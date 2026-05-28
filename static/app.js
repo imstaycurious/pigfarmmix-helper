@@ -1382,6 +1382,7 @@
     event: "🎉 Events图鉴",
     progress: "📊 进度总览",
     add: "➕ 导入/导出",
+    about: "ℹ️ 关于项目",
   };
 
   function setMineView(view) {
@@ -1389,12 +1390,14 @@
     const menu = $("#mineMenu");
     const listView = $("#mineListView");
     const addView = $("#mineAddView");
+    const aboutView = $("#mineAboutView");
     const progressView = $("#mineProgressView");
     const subhead = $("#mineSubHead");
     const subheadTitle = $("#mineSubHeadTitle");
     menu.style.display = view === "menu" ? "" : "none";
     listView.style.display = (view === "main" || view === "event") ? "" : "none";
     addView.style.display = view === "add" ? "" : "none";
+    if (aboutView) aboutView.style.display = view === "about" ? "" : "none";
     if (progressView) progressView.style.display = view === "progress" ? "" : "none";
     subhead.style.display = view === "menu" ? "none" : "";
     if (subheadTitle) subheadTitle.textContent = MINE_VIEW_TITLES[view] || "";
@@ -1641,9 +1644,9 @@
         </div>
       </div>
       ${p.description ? `<div class="kv note" style="margin-top:10px"><div class="k">描述</div><div class="v">${escHtml(p.description)}</div></div>` : ""}
-      ${p.breed_note ? `<div class="kv note warn" style="margin-top:10px"><div class="k">备注</div><div class="v">${escHtml(p.breed_note)}</div></div>` : ""}
+      ${p.breeding_guide?.requirements ? `<div class="kv note warn" style="margin-top:10px"><div class="k">强制要求</div><div class="v">${escHtml(p.breeding_guide.requirements)}</div></div>` : ""}
+      ${p.breeding_guide?.tips ? `<div class="kv note tip" style="margin-top:6px"><div class="k">养成建议</div><div class="v">${escHtml(p.breeding_guide.tips)}</div></div>` : ""}
       ${p.hints && p.hints.length > 0 ? `<div class="kv note hints" style="margin-top:10px"><div class="k">提示</div><div class="v"><ul class="hints-list">${p.hints.map(h => `<li>${escHtml(h)}</li>`).join("")}</ul></div></div>` : ""}
-      ${p.tip ? `<div class="kv note tip" style="margin-top:6px"><div class="k">建议</div><div class="v">${escHtml(p.tip)}</div></div>` : ""}
       <div class="section"><h3>获得方式</h3>${acqHTML.join("")}</div>
       ${p.rare !== 6 ? `<div class="section"><h3>它能配出的崽</h3>${parentBlock}</div>` : ""}
       ${p.rare !== 6 || bleeds.length > 0 ? `<div class="section"><h3>配种配出它的方式</h3>${recipeBlock}</div>` : ""}
