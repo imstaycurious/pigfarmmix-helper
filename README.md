@@ -1,82 +1,45 @@
 # 养猪场mix图鉴助手 🐷
 
-一个帮你整理「养猪场 MIX」收藏进度的小 PWA，数据取自 [pigfarmmix.net](https://pigfarmmix.net/)。
+一个帮助玩家整理「养猪场 MIX」收藏进度的图鉴助手工具。
 
-- 在手机/电脑浏览器上打开即可使用，支持离线、可装到主屏幕。
-- 完全跑在前端：一次性加载 `static/data/pigs_full.json`（约 2.5 MB，621 只完整图鉴），收藏列表持久化在 `localStorage`。
-- 支持按 **图鉴/页/格** 三元组添加、**按名字** 搜索添加、**批量** 元组添加。
-- 支持按 **颜色**、**获得方式** 筛选；选「狩猎」时追加 **场所 + 券种** 子筛选；选「商店进货」时追加 **A/B/C 等级** 子筛选。
+## ✨ 功能特性
 
-📖 **详细图文使用手册**：[docs/USAGE.md](docs/USAGE.md)
+- 📱 **PWA 应用**：支持安装到桌面，可离线使用
+- 📖 **完整图鉴**：包含 186 图鉴和 Events 活动猪
+- 🔍 **多维筛选**：按颜色、星级、获得方式、放牧、挑食等条件筛选
+- ➕ **灵活添加**：支持按名字搜索、图鉴三元组、批量导入
+- 📊 **进度总览**：按图鉴、星级、颜色分组查看收藏进度
+- 🎯 **配种助手**：查看配种配方和产出结果
+- 🏷️ **拍卖场**：查询国服/日服拍卖场信息
+- 💾 **数据备份**：支持导出/导入收藏数据
 
-## 目录结构
+## 🎯 项目特点
 
-```
-static/                — 部署用的纯静态站点（GitHub Pages 指向这里即可）
-  index.html
-  app.js
-  sw.js
-  manifest.webmanifest
-  icon-*.png
-  data/pigs_full.json      — 繁体（原始上游数据，621 只）
-  data/pigs_full_zhs.json  — 简体（zhconv 转换）
-tools/make_icons.py    — 重新生成 PWA 图标
-docs/USAGE.md          — 图文使用手册
-```
+- **纯前端实现**：无需后端服务器，数据存储在本地 localStorage
+- **简繁双语**：支持简体中文和繁体中文切换
+- **响应式设计**：适配手机、平板、电脑等各种设备
+- **深色模式**：支持浅色/深色主题切换
 
-## 本地预览
+## 📖 使用说明
 
-因为站点是纯静态的，随便起一个静态服务器就行：
+详细的图文使用手册请查看：
+- [docs/USAGE.md](docs/USAGE.md)
+- [小红书图文教程](https://www.xiaohongshu.com/user/profile/69c2b2fd00000000330244a4)
 
-```bash
-# Python stdlib
-python -m http.server -d static 5055
-# 浏览器打开 http://localhost:5055
-```
+## ✨ 特别感谢
 
-## 部署到 GitHub Pages
+- 感谢游戏官方创造了如此有趣的养猪场世界
+- 感谢 [養豬場MIX 資料庫](https://pigfarmmix.net/) 提供的数据支持
+- 感谢小红书用户 [@最爱你寂寞](https://www.xiaohongshu.com/user/profile/687257f5000000001d00b658) 提供的最新数据共享文档
+- 感谢所有为养猪场mix游戏社区做出贡献的玩家们
 
-推荐用 GitHub Actions 把 `static/` 作为发布目录：
+## ⚠️ 免责声明
 
-1. 在仓库 `Settings → Pages` 里选择 `GitHub Actions`。
-2. 新建 `.github/workflows/pages.yml`：
+**本项目仅供学习交流使用，不得用于商业用途。**
 
-```yaml
-name: Deploy to Pages
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+所有游戏数据、图片等资源版权归原作者所有。本工具为非官方第三方辅助工具，与游戏官方无关。
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+## 📄 许可协议
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
+本项目采用 MIT 许可协议，允许自由使用、修改和分发，但需保留原作者信息。详见 [LICENSE](LICENSE) 文件。
 
-jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: static
-      - id: deployment
-        uses: actions/deploy-pages@v4
-```
-
-Service Worker 会登记在 `/sw.js`，GitHub Pages 会自动把 `static/` 映射到域名根路径，所以不需要改代码。
-
-> 如果你的仓库是 `user.github.io/<repo>/` 形式（非用户主页），Service Worker 作用域会变成子路径 —— 现有代码里 `navigator.serviceWorker.register("/sw.js")` 和 `manifest.webmanifest` 的 `start_url` 都使用绝对路径，需要按你的 Pages 子路径适配（例如改成相对路径或加上 base）。最简单的办法是使用自定义域名 / 用户主页仓库。
-
-## 许可 / 署名
-
-图鉴数据来源于 [pigfarmmix.net](https://pigfarmmix.net/)，所有图片版权归原作者所有。本项目仅作学习用途。
