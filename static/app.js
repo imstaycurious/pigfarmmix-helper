@@ -806,7 +806,6 @@
       return el(tag, attrs, [
         el("img", { class: "card-badge-img", src: iconSrc, alt: label }),
         el("span", { class: "card-badge-w" }, `${op}${fmtKg(weight)}`),
-        has ? el("span", { class: "card-badge-tick" }, "☑") : null,
       ]);
     };
     const badgeRow = w

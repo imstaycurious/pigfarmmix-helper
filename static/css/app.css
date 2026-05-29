@@ -598,8 +598,8 @@
       color: var(--ink);
     }
     .card-badge-chip.is-on {
-      background: color-mix(in srgb, var(--star) 18%, var(--card));
-      border-color: var(--star);
+      background: color-mix(in srgb, var(--ok) 18%, var(--card));
+      border-color: var(--ok);
       color: var(--ink);
     }
     .card-badge-img {
@@ -609,10 +609,6 @@
     }
     .card-badge-w {
       font-variant-numeric: tabular-nums;
-    }
-    .card-badge-tick {
-      color: var(--ok);
-      font-weight: bold;
     }
 
     /* 我的 tab 筛选行里小章/大章 label 的小图标 */
