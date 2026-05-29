@@ -1324,6 +1324,26 @@
       $$(".chip", $(rootSel)).forEach(c => c.classList.remove("active"));
       chip.classList.add("active");
       filterObj[key] = chip.dataset.value;
+      // 切换筛选时清空对应的搜索框
+      if (filterObj === state.atlasFilter) {
+        const searchBox = $("#atlasSearch");
+        if (searchBox) {
+          searchBox.value = "";
+          state.atlasFilter.q = "";
+        }
+      } else if (filterObj === state.eventFilter) {
+        const searchBox = $("#eventSearch");
+        if (searchBox) {
+          searchBox.value = "";
+          state.eventFilter.q = "";
+        }
+      } else if (filterObj === state.mineFilter) {
+        const searchBox = $("#mineSearch");
+        if (searchBox) {
+          searchBox.value = "";
+          state.mineFilter.q = "";
+        }
+      }
       if (onChange) onChange(chip.dataset.value);
       render();
     });
@@ -1428,6 +1448,44 @@
       clearTimeout(timer);
       timer = setTimeout(() => {
         filterObj.q = v.trim();
+        // 使用搜索时清空所有筛选条件
+        if (filterObj.q) {
+          if (filterObj === state.atlasFilter) {
+            filterObj.color = "";
+            filterObj.rare = "";
+            filterObj.method = "";
+            filterObj.huntRegion = "";
+            filterObj.huntTicket = "";
+            filterObj.shopRank = "";
+            filterObj.graze = "";
+            filterObj.picky = "";
+            // 重置所有筛选 chip 为默认状态
+            resetChipRow("#atlasColorFilter");
+            resetChipRow("#atlasRareFilter");
+            resetChipRow("#atlasMethodFilter");
+            resetChipRow("#atlasGrazeFilter");
+            resetChipRow("#atlasPickyFilter");
+            resetChipRow("#atlasHuntRegionFilter");
+            resetChipRow("#atlasHuntTicketFilter");
+            resetChipRow("#atlasShopRankFilter");
+          } else if (filterObj === state.eventFilter) {
+            filterObj.color = "";
+            filterObj.rare = "";
+            filterObj.graze = "";
+            filterObj.picky = "";
+            resetChipRow("#eventColorFilter");
+            resetChipRow("#eventRareFilter");
+            resetChipRow("#eventGrazeFilter");
+            resetChipRow("#eventPickyFilter");
+          } else if (filterObj === state.mineFilter) {
+            filterObj.owned = "";
+            filterObj.small = "";
+            filterObj.big = "";
+            resetChipRow("#mineOwnedFilter");
+            resetChipRow("#mineSmallFilter");
+            resetChipRow("#mineBigFilter");
+          }
+        }
         render();
       }, 200);
     });
