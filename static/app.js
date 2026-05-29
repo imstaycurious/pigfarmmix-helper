@@ -21,6 +21,8 @@
   // 集齐 186 后解锁的隐藏图鉴。这些 pNo 在 186图鉴 的 typeno=6 第3页里, 上游
   // 标的 isview=2 表示隐藏。解锁前完全不出现在任何 UI / 抽屉 / 配种引用里。
   const HIDDEN_PNOS = new Set([904, 905, 920, 921]);
+  // pNo 800-805: 已从页面隐藏，不计入统计（数据仍保留在 JSON 中）
+  const REMOVED_PNOS = new Set([800, 801, 802, 803, 804, 805]);
   const STORAGE_KEY_HIDDEN_UNLOCK = "pig_hidden_unlocked_v1";
   // 数据有两份: 上游原始繁体 (pigs_full.json) + zhconv 转的简体 (pigs_full_zhs.json)
   // 切换按钮 (#langBtn) 持久化偏好,默认简体
@@ -440,6 +442,8 @@
     //   - 隐藏 pNo (HIDDEN_PNOS) 单独入 hiddenPigsById, 解锁后才并入 pigsById
     for (const raw of bundle.pigs) {
       const p = enrichPig(raw);
+      // REMOVED_PNOS: 从页面完全隐藏，不计入任何统计
+      if (REMOVED_PNOS.has(p.pNo)) continue;
       const info = p.list || {};
       if (HIDDEN_PNOS.has(p.pNo)) {
         state.hiddenPigsById.set(p.pNo, p);
@@ -946,7 +950,7 @@
     const { main, event } = buildProgressBuckets();
 
     const rareOrder = [5, 4, 3, 2, 1];   // 5★ 在前,玩家更关心稀有
-    const eventRareOrder = [6, 5, 4, 3, 2, 1];
+    const eventRareOrder = [6, 5, 4, 3, 2]; // Events 进度总览不显示 1★
     const badgeOrder = ["small", "big"];
 
     const starsLabel = (n, isEvent = false) => {
@@ -976,8 +980,13 @@
     // 顶部总览数字
     const mainOwned = state.collection.length;
     const mainTotal = state.pigsById.size;
-    const eventOwned = state.ownedEventPigs.size;
-    const eventTotal = state.eventPigsById.size;
+    // Events 总览排除 1★ (已在 eventRareOrder 中不显示 1★ 行)
+    let eventOwned = 0, eventTotal = 0;
+    for (const p of state.eventPigsById.values()) {
+      if (p.rare === 1) continue;
+      eventTotal++;
+      if (state.ownedEventPigs.has(p.pNo)) eventOwned++;
+    }
     const mainPct = mainTotal > 0 ? (mainOwned / mainTotal * 100).toFixed(1) : "0.0";
     const eventPct = eventTotal > 0 ? (eventOwned / eventTotal * 100).toFixed(1) : "0.0";
 
