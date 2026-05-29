@@ -1611,7 +1611,9 @@
     const lifespanChip = p.lifespan
       ? `<span class="chip"><span class="chip-k">📅 成猪</span><span class="chip-v">${p.lifespan} 小时</span></span>`
       : "";
-    const rentChip = `<span class="chip"><span class="chip-k">借猪</span><span class="chip-v">${p.rent}pt</span></span>`;
+    const rentChip = p.rent
+      ? `<span class="chip"><span class="chip-k">借猪</span><span class="chip-v">${p.rent}pt</span></span>`
+      : "";
     const priceChip = `<span class="chip"><span class="chip-k">售价</span><span class="chip-v">${p.price}pt</span></span>`;
     const pickyChip = `<span class="${pickyChipClass}" title="${escHtml(pickyChipTitle)}"><span class="chip-icon">🍽️</span><span class="chip-v">${escHtml(pickyChipText)}</span></span>`;
     const pickyDetail = picky.level !== "none"
