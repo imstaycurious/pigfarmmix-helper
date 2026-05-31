@@ -2199,7 +2199,7 @@ function applyImport(parsed, { replace }) {
     state.hiddenUnlocked = true;
     saveHiddenUnlocked();
     mergeHiddenIntoMain();
-    buildBreedingIndex();
+    buildBreedingIndex(state.breedingTable);
     unlocked = true;
   }
   return { addedColl, removedColl, addedOwned, removedOwned,
@@ -2261,7 +2261,7 @@ function runImport(replace) {
       state.hiddenUnlocked = true;
       saveHiddenUnlocked();
       mergeHiddenIntoMain();
-      buildBreedingIndex();
+      buildBreedingIndex(state.breedingTable);
       r.unlocked = true;
     }
     showUnlockCelebration();
