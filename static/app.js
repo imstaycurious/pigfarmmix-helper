@@ -57,7 +57,7 @@ function buildCard(p, opts) {
     class: "picky " + picky.level,
     title: pickyTitle,
   }, pickyLabel);
-  const feedN = p.feedCount || 0;
+  const feedN = (p.feeding && p.feeding.times) || 0;
   const feedBadge = el("span", {
     class: "feed",
     title: `最少喂食 ${feedN} 次`,
@@ -976,9 +976,9 @@ function showDetail(pNo) {
   const grazeChip = p.isExer
     ? `<span class="chip ok"><span class="chip-icon">🌿</span><span class="chip-v">放牧</span></span>`
     : `<span class="chip"><span class="chip-icon">🏠</span><span class="chip-v">不放牧</span></span>`;
-  const feedChip = `<span class="chip"><span class="chip-k">🍚 最少喂</span><span class="chip-v">${p.feedCount || 0} 次</span></span>`;
-  const intervalChip = (p.feedCount || 0) > 0
-    ? `<span class="chip"><span class="chip-k">⏱️ 喂食间隔</span><span class="chip-v">${escHtml(feedIntervalText(p.eatable_time))}</span></span>`
+  const feedChip = `<span class="chip"><span class="chip-k">🍚 最少喂</span><span class="chip-v">${(p.feeding && p.feeding.times) || 0} 次</span></span>`;
+  const intervalChip = ((p.feeding && p.feeding.times) || 0) > 0
+    ? `<span class="chip"><span class="chip-k">⏱️ 喂食间隔</span><span class="chip-v">${escHtml(feedIntervalText((p.feeding && p.feeding.interval)))}</span></span>`
     : "";
   const lifespanChip = p.lifespan
     ? `<span class="chip"><span class="chip-k">📅 成猪</span><span class="chip-v">${p.lifespan} 小时</span></span>`
