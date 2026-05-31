@@ -29,4 +29,6 @@ static/img/png_h/*
 # 本地保留的完整数据（含已剔除字段）；提交版是精简版
 static/data/*.full.json
 # 本地排版查看用的 pretty JSON
-static/data/*.pretty.json
+static/data/*.pretty.json# 数据备份文件
+static/data/*.backup
+static/data/*_v2_old.json
