@@ -449,10 +449,10 @@ $("#clearBtn").addEventListener("click", () => {
   state.ownedEventPigs = new Set();
   state.smallBadges = new Set();
   state.bigBadges = new Set();
-  saveCollection();
-  saveOwnedEventPigs();
-  saveSmallBadges();
-  saveBigBadges();
+  saveCollection(state.collection);
+  saveOwnedEventPigs(state.ownedEventPigs);
+  saveSmallBadges(state.smallBadges);
+  saveBigBadges(state.bigBadges);
   // 重置隐藏图鉴解锁状态 + 把 4 只皇室猪从 pigsById / pigsByListKey 抽回去
   if (state.hiddenUnlocked) {
     state.hiddenUnlocked = false;
@@ -502,7 +502,7 @@ function addByPNo(pNo) {
     return { ok: false, pig: p, msg: `已在收藏中: #${pNo} ${p.name}` };
   }
   state.collection.push(pNo);
-  saveCollection();
+  saveCollection(state.collection);
   return { ok: true, pig: p, msg: `已添加: #${pNo} ${p.name}` };
 }
 
@@ -523,7 +523,7 @@ function removePig(pNo) {
   const i = state.collection.indexOf(pNo);
   if (i < 0) return;
   state.collection.splice(i, 1);
-  saveCollection();
+  saveCollection(state.collection);
   render();
   if (p) toast(`已移除: ${p.name}`);
 }
@@ -2188,10 +2188,10 @@ function applyImport(parsed, { replace }) {
     }
   }
 
-  saveCollection();
-  saveOwnedEventPigs();
-  saveSmallBadges();
-  saveBigBadges();
+  saveCollection(state.collection);
+  saveOwnedEventPigs(state.ownedEventPigs);
+  saveSmallBadges(state.smallBadges);
+  saveBigBadges(state.bigBadges);
   // hiddenUnlocked: 备份里如果带 true 就尊重它(已解锁过的就别再藏起来),
   // 反之不动 (覆盖导入不强制 re-lock,避免误清成就)
   let unlocked = false;
