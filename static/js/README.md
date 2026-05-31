@@ -1,9 +1,5 @@
 # 代码模块化说明
 
-## 📁 模块结构
-
-项目已经从单一的 `app.js` (3030行) 重构为多个模块，提高了代码的可维护性和可读性。
-
 ### 模块划分
 
 ```
@@ -80,51 +76,3 @@ app.js
   ├── data.js → constants.js, state.js, storage.js, utils.js
   └── filters.js → state.js, utils.js, data.js
 ```
-
-## 🚀 使用方式
-
-### 开发
-代码使用 ES6 模块，浏览器原生支持。只需在 HTML 中引入：
-
-```html
-<script type="module" src="/app.js"></script>
-```
-
-### 添加新功能
-1. 确定功能属于哪个模块
-2. 在对应模块中添加函数
-3. 导出函数 (export function xxx)
-4. 在需要的地方导入使用
-
-### 示例：添加新的工具函数
-
-```javascript
-// 在 utils.js 中添加
-export function formatDate(timestamp) {
-  return new Date(timestamp).toLocaleDateString('zh-CN');
-}
-
-// 在 app.js 中使用
-import { formatDate } from './js/utils.js';
-// 或者在已有的导入中添加
-const { ..., formatDate } = U;
-```
-
-## 📝 注意事项
-
-1. **模块加载顺序**：浏览器会自动处理模块依赖，无需手动管理加载顺序
-2. **作用域**：每个模块有独立的作用域，需要显式导出/导入
-3. **兼容性**：ES6 模块需要现代浏览器支持 (Chrome 61+, Firefox 60+, Safari 11+)
-4. **开发服务器**：本地开发需要使用 HTTP 服务器，不能直接打开 file:// 协议的文件
-
-## 🔧 后续优化建议
-
-1. **进一步拆分 app.js**：可以将 UI 渲染、抽屉、拍卖场、导入导出等功能拆分为独立模块
-2. **添加类型检查**：考虑使用 JSDoc 或 TypeScript 添加类型注解
-3. **单元测试**：为各个模块添加单元测试
-4. **构建工具**：使用 Vite 或 Rollup 进行打包优化
-
-## 📚 相关文档
-
-- [ES6 模块](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Modules)
-- [JavaScript 模块化](https://javascript.info/modules-intro)
