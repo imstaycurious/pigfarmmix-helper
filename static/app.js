@@ -156,10 +156,10 @@ function buildProgressBuckets() {
     bucketAdd(main.byRare, p.rare, isOwn);
     bucketAdd(main.byColor, p.color_text, isOwn);
     // 小章/大章: 只统计有 weight 字段的猪 (否则该猪不参与章别系统)
-    if (typeof p.smallWeight === "number") {
+    if (p.weight && typeof p.weight.small === "number") {
       bucketAdd(main.byBadge, "small", state.smallBadges.has(p.pNo));
     }
-    if (typeof p.bigWeight === "number") {
+    if (p.weight && typeof p.weight.big === "number") {
       bucketAdd(main.byBadge, "big", state.bigBadges.has(p.pNo));
     }
   }
@@ -172,10 +172,10 @@ function buildProgressBuckets() {
     const isOwn = state.ownedEventPigs.has(p.pNo);
     bucketAdd(event.byRare, p.rare, isOwn);
     bucketAdd(event.byColor, p.color_text, isOwn);
-    if (typeof p.smallWeight === "number") {
+    if (p.weight && typeof p.weight.small === "number") {
       bucketAdd(event.byBadge, "small", state.smallBadges.has(p.pNo));
     }
-    if (typeof p.bigWeight === "number") {
+    if (p.weight && typeof p.weight.big === "number") {
       bucketAdd(event.byBadge, "big", state.bigBadges.has(p.pNo));
     }
   }
