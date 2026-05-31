@@ -87,7 +87,7 @@ export function checkAndUnlockHidden() {
   state.hiddenUnlocked = true;
   saveHiddenUnlocked(state.hiddenUnlocked);
   mergeHiddenIntoMain();
-  buildBreedingIndex();
+  buildBreedingIndex(state.breedingTable);
   showUnlockCelebration();
   return true;
 }
