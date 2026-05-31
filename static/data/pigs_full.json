@@ -33,9 +33,7 @@
           609,
           543
         ]
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 2,
@@ -66,9 +64,7 @@
           50,
           522
         ]
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 3,
@@ -99,9 +95,7 @@
           590,
           514
         ]
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 4,
@@ -132,9 +126,7 @@
           535,
           547
         ]
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 5,
@@ -164,9 +156,7 @@
         "fail": [
           528
         ]
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 6,
@@ -218,12 +208,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 7,
@@ -280,12 +265,7 @@
       "breedingGuide": {
         "requirements": "成豬前體重限制 ≥128.0 kg",
         "tips": null
-      },
-      "feedCount": 10,
-      "eatable_time": 2,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 8,
@@ -339,9 +319,7 @@
           7
         ],
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 3
+      }
     },
     {
       "pNo": 9,
@@ -394,12 +372,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 2,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 10,
@@ -449,9 +422,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 11,
@@ -501,9 +472,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 12,
@@ -556,13 +525,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 2,
-      "eatable": [
-        2,
-        3
-      ]
+      }
     },
     {
       "pNo": 13,
@@ -598,13 +561,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 2,
-      "eatable": [
-        2,
-        3
-      ]
+      }
     },
     {
       "pNo": 14,
@@ -654,9 +611,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 15,
@@ -706,9 +661,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 16,
@@ -761,12 +714,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 17,
@@ -819,12 +767,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 2,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 18,
@@ -867,12 +810,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 19,
@@ -916,13 +854,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        3
-      ]
+      }
     },
     {
       "pNo": 20,
@@ -981,13 +913,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 2,
-      "eatable": [
-        2,
-        3
-      ]
+      }
     },
     {
       "pNo": 21,
@@ -1038,9 +964,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 22,
@@ -1091,9 +1015,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 23,
@@ -1134,9 +1056,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 24,
@@ -1189,12 +1109,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 25,
@@ -1247,12 +1162,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 26,
@@ -1303,9 +1213,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 27,
@@ -1356,9 +1264,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 28,
@@ -1412,9 +1318,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 29,
@@ -1461,9 +1365,7 @@
         "fail": [
           508
         ]
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 30,
@@ -1516,13 +1418,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 10,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        6
-      ]
+      }
     },
     {
       "pNo": 31,
@@ -1558,13 +1454,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 2,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 32,
@@ -1615,9 +1505,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 33,
@@ -1670,13 +1558,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 34,
@@ -1726,9 +1608,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 35,
@@ -1773,9 +1653,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 36,
@@ -1828,12 +1706,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 37,
@@ -1884,9 +1757,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 38,
@@ -1937,9 +1808,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 39,
@@ -1990,9 +1859,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 40,
@@ -2043,9 +1910,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 41,
@@ -2104,9 +1969,7 @@
           527
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 42,
@@ -2156,12 +2019,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 43,
@@ -2214,13 +2072,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 2,
-      "eatable": [
-        2,
-        5
-      ]
+      }
     },
     {
       "pNo": 44,
@@ -2261,12 +2113,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 45,
@@ -2323,9 +2170,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 46,
@@ -2382,9 +2227,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 47,
@@ -2436,12 +2279,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 48,
@@ -2492,9 +2330,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 49,
@@ -2537,12 +2373,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 50,
@@ -2596,9 +2427,7 @@
       "breedingGuide": {
         "requirements": "成豬前體重限制 ≥128.0 kg",
         "tips": null
-      },
-      "feedCount": 13,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 51,
@@ -2652,9 +2481,7 @@
           161
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 52,
@@ -2704,9 +2531,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 53,
@@ -2751,9 +2576,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 54,
@@ -2804,9 +2627,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 55,
@@ -2865,12 +2686,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 56,
@@ -2922,12 +2738,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 57,
@@ -2979,12 +2790,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 58,
@@ -3041,9 +2847,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 59,
@@ -3078,12 +2882,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 60,
@@ -3134,9 +2933,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 61,
@@ -3192,9 +2989,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 62,
@@ -3235,9 +3030,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 63,
@@ -3282,9 +3075,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 64,
@@ -3334,9 +3125,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 65,
@@ -3387,9 +3176,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 66,
@@ -3446,9 +3233,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 67,
@@ -3500,12 +3285,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 68,
@@ -3555,9 +3335,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 69,
@@ -3600,12 +3378,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 70,
@@ -3662,9 +3435,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 71,
@@ -3721,9 +3492,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 72,
@@ -3774,9 +3543,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 73,
@@ -3827,9 +3594,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 74,
@@ -3880,9 +3645,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 75,
@@ -3930,13 +3693,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        7
-      ]
+      }
     },
     {
       "pNo": 76,
@@ -3993,9 +3750,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 77,
@@ -4042,12 +3797,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 78,
@@ -4088,9 +3838,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 79,
@@ -4140,9 +3888,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 80,
@@ -4189,12 +3935,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 81,
@@ -4239,9 +3980,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 82,
@@ -4292,9 +4031,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 83,
@@ -4344,9 +4081,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 84,
@@ -4399,12 +4134,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 85,
@@ -4458,13 +4188,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        4
-      ]
+      }
     },
     {
       "pNo": 86,
@@ -4505,9 +4229,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 10,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 87,
@@ -4548,9 +4270,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 88,
@@ -4600,9 +4320,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 89,
@@ -4653,9 +4371,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 90,
@@ -4706,9 +4422,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 91,
@@ -4759,9 +4473,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 92,
@@ -4812,9 +4524,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 93,
@@ -4859,9 +4569,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 94,
@@ -4918,9 +4626,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 95,
@@ -4970,9 +4676,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 96,
@@ -5025,12 +4729,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 97,
@@ -5073,12 +4772,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 98,
@@ -5119,9 +4813,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 99,
@@ -5166,9 +4858,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 100,
@@ -5209,9 +4899,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 101,
@@ -5252,9 +4940,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 102,
@@ -5295,9 +4981,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 103,
@@ -5338,9 +5022,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 104,
@@ -5383,12 +5065,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 105,
@@ -5431,12 +5108,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 106,
@@ -5477,9 +5149,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 107,
@@ -5520,9 +5190,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 108,
@@ -5563,9 +5231,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 109,
@@ -5609,13 +5275,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        4,
-        5
-      ]
+      }
     },
     {
       "pNo": 110,
@@ -5658,12 +5318,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 111,
@@ -5720,9 +5375,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 112,
@@ -5767,9 +5420,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 113,
@@ -5826,9 +5477,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 114,
@@ -5869,9 +5518,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 115,
@@ -5912,9 +5559,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 116,
@@ -5955,9 +5600,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 117,
@@ -6002,9 +5645,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 118,
@@ -6045,9 +5686,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 119,
@@ -6088,9 +5727,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 120,
@@ -6141,9 +5778,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 121,
@@ -6187,13 +5822,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        4
-      ]
+      }
     },
     {
       "pNo": 122,
@@ -6234,9 +5863,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 123,
@@ -6289,12 +5916,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 124,
@@ -6335,9 +5957,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 125,
@@ -6382,9 +6002,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 126,
@@ -6428,13 +6046,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        5
-      ]
+      }
     },
     {
       "pNo": 127,
@@ -6475,9 +6087,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 128,
@@ -6520,12 +6130,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 129,
@@ -6570,9 +6175,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 130,
@@ -6629,9 +6232,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 131,
@@ -6682,9 +6283,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 132,
@@ -6737,12 +6336,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 133,
@@ -6792,9 +6386,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 134,
@@ -6844,9 +6436,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 135,
@@ -6902,9 +6492,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 136,
@@ -6954,9 +6542,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 137,
@@ -7012,9 +6598,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 138,
@@ -7057,12 +6641,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 2,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 139,
@@ -7115,13 +6694,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 2,
-      "eatable": [
-        2,
-        3
-      ]
+      }
     },
     {
       "pNo": 140,
@@ -7177,9 +6750,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 141,
@@ -7212,9 +6783,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 142,
@@ -7250,9 +6819,7 @@
           143
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 143,
@@ -7289,9 +6856,7 @@
       "breedingGuide": {
         "requirements": "成豬前體重限制 ≥128.0 kg",
         "tips": null
-      },
-      "feedCount": 10,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 144,
@@ -7344,12 +6909,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 145,
@@ -7384,12 +6944,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 146,
@@ -7446,9 +7001,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 147,
@@ -7505,9 +7058,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 148,
@@ -7558,9 +7109,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 149,
@@ -7610,9 +7159,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 150,
@@ -7663,9 +7210,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 151,
@@ -7706,9 +7251,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 152,
@@ -7765,9 +7308,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 153,
@@ -7808,9 +7349,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 154,
@@ -7861,9 +7400,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 155,
@@ -7899,13 +7436,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 156,
@@ -7958,13 +7489,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 0,
-      "eatable": [
-        4,
-        6
-      ]
+      }
     },
     {
       "pNo": 157,
@@ -8015,9 +7540,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 158,
@@ -8068,9 +7591,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 7,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 159,
@@ -8103,9 +7624,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 160,
@@ -8156,9 +7675,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 161,
@@ -8199,13 +7716,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 2,
-      "eatable": [
-        3,
-        6
-      ]
+      }
     },
     {
       "pNo": 162,
@@ -8250,9 +7761,7 @@
       "breedingGuide": {
         "requirements": "只有19:00:00-07:59:59(+1)可狩獵",
         "tips": null
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 163,
@@ -8287,12 +7796,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 2,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 164,
@@ -8325,9 +7829,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 165,
@@ -8363,9 +7865,7 @@
           164
         ],
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 166,
@@ -8416,9 +7916,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 181,
@@ -8471,13 +7969,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        3
-      ]
+      }
     },
     {
       "pNo": 197,
@@ -8534,9 +8026,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 198,
@@ -8586,9 +8076,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 199,
@@ -8638,9 +8126,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 200,
@@ -8696,9 +8182,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 201,
@@ -8741,12 +8225,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 202,
@@ -8787,9 +8266,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 203,
@@ -8840,9 +8317,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 204,
@@ -8884,9 +8359,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 205,
@@ -8939,12 +8412,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 1,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 206,
@@ -9003,12 +8471,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 207,
@@ -9053,13 +8516,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 208,
@@ -9110,9 +8567,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 209,
@@ -9165,12 +8620,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 210,
@@ -9221,9 +8671,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 211,
@@ -9274,9 +8722,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 212,
@@ -9327,9 +8773,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 213,
@@ -9371,9 +8815,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 400,
@@ -9409,13 +8851,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        4,
-        7
-      ]
+      }
     },
     {
       "pNo": 401,
@@ -9451,13 +8887,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 402,
@@ -9490,9 +8920,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 403,
@@ -9536,9 +8964,7 @@
         "好像有遺傳到當領導的才能",
         "待在海上的時間好像比較多",
         "似乎很擅長打鬥"
-      ],
-      "feedCount": 5,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 404,
@@ -9574,13 +9000,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        1,
-        7
-      ]
+      }
     },
     {
       "pNo": 405,
@@ -9624,9 +9044,7 @@
         "繼承了堅固的裝備呢",
         "似乎已頓悟了命運",
         "好像擁有堅強的信念"
-      ],
-      "feedCount": 5,
-      "eatable_time": 1
+      ]
     },
     {
       "pNo": 406,
@@ -9659,9 +9077,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 407,
@@ -9707,11 +9123,6 @@
         "沒有繼承到財運UP嗎",
         "繼承了美貌與魅力",
         "繼承了父母的櫻桃小嘴"
-      ],
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        8
       ]
     },
     {
@@ -9745,9 +9156,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 410,
@@ -9783,9 +9192,7 @@
           409
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 411,
@@ -9829,9 +9236,7 @@
         "像父(母)一樣很有出息的樣子",
         "好像是從不列顛來的",
         "似乎遺傳到父母的勇猛"
-      ],
-      "feedCount": 5,
-      "eatable_time": 1
+      ]
     },
     {
       "pNo": 412,
@@ -9877,11 +9282,6 @@
         "死去時似乎很壯烈",
         "遺傳到父(母)的庶民人氣",
         "父母親都隱藏真面目"
-      ],
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        7
       ]
     },
     {
@@ -9915,9 +9315,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 414,
@@ -9953,9 +9351,7 @@
           413
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 415,
@@ -9988,9 +9384,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 416,
@@ -10023,9 +9417,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 417,
@@ -10072,12 +9464,6 @@
         "好像從神那裡得到某個東西",
         "好像會成為智慧之王",
         "父(母)和神的使者很像呢"
-      ],
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        7,
-        8
       ]
     },
     {
@@ -10114,13 +9500,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        6
-      ]
+      }
     },
     {
       "pNo": 419,
@@ -10155,12 +9535,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 420,
@@ -10195,12 +9570,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 421,
@@ -10236,13 +9606,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 422,
@@ -10277,12 +9641,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 423,
@@ -10318,13 +9677,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 424,
@@ -10359,12 +9712,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 425,
@@ -10397,9 +9745,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 426,
@@ -10434,12 +9780,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 427,
@@ -10475,13 +9816,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 428,
@@ -10514,9 +9849,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 429,
@@ -10549,9 +9882,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 430,
@@ -10587,13 +9918,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 431,
@@ -10628,12 +9953,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 432,
@@ -10666,9 +9986,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 433,
@@ -10703,12 +10021,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 434,
@@ -10741,9 +10054,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 435,
@@ -10776,9 +10087,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 436,
@@ -10813,12 +10122,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 437,
@@ -10854,13 +10158,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        5,
-        8
-      ]
+      }
     },
     {
       "pNo": 438,
@@ -10893,9 +10191,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 439,
@@ -10928,9 +10224,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 440,
@@ -10963,9 +10257,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 441,
@@ -10998,9 +10290,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 442,
@@ -11036,13 +10326,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        8
-      ]
+      }
     },
     {
       "pNo": 443,
@@ -11075,9 +10359,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 7,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 444,
@@ -11113,13 +10395,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 445,
@@ -11152,9 +10428,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 446,
@@ -11187,9 +10461,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 447,
@@ -11222,9 +10494,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 448,
@@ -11257,9 +10527,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 449,
@@ -11294,12 +10562,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 500,
@@ -11334,12 +10597,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 501,
@@ -11374,12 +10632,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 502,
@@ -11412,9 +10665,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 503,
@@ -11447,9 +10698,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 504,
@@ -11484,12 +10733,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 505,
@@ -11522,9 +10766,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 506,
@@ -11557,9 +10799,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 507,
@@ -11592,9 +10832,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 508,
@@ -11649,12 +10887,6 @@
         "只要給牠滿滿的飼料就好啦",
         "有很大的獠牙喔",
         "好像喜歡大草原喔"
-      ],
-      "feedCount": 12,
-      "eatable_time": 2,
-      "eatable": [
-        2,
-        5
       ]
     },
     {
@@ -11690,12 +10922,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 510,
@@ -11730,12 +10957,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 511,
@@ -11770,12 +10992,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 512,
@@ -11808,9 +11025,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 513,
@@ -11845,12 +11060,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 514,
@@ -11904,11 +11114,6 @@
         "似乎很神聖呢",
         "好像是從南方的島嶼過來的",
         "不管到哪裡好像都可以生存耶"
-      ],
-      "feedCount": 8,
-      "eatable_time": 0,
-      "eatable": [
-        3
       ]
     },
     {
@@ -11942,9 +11147,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 516,
@@ -11979,12 +11182,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 517,
@@ -12019,12 +11217,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 518,
@@ -12057,9 +11250,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 519,
@@ -12095,13 +11286,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 520,
@@ -12136,12 +11321,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 7,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 521,
@@ -12176,12 +11356,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 7,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 522,
@@ -12237,13 +11412,6 @@
         "感覺到有一股妖氣呢",
         "似乎來自日本南部",
         "很怕曬到太陽？"
-      ],
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        3,
-        6
       ]
     },
     {
@@ -12279,12 +11447,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 524,
@@ -12319,12 +11482,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 525,
@@ -12357,9 +11515,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 526,
@@ -12392,9 +11548,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 527,
@@ -12435,9 +11589,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 528,
@@ -12489,9 +11641,7 @@
         "到底要養到多胖呀",
         "要變得很重很重呢",
         "好像是從台灣來的"
-      ],
-      "feedCount": 18,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 529,
@@ -12526,12 +11676,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 530,
@@ -12564,9 +11709,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 531,
@@ -12601,13 +11744,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 532,
@@ -12643,13 +11780,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        4,
-        5
-      ]
+      }
     },
     {
       "pNo": 533,
@@ -12682,9 +11813,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 534,
@@ -12720,13 +11849,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 535,
@@ -12780,11 +11903,6 @@
         "似乎很愛到處跑",
         "太胖好像不好呐",
         "太瘦也不行噢"
-      ],
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        1
       ]
     },
     {
@@ -12820,12 +11938,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 537,
@@ -12858,9 +11971,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 538,
@@ -12893,9 +12004,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 539,
@@ -12931,13 +12040,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        5
-      ]
+      }
     },
     {
       "pNo": 540,
@@ -12970,9 +12073,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 541,
@@ -13008,13 +12109,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        5,
-        7
-      ]
+      }
     },
     {
       "pNo": 542,
@@ -13049,12 +12144,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 7,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 543,
@@ -13113,16 +12203,6 @@
         "好像也喜歡伏特加？",
         "似乎對香味很講究",
         "好像喜歡往外跑呐"
-      ],
-      "feedCount": 8,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2,
-        4,
-        5,
-        7,
-        8
       ]
     },
     {
@@ -13156,9 +12236,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 545,
@@ -13194,13 +12272,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 546,
@@ -13241,9 +12313,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 547,
@@ -13278,12 +12348,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 548,
@@ -13316,9 +12381,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 549,
@@ -13351,9 +12414,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 550,
@@ -13386,9 +12447,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 551,
@@ -13421,9 +12480,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 552,
@@ -13461,12 +12518,7 @@
           552
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 553,
@@ -13501,12 +12553,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 554,
@@ -13541,12 +12588,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 555,
@@ -13581,12 +12623,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 556,
@@ -13619,9 +12656,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 557,
@@ -13656,12 +12691,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 558,
@@ -13694,9 +12724,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 559,
@@ -13729,9 +12757,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 560,
@@ -13764,9 +12790,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 561,
@@ -13799,9 +12823,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 562,
@@ -13842,9 +12864,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 563,
@@ -13879,12 +12899,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 564,
@@ -13917,9 +12932,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 565,
@@ -13952,9 +12965,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 566,
@@ -13987,9 +12998,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 567,
@@ -14022,9 +13031,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 568,
@@ -14057,9 +13064,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 569,
@@ -14094,12 +13099,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 570,
@@ -14132,9 +13132,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 571,
@@ -14167,9 +13165,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 572,
@@ -14204,12 +13200,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 573,
@@ -14242,9 +13233,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 574,
@@ -14279,12 +13268,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 575,
@@ -14320,13 +13304,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        6
-      ]
+      }
     },
     {
       "pNo": 576,
@@ -14359,9 +13337,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 577,
@@ -14394,9 +13370,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 578,
@@ -14429,9 +13403,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 579,
@@ -14464,9 +13436,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 580,
@@ -14501,12 +13471,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 581,
@@ -14539,9 +13504,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 582,
@@ -14576,12 +13539,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 583,
@@ -14616,12 +13574,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 584,
@@ -14654,9 +13607,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 585,
@@ -14691,12 +13642,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 586,
@@ -14729,9 +13675,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 587,
@@ -14767,13 +13711,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        4
-      ]
+      }
     },
     {
       "pNo": 588,
@@ -14808,12 +13746,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 589,
@@ -14846,9 +13779,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 590,
@@ -14910,19 +13841,6 @@
         "「最後的要3次」的樣子",
         "好像喜歡出謎語",
         "好像不太喜歡運動"
-      ],
-      "feedCount": 9,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        1,
-        1,
-        1,
-        2,
-        2,
-        8,
-        8,
-        8
       ]
     },
     {
@@ -14958,12 +13876,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 592,
@@ -14996,9 +13909,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 593,
@@ -15031,9 +13942,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 594,
@@ -15066,9 +13975,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 595,
@@ -15104,13 +14011,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        5,
-        6
-      ]
+      }
     },
     {
       "pNo": 596,
@@ -15142,9 +14043,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 597,
@@ -15176,9 +14075,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 598,
@@ -15211,9 +14108,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 599,
@@ -15246,9 +14141,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 600,
@@ -15300,9 +14193,7 @@
         "好像很排斥周圍的豬",
         "好像很跟地不合的豬",
         "佔有欲很強的樣子"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 601,
@@ -15338,9 +14229,7 @@
           600
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 602,
@@ -15373,9 +14262,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 603,
@@ -15408,9 +14295,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 604,
@@ -15446,13 +14331,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        7
-      ]
+      }
     },
     {
       "pNo": 605,
@@ -15487,12 +14366,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 606,
@@ -15527,12 +14401,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 607,
@@ -15567,12 +14436,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 608,
@@ -15605,9 +14469,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 609,
@@ -15659,9 +14521,7 @@
         "好像想要充分練習發音",
         "對船很有興趣的樣子",
         "太胖的話移動好像會很困難"
-      ],
-      "feedCount": 12,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 610,
@@ -15694,9 +14554,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 611,
@@ -15731,12 +14589,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 612,
@@ -15779,12 +14632,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 613,
@@ -15817,9 +14665,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 614,
@@ -15854,12 +14700,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 615,
@@ -15915,13 +14756,6 @@
         "對一部分的飼料很執著？",
         "好像喜歡3種飼料",
         "好像會咬別的豬"
-      ],
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2,
-        7
       ]
     },
     {
@@ -15955,9 +14789,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 617,
@@ -15992,12 +14824,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 618,
@@ -16033,13 +14860,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        5
-      ]
+      }
     },
     {
       "pNo": 619,
@@ -16072,9 +14893,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 620,
@@ -16107,9 +14926,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 621,
@@ -16142,9 +14959,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 622,
@@ -16177,9 +14992,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 623,
@@ -16215,13 +15028,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        4
-      ]
+      }
     },
     {
       "pNo": 624,
@@ -16276,12 +15083,6 @@
         "好像會花一些時間",
         "似乎擅長魅惑欺騙",
         "似乎很神聖呢"
-      ],
-      "feedCount": 9,
-      "eatable_time": 0,
-      "eatable": [
-        7,
-        8
       ]
     },
     {
@@ -16313,9 +15114,7 @@
           624
         ],
         "specialFeeding": true
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 626,
@@ -16348,9 +15147,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 627,
@@ -16383,9 +15180,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 628,
@@ -16420,12 +15215,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 629,
@@ -16460,12 +15250,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 630,
@@ -16498,9 +15283,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 631,
@@ -16533,9 +15316,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 632,
@@ -16587,9 +15368,7 @@
         "好像不希望被人看到",
         "毛髮好像很濃密",
         "他的足跡似乎是一團謎"
-      ],
-      "feedCount": 20,
-      "eatable_time": 0.5
+      ]
     },
     {
       "pNo": 633,
@@ -16622,9 +15401,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 634,
@@ -16657,9 +15434,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 635,
@@ -16692,9 +15467,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 636,
@@ -16729,12 +15502,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 637,
@@ -16767,9 +15535,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 638,
@@ -16802,9 +15568,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 639,
@@ -16837,9 +15601,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 640,
@@ -16891,9 +15653,7 @@
         "很在意周遭的環境呐",
         "飼料不同好像會墮豬",
         "數字似乎是關鍵"
-      ],
-      "feedCount": 4,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 641,
@@ -16939,11 +15699,6 @@
         "很在意周遭的環境呐",
         "飼料不同好像會墮豬",
         "數字似乎是關鍵"
-      ],
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        6
       ]
     },
     {
@@ -16979,12 +15734,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 643,
@@ -17017,9 +15767,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 644,
@@ -17054,13 +15802,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        3
-      ]
+      }
     },
     {
       "pNo": 645,
@@ -17093,9 +15835,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 646,
@@ -17132,12 +15872,7 @@
           646
         ],
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 647,
@@ -17191,11 +15926,6 @@
         "好像都有象徵的顏色",
         "好像很挑食",
         "好像喜歡以前的時刻表"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        3
       ]
     },
     {
@@ -17242,11 +15972,6 @@
         "好像都有象徵的顏色",
         "好像很挑食",
         "好像喜歡以前的時刻表"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        8
       ]
     },
     {
@@ -17293,11 +16018,6 @@
         "好像都有象徵的顏色",
         "好像很挑食",
         "好像喜歡以前的時刻表"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
       ]
     },
     {
@@ -17344,11 +16064,6 @@
         "好像都有象徵的顏色",
         "好像很挑食",
         "好像喜歡以前的時刻表"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
       ]
     },
     {
@@ -17384,12 +16099,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 652,
@@ -17422,9 +16132,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 653,
@@ -17457,9 +16165,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 654,
@@ -17494,12 +16200,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 2,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 655,
@@ -17534,12 +16235,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 656,
@@ -17574,12 +16270,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 657,
@@ -17620,9 +16311,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 658,
@@ -17658,13 +16347,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        8
-      ]
+      }
     },
     {
       "pNo": 659,
@@ -17697,9 +16380,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 660,
@@ -17751,9 +16432,7 @@
         "星系的位置似乎很重要",
         "長男好像不擅長戀愛",
         "老幺好像愛拈花惹草"
-      ],
-      "feedCount": 5,
-      "eatable_time": 0.5
+      ]
     },
     {
       "pNo": 661,
@@ -17797,9 +16476,7 @@
         "星系的位置似乎很重要",
         "長男好像不擅長戀愛",
         "老幺好像愛拈花惹草"
-      ],
-      "feedCount": 8,
-      "eatable_time": 0.5
+      ]
     },
     {
       "pNo": 662,
@@ -17843,9 +16520,7 @@
         "星系的位置似乎很重要",
         "長男好像不擅長戀愛",
         "老幺好像愛拈花惹草"
-      ],
-      "feedCount": 9,
-      "eatable_time": 0.5
+      ]
     },
     {
       "pNo": 663,
@@ -17878,9 +16553,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 664,
@@ -17916,13 +16589,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        7
-      ]
+      }
     },
     {
       "pNo": 665,
@@ -17958,13 +16625,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 666,
@@ -18000,13 +16661,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 667,
@@ -18053,9 +16708,7 @@
         "跟性別似乎有關",
         "出生順序似乎是關鍵",
         "手足關係似乎很錯綜複雜"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 668,
@@ -18094,9 +16747,7 @@
         "跟性別似乎有關",
         "出生順序似乎是關鍵",
         "手足關係似乎很錯綜複雜"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 669,
@@ -18135,9 +16786,7 @@
         "跟性別似乎有關",
         "出生順序似乎是關鍵",
         "手足關係似乎很錯綜複雜"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 670,
@@ -18176,9 +16825,7 @@
         "跟性別似乎有關",
         "出生順序似乎是關鍵",
         "手足關係似乎很錯綜複雜"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 671,
@@ -18214,13 +16861,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        6
-      ]
+      }
     },
     {
       "pNo": 672,
@@ -18253,9 +16894,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 673,
@@ -18290,12 +16929,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 674,
@@ -18328,9 +16962,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 675,
@@ -18363,9 +16995,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 676,
@@ -18401,9 +17031,7 @@
           675
         ],
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 677,
@@ -18457,11 +17085,6 @@
         "有一個喜歡的食物",
         "好像因為父親淨身而誕生的樣子",
         "姐姐似乎不想見到弟弟"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
       ]
     },
     {
@@ -18508,11 +17131,6 @@
         "有一個喜歡的食物",
         "好像因為父親淨身而誕生的樣子",
         "姐姐似乎不想見到弟弟"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
       ]
     },
     {
@@ -18559,11 +17177,6 @@
         "有一個喜歡的食物",
         "好像因為父親淨身而誕生的樣子",
         "姐姐似乎不想見到弟弟"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
       ]
     },
     {
@@ -18597,9 +17210,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 681,
@@ -18635,13 +17246,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        1,
-        5
-      ]
+      }
     },
     {
       "pNo": 682,
@@ -18676,12 +17281,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 683,
@@ -18717,13 +17317,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        7
-      ]
+      }
     },
     {
       "pNo": 684,
@@ -18756,9 +17350,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 685,
@@ -18791,9 +17383,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 686,
@@ -18840,9 +17430,7 @@
         "好像和北歐神殿有關",
         "在與巨人的戰鬥中很活躍的樣子",
         "成豬時好像需要神秘的數字"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 687,
@@ -18881,9 +17469,7 @@
         "好像和北歐神殿有關",
         "在與巨人的戰鬥中很活躍的樣子",
         "成豬時好像需要神秘的數字"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 688,
@@ -18922,9 +17508,7 @@
         "好像和北歐神殿有關",
         "在與巨人的戰鬥中很活躍的樣子",
         "成豬時好像需要神秘的數字"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 689,
@@ -18957,9 +17541,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 690,
@@ -18995,13 +17577,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 691,
@@ -19037,13 +17613,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        3
-      ]
+      }
     },
     {
       "pNo": 692,
@@ -19076,9 +17646,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 693,
@@ -19114,13 +17682,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 694,
@@ -19156,13 +17718,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        4
-      ]
+      }
     },
     {
       "pNo": 695,
@@ -19195,9 +17751,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 696,
@@ -19232,12 +17786,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 697,
@@ -19272,12 +17821,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 698,
@@ -19331,11 +17875,6 @@
         "似乎有成為天下下人的野心",
         "好像想要奢侈過剩",
         "好像想要沒收刀子"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
       ]
     },
     {
@@ -19364,9 +17903,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 800,
@@ -19401,12 +17938,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 801,
@@ -19441,12 +17973,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 802,
@@ -19479,9 +18006,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 803,
@@ -19514,9 +18039,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 804,
@@ -19549,9 +18072,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 805,
@@ -19586,12 +18107,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 900,
@@ -19617,9 +18133,7 @@
             0
           ]
         }
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 901,
@@ -19645,9 +18159,7 @@
             0
           ]
         }
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 904,
@@ -19695,12 +18207,7 @@
       "breedingGuide": {
         "requirements": "成豬前體重限制 ≥128.0 kg",
         "tips": null
-      },
-      "feedCount": 15,
-      "eatable_time": 2,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 905,
@@ -19739,12 +18246,7 @@
           904
         ],
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 920,
@@ -19790,9 +18292,7 @@
       "breedingGuide": {
         "requirements": "成豬前體重限制 ≥138.0 kg",
         "tips": null
-      },
-      "feedCount": 15,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 921,
@@ -19828,9 +18328,7 @@
         "fail": [
           920
         ]
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1000,
@@ -19865,12 +18363,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1001,
@@ -19906,13 +18399,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        5
-      ]
+      }
     },
     {
       "pNo": 1002,
@@ -19948,13 +18435,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 1003,
@@ -19995,9 +18476,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1004,
@@ -20030,9 +18509,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1005,
@@ -20067,12 +18544,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 1006,
@@ -20107,12 +18579,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1007,
@@ -20145,9 +18612,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1008,
@@ -20199,9 +18664,7 @@
         "彈琴吟詩音樂很精湛的樣子",
         "好像想要保持勻稱的臉和身材",
         "好像是從牧羊人熬出頭的樣子"
-      ],
-      "feedCount": 8,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1009,
@@ -20234,9 +18697,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1010,
@@ -20269,9 +18730,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 8,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1011,
@@ -20307,13 +18766,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        5
-      ]
+      }
     },
     {
       "pNo": 1012,
@@ -20346,9 +18799,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1013,
@@ -20381,9 +18832,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1014,
@@ -20419,13 +18868,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        3,
-        6
-      ]
+      }
     },
     {
       "pNo": 1015,
@@ -20460,12 +18903,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1016,
@@ -20521,13 +18959,6 @@
         "似乎有傳聞說其實是龍之子",
         "透過進攻北遷才出人頭地的樣子",
         "會率領著烏合之眾出現的樣子"
-      ],
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        3,
-        4
       ]
     },
     {
@@ -20565,14 +18996,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 1018,
@@ -20609,14 +19033,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 1019,
@@ -20649,9 +19066,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1020,
@@ -20686,12 +19101,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 1021,
@@ -20724,9 +19134,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1022,
@@ -20759,9 +19167,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1023,
@@ -20794,9 +19200,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1024,
@@ -20832,13 +19236,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        3
-      ]
+      }
     },
     {
       "pNo": 1025,
@@ -20890,9 +19288,7 @@
         "數字好像是關鍵",
         "有一場很吸引豬的演說呢",
         "好像是個高個子"
-      ],
-      "feedCount": 16,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1026,
@@ -20925,9 +19321,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 16,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1027,
@@ -20960,9 +19354,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 16,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1028,
@@ -20997,12 +19389,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1029,
@@ -21037,12 +19424,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1030,
@@ -21075,9 +19457,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1031,
@@ -21112,12 +19492,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1032,
@@ -21152,12 +19527,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1033,
@@ -21190,9 +19560,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1034,
@@ -21228,13 +19596,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        8
-      ]
+      }
     },
     {
       "pNo": 1035,
@@ -21270,13 +19632,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        5,
-        7
-      ]
+      }
     },
     {
       "pNo": 1036,
@@ -21328,9 +19684,7 @@
         "好像是個會忘記睡覺的勞動者",
         "似乎有賢妻支持著他",
         "似乎會有流行疾病"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1037,
@@ -21358,9 +19712,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1038,
@@ -21388,9 +19740,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1039,
@@ -21423,9 +19773,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1040,
@@ -21458,9 +19806,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1041,
@@ -21493,9 +19839,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1042,
@@ -21530,12 +19874,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1043,
@@ -21587,9 +19926,7 @@
         "富有的豬似乎是肅清對象",
         "似乎害怕被肅清而孤立他",
         "似乎從赤貧生活中保住了性命"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1044,
@@ -21616,9 +19953,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1045,
@@ -21645,9 +19980,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 0,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1046,
@@ -21680,9 +20013,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1047,
@@ -21718,13 +20049,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        4
-      ]
+      }
     },
     {
       "pNo": 1048,
@@ -21757,9 +20082,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1049,
@@ -21794,12 +20117,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1050,
@@ -21834,12 +20152,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 1051,
@@ -21874,12 +20187,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1052,
@@ -21914,12 +20222,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 1053,
@@ -21954,12 +20257,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1054,
@@ -21994,12 +20292,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1055,
@@ -22043,9 +20336,7 @@
         "好像有三種喜歡的食物呢",
         "有很大的獠牙喔",
         "好像喜歡曬太陽"
-      ],
-      "feedCount": 3,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1056,
@@ -22081,13 +20372,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        5
-      ]
+      }
     },
     {
       "pNo": 1057,
@@ -22123,13 +20408,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        4,
-        8
-      ]
+      }
     },
     {
       "pNo": 1058,
@@ -22164,12 +20443,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 1,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 1059,
@@ -22202,9 +20476,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1060,
@@ -22237,9 +20509,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1061,
@@ -22272,9 +20542,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1062,
@@ -22318,9 +20586,7 @@
         "感覺到有一股妖氣呢",
         "似乎來自日本南部",
         "好像會在夜晚成群跑來跑去"
-      ],
-      "feedCount": 3,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1063,
@@ -22353,9 +20619,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1064,
@@ -22390,12 +20654,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 1065,
@@ -22428,9 +20687,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1066,
@@ -22465,12 +20722,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1067,
@@ -22505,12 +20757,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 1068,
@@ -22553,12 +20800,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1069,
@@ -22602,9 +20844,7 @@
         "好像有在神話中登場",
         "好像是從南方的島嶼過來的",
         "好像會變成花花公子"
-      ],
-      "feedCount": 5,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1070,
@@ -22637,9 +20877,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1071,
@@ -22674,12 +20912,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 1,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 1072,
@@ -22715,13 +20948,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        1,
-        5
-      ]
+      }
     },
     {
       "pNo": 1073,
@@ -22756,12 +20983,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 1074,
@@ -22794,9 +21016,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1075,
@@ -22831,12 +21051,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 2,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 1076,
@@ -22880,9 +21095,7 @@
         "好像因為生過小孩所以很瘦",
         "好像會變成有很多小孩的母豬",
         "好像會帶來豐饒與災禍"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1077,
@@ -22918,13 +21131,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        1,
-        8
-      ]
+      }
     },
     {
       "pNo": 1078,
@@ -22957,9 +21164,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1079,
@@ -22992,9 +21197,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 2
+      }
     },
     {
       "pNo": 1080,
@@ -23027,9 +21230,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1081,
@@ -23065,13 +21266,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 1082,
@@ -23104,9 +21299,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1083,
@@ -23139,9 +21332,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1084,
@@ -23185,9 +21376,7 @@
         "好像會樹立斷奶的榜樣",
         "好像會為出生的小豬送行",
         "似乎喜歡外面的樣子"
-      ],
-      "feedCount": 8,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1085,
@@ -23220,9 +21409,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1086,
@@ -23257,12 +21444,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 1087,
@@ -23295,9 +21477,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1088,
@@ -23333,13 +21513,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        5,
-        6
-      ]
+      }
     },
     {
       "pNo": 1089,
@@ -23372,9 +21546,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1090,
@@ -23407,9 +21579,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1091,
@@ -23453,9 +21623,7 @@
         "到底要養到多胖呀",
         "注意挑食會吃很多的樣子",
         "好像是從台灣來的"
-      ],
-      "feedCount": 16,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1092,
@@ -23488,9 +21656,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1093,
@@ -23523,9 +21689,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1094,
@@ -23558,9 +21722,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1095,
@@ -23596,13 +21758,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 1096,
@@ -23635,9 +21791,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1097,
@@ -23670,9 +21824,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1098,
@@ -23708,13 +21860,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        7
-      ]
+      }
     },
     {
       "pNo": 1099,
@@ -23747,9 +21893,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1100,
@@ -23782,9 +21926,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1101,
@@ -23828,9 +21970,7 @@
         "好像執著於單一性別？",
         "好像特別討厭聖歌",
         "好像會咬別的豬"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1102,
@@ -23863,9 +22003,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1103,
@@ -23898,9 +22036,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1104,
@@ -23935,12 +22071,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 1105,
@@ -23975,12 +22106,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1106,
@@ -24013,9 +22139,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1107,
@@ -24050,12 +22174,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1108,
@@ -24099,9 +22218,7 @@
         "「吃的可以分兩半」的樣子",
         "好像喜歡出謎語",
         "好像不喜歡移動"
-      ],
-      "feedCount": 2,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1109,
@@ -24136,12 +22253,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1110,
@@ -24176,12 +22288,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1111,
@@ -24214,9 +22321,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1112,
@@ -24249,9 +22354,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1113,
@@ -24284,9 +22387,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1114,
@@ -24319,9 +22420,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1115,
@@ -24354,9 +22453,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1116,
@@ -24400,9 +22497,7 @@
         "太胖的話移動好像會很困難",
         "好像會監視豬豬小屋的出貨",
         "好像很在意出貨數"
-      ],
-      "feedCount": 12,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1117,
@@ -24435,9 +22530,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1118,
@@ -24470,9 +22563,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1119,
@@ -24507,12 +22598,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1120,
@@ -24547,12 +22633,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1121,
@@ -24588,13 +22669,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        5
-      ]
+      }
     },
     {
       "pNo": 1122,
@@ -24629,12 +22704,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 1123,
@@ -24673,9 +22743,7 @@
         "好像喜歡單獨行動",
         "好像討厭一切殺生的事",
         "擁有強烈的慈愛之心"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1124,
@@ -24718,12 +22786,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 7,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1125,
@@ -24756,9 +22819,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1126,
@@ -24793,12 +22854,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1127,
@@ -24831,9 +22887,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1128,
@@ -24866,9 +22920,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1129,
@@ -24901,9 +22953,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1130,
@@ -24939,13 +22989,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        3,
-        5
-      ]
+      }
     },
     {
       "pNo": 1131,
@@ -24978,9 +23022,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1132,
@@ -25024,9 +23066,7 @@
         "靠近的話好像會生病",
         "似乎擅長魅惑欺騙",
         "好像被小心呵護著養大"
-      ],
-      "feedCount": 2,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1133,
@@ -25061,12 +23101,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0,
-      "eatable": [
-        3
-      ]
+      }
     },
     {
       "pNo": 1134,
@@ -25102,13 +23137,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        7
-      ]
+      }
     },
     {
       "pNo": 1135,
@@ -25149,9 +23178,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1136,
@@ -25194,12 +23221,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1137,
@@ -25235,13 +23257,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        3
-      ]
+      }
     },
     {
       "pNo": 1138,
@@ -25276,12 +23292,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1139,
@@ -25325,9 +23336,7 @@
         "似乎調查過飼料種類",
         "好像是黑桃的形狀",
         "似乎被懷疑是否存在"
-      ],
-      "feedCount": 18,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1140,
@@ -25362,12 +23371,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1141,
@@ -25400,9 +23404,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 6,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1142,
@@ -25443,9 +23445,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1
+      }
     },
     {
       "pNo": 1143,
@@ -25489,13 +23489,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        7,
-        8
-      ]
+      }
     },
     {
       "pNo": 1144,
@@ -25528,9 +23522,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1145,
@@ -25566,13 +23558,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 1,
-      "eatable": [
-        2,
-        8
-      ]
+      }
     },
     {
       "pNo": 1146,
@@ -25616,9 +23602,7 @@
         "數字似乎是關鍵",
         "好像很在意最後審判中的豬",
         "好像會傳達神的訊息"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1147,
@@ -25653,12 +23637,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 1148,
@@ -25694,13 +23673,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 1,
-      "eatable": [
-        4,
-        8
-      ]
+      }
     },
     {
       "pNo": 1149,
@@ -25743,12 +23716,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 7,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1150,
@@ -25789,9 +23757,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1151,
@@ -25834,12 +23800,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 1,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1152,
@@ -25882,12 +23843,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 5,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 1153,
@@ -25926,9 +23882,7 @@
         "好像會在清晨啼叫",
         "象是會出現在神話裡",
         "只喝水的樣子"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1154,
@@ -25963,12 +23917,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 1155,
@@ -26004,13 +23953,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        2,
-        4
-      ]
+      }
     },
     {
       "pNo": 1156,
@@ -26051,9 +23994,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1157,
@@ -26094,9 +24035,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1158,
@@ -26135,9 +24074,7 @@
         "上一刻出貨的豬似乎很重要",
         "似乎會往壁爐裡添柴火",
         "聽說她都待在家裡"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1159,
@@ -26172,12 +24109,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1160,
@@ -26212,12 +24144,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        4
-      ]
+      }
     },
     {
       "pNo": 1161,
@@ -26258,9 +24185,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1162,
@@ -26301,9 +24226,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1163,
@@ -26339,13 +24262,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 1164,
@@ -26378,9 +24295,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1165,
@@ -26419,9 +24334,7 @@
         "好像能量測豬的靈魂重量",
         "好像一出生就會被藏起來",
         "手足關係似乎很錯綜複雜"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1166,
@@ -26454,9 +24367,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1167,
@@ -26491,12 +24402,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1168,
@@ -26532,13 +24438,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        8
-      ]
+      }
     },
     {
       "pNo": 1169,
@@ -26571,9 +24471,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1170,
@@ -26614,9 +24512,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1171,
@@ -26660,13 +24556,7 @@
           }
         },
         "specialFeeding": true
-      },
-      "feedCount": 4,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 1174,
@@ -26701,12 +24591,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 1175,
@@ -26741,12 +24626,7 @@
           ]
         },
         "specialFeeding": true
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        6
-      ]
+      }
     },
     {
       "pNo": 1176,
@@ -26790,9 +24670,7 @@
         "似乎與出沒時間有關",
         "會受到周圍環境的影響",
         "據說是從父親的右眼誕生的"
-      ],
-      "feedCount": 3,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 450,
@@ -26818,9 +24696,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 451,
@@ -26846,9 +24722,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 452,
@@ -26876,12 +24750,7 @@
         "picky": [
           8
         ]
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        8
-      ]
+      }
     },
     {
       "pNo": 453,
@@ -26907,9 +24776,7 @@
         "interval": 0,
         "times": 4,
         "picky": []
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 454,
@@ -26935,9 +24802,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1177,
@@ -26963,9 +24828,7 @@
         "interval": 0,
         "times": 2,
         "picky": []
-      },
-      "feedCount": 2,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1178,
@@ -26994,13 +24857,7 @@
           1,
           2
         ]
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 1179,
@@ -27026,9 +24883,7 @@
         "interval": 0,
         "times": 4,
         "picky": []
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1180,
@@ -27054,9 +24909,7 @@
         "interval": 0,
         "times": 4,
         "picky": []
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1181,
@@ -27088,9 +24941,7 @@
         "好像會讓心愛的對象變身",
         "好像和北歐神殿有關",
         "似乎有一位雙胞胎哥哥"
-      ],
-      "feedCount": 0,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1182,
@@ -27119,13 +24970,7 @@
           1,
           8
         ]
-      },
-      "feedCount": 3,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        8
-      ]
+      }
     },
     {
       "pNo": 1183,
@@ -27153,12 +24998,7 @@
         "picky": [
           1
         ]
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        1
-      ]
+      }
     },
     {
       "pNo": 1184,
@@ -27186,12 +25026,7 @@
         "picky": [
           7
         ]
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        7
-      ]
+      }
     },
     {
       "pNo": 1185,
@@ -27219,12 +25054,7 @@
         "picky": [
           2
         ]
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        2
-      ]
+      }
     },
     {
       "pNo": 1186,
@@ -27250,9 +25080,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1187,
@@ -27278,9 +25106,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1188,
@@ -27317,9 +25143,7 @@
         "有著不為人知的野心",
         "非常節儉的豬",
         "不急不躁且非常有耐心"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1189,
@@ -27347,12 +25171,7 @@
         "picky": [
           5
         ]
-      },
-      "feedCount": 1,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1190,
@@ -27378,9 +25197,7 @@
         "interval": 0,
         "times": 4,
         "picky": []
-      },
-      "feedCount": 4,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1191,
@@ -27409,13 +25226,7 @@
           1,
           2
         ]
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        1,
-        2
-      ]
+      }
     },
     {
       "pNo": 1192,
@@ -27441,9 +25252,7 @@
         "interval": 0,
         "times": 5,
         "picky": []
-      },
-      "feedCount": 5,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1193,
@@ -27469,9 +25278,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1194,
@@ -27497,9 +25304,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     },
     {
       "pNo": 1195,
@@ -27536,9 +25341,7 @@
         "似乎有著一身發達的肌肉",
         "感覺很渴望來場一對一的單挑",
         "看起來全身穿戴著重裝備"
-      ],
-      "feedCount": 1,
-      "eatable_time": 0
+      ]
     },
     {
       "pNo": 1196,
@@ -27566,12 +25369,7 @@
         "picky": [
           5
         ]
-      },
-      "feedCount": 2,
-      "eatable_time": 0,
-      "eatable": [
-        5
-      ]
+      }
     },
     {
       "pNo": 1197,
@@ -27597,9 +25395,7 @@
         "interval": 0,
         "times": 3,
         "picky": []
-      },
-      "feedCount": 3,
-      "eatable_time": 0
+      }
     }
   ],
   "breeding": [

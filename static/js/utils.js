@@ -106,7 +106,7 @@ export function feedIntervalText(eatable_time) {
 
 // 挑食程度判定
 export function pigPicky(p) {
-  const ids = (p.eatable || []).filter(i => FEED_LABELS[i]);
+  const ids = ((p.feeding && p.feeding.picky) || []).filter(i => FEED_LABELS[i]);
   const foods = ids.map(i => FEED_LABELS[i]);
   if (ids.length === 0) return { level: "none", label: "不挑食", foods };
   if (ids.length === 1) return { level: "picky", label: "挑食", foods };
