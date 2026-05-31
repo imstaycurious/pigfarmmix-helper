@@ -1542,11 +1542,14 @@ function buildAuctionOwnershipRow(pNo) {
 //   adult ≥ small  → 错过小章, 还差 X kg 到大章
 // 游戏机制下 adult 不会 ≥ 大章阈值, 所以无须第三种情况。
 // 该品种数据里没 weight 字段 (badgeWeights == null) → 不显示。
+// 特例：大黑猪 (pNo 50) 的成猪体重偏移是 278 而不是 98
 function buildBadgeForecast(rec, pig) {
   if (!pig) return null;
   const w = badgeWeights(pig);
   if (!w) return null;
-  const adult = (rec.weight || 0) + ADULT_OFFSET_KG;
+  // 大黑猪特殊处理：偏移 22 + 278 = 300
+  const adultOffset = pig.pNo === 50 ? (WEIGHT_OFFSET_KG + 278) : ADULT_OFFSET_KG;
+  const adult = (rec.weight || 0) + adultOffset;
   const adultStr = adult.toFixed(1);
   if (adult < w.small) {
     const delta = (w.small - adult).toFixed(1);
