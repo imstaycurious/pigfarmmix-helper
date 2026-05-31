@@ -69,15 +69,15 @@ export function fmtKg(v) {
 }
 
 export function badgeWeights(pig) {
-  if (!pig || typeof pig.bigWeight !== "number" || typeof pig.smallWeight !== "number") {
+  if (!pig || !pig.weight || typeof pig.weight.big !== "number" || typeof pig.weight.small !== "number") {
     return null;
   }
   const off = badgeOffset(pig.pNo);
   return {
-    small: pig.smallWeight + off,
-    big: pig.bigWeight + off,
-    smallRaw: pig.smallWeight,
-    bigRaw: pig.bigWeight,
+    small: pig.weight.small + off,
+    big: pig.weight.big + off,
+    smallRaw: pig.weight.small,
+    bigRaw: pig.weight.big,
     offset: off,
   };
 }
