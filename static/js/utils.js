@@ -2,7 +2,7 @@
  * 工具函数和 DOM 辅助函数
  */
 
-import { IMG_BASE, FEED_LABELS, WEIGHT_OFFSET_BASE } from './constants.js';
+import { IMG_BASE, FEED_LABELS } from './constants.js';
 import { state } from './state.js';
 
 // DOM 辅助函数
@@ -58,11 +58,6 @@ export function stars(rare, special) {
   return "★".repeat(filled) + "☆".repeat(5 - filled);
 }
 
-// 体型徽章相关
-export function badgeOffset(_pNo) {
-  return WEIGHT_OFFSET_BASE;
-}
-
 export function fmtKg(v) {
   if (typeof v !== "number" || !isFinite(v)) return "?";
   return (Math.round(v * 10) / 10).toFixed(1);
@@ -72,13 +67,13 @@ export function badgeWeights(pig) {
   if (!pig || !pig.weight || typeof pig.weight.big !== "number" || typeof pig.weight.small !== "number") {
     return null;
   }
-  const off = badgeOffset(pig.pNo);
+  // 数据中已经包含了偏移量，直接使用
   return {
-    small: pig.weight.small + off,
-    big: pig.weight.big + off,
+    small: pig.weight.small,
+    big: pig.weight.big,
     smallRaw: pig.weight.small,
     bigRaw: pig.weight.big,
-    offset: off,
+    offset: 0,
   };
 }
 
