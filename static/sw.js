@@ -10,11 +10,17 @@
 //   - 已浏览过的猪头像从缓存读取
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
-const CACHE = "pigfarm-v65";
+const CACHE = "pigfarm-v67";
 const SHELL = [
   "/",
   "/index.html",
   "/app.js",
+  "/js/constants.js",
+  "/js/storage.js",
+  "/js/state.js",
+  "/js/utils.js",
+  "/js/data.js",
+  "/js/filters.js",
   "/css/app.css",
   "/manifest.webmanifest",
   "/icon-192.png",
