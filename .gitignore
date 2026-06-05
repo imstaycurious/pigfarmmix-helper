@@ -16,12 +16,16 @@ venv/
 .DS_Store
 Thumbs.db
 
+# Local secrets
+.env
+
 # Scratch / scraped artifacts (if they come back)
 *.tmp
 *.log
 
 *.py
-.wrangler/*
+.wrangler/
+*/.wrangler/
 tmp*
 pig143*
 static/img/png_h/*
