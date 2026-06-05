@@ -9,7 +9,13 @@ export const STORAGE_KEY_BADGE_BIG = "pig_badge_big_v1";
 export const STORAGE_KEY_HIDDEN_UNLOCK = "pig_hidden_unlocked_v1";
 export const STORAGE_KEY_RAISING = "pig_raising_v1";
 export const STORAGE_KEY_RAISING_FLOOR = "pig_raising_floor_v1";
+export const STORAGE_KEY_DEVICE_ID = "pig_device_id_v1";
+export const STORAGE_KEY_PUSH_ENABLED = "pig_push_enabled_v1";
 export const LANG_KEY = "lang_v1";
+
+// Web Push 的 VAPID public key。生成 VAPID keys 后把 public key 填到这里。
+// private key 只放 Cloudflare Pages/Worker 环境变量，不能写进前端代码。
+export const VAPID_PUBLIC_KEY = "";
 
 export const DATA_URL_BY_LANG = {
   zhs: "/data/pigs_full_zhs.json",

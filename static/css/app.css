@@ -2070,7 +2070,7 @@
       position: fixed !important;
       left: 0 !important;
       right: 0 !important;
-      bottom: 0 !important;
+      bottom: var(--tabbar-bottom-offset, 0px) !important;
       width: 100%;
       height: calc(56px + env(safe-area-inset-bottom));
       padding-bottom: env(safe-area-inset-bottom);
@@ -2137,6 +2137,7 @@
 
     .tab-panel.active {
       display: block;
+      min-height: calc(100dvh - 56px - env(safe-area-inset-bottom));
     }
 
     /* add-tab */

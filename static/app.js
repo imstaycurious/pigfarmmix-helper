@@ -13,12 +13,13 @@ import * as F from './js/filters.js';
 const { $, $$, el, text, toast, escHtml, imgUrl, stars, badgeWeights, badgeMetaHTML, 
         feedIntervalText, pigPicky, isEventPigId, pigIsOwned, showUnlockCelebration, fmtKg } = U;
 const { METHOD_LABELS, HUNT_SITES, FEED_LABELS, BLEED_TYPE_TEXT, COLOR_ORDER_PROG,
-        COLOR_DOT_PROG, RAISING_FLOORS } = C;
+        COLOR_DOT_PROG, RAISING_FLOORS, VAPID_PUBLIC_KEY } = C;
 const { loadData, setPigOwned, setPigBadge, deriveAcquisitions, checkAndUnlockHidden, 
         buildBreedingIndex, mergeHiddenIntoMain, basePigPNos } = D;
 const { currentAtlasPigs, currentEventPigs, currentMinePigs } = F;
 const { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, 
-        saveHiddenUnlocked, saveRaisingPigs, saveRaisingFloor, currentLang, saveLang } = S;
+        saveHiddenUnlocked, saveRaisingPigs, saveRaisingFloor, loadDeviceId,
+        loadPushEnabled, savePushEnabled, currentLang, saveLang } = S;
 
 function buildCard(p, opts) {
   const { showCollected = true, showBadges = false } = opts || {};
@@ -439,9 +440,57 @@ const MS_HOUR = 60 * MS_MIN;
 const RAISING_SOON_MS = 10 * MS_MIN;
 const raisingSearchState = { q: "", results: [] };
 let raisingTicker = null;
+let raisingPushEnabled = loadPushEnabled();
+let raisingPushSyncTimer = null;
+let raisingPushSyncInFlight = null;
+let raisingPushSyncPending = false;
+let serviceWorkerReadyPromise = null;
 
 function makeRaisingId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function deviceId() {
+  return loadDeviceId();
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+function webPushSupported() {
+  return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+}
+
+function serviceWorkerReady() {
+  if (!("serviceWorker" in navigator)) return Promise.reject(new Error("service worker unsupported"));
+  if (!serviceWorkerReadyPromise) {
+    serviceWorkerReadyPromise = navigator.serviceWorker.ready;
+  }
+  return serviceWorkerReadyPromise;
+}
+
+function apiJson(path, body) {
+  return fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).then(async res => {
+    let data = null;
+    try { data = await res.json(); } catch { }
+    if (!res.ok || (data && data.ok === false)) {
+      const msg = data && data.error ? data.error : `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return data || {};
+  });
 }
 
 function currentRaisingFloor() {
@@ -494,6 +543,84 @@ function getRaisingDueMs(item, pig) {
   return item.lastFedAt + adjustedFeedIntervalMs(pig);
 }
 
+let vapidPublicKeyPromise = null;
+async function getVapidPublicKey() {
+  if (VAPID_PUBLIC_KEY) return VAPID_PUBLIC_KEY;
+  if (!vapidPublicKeyPromise) {
+    vapidPublicKeyPromise = fetch("/api/push-config")
+      .then(async res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data && data.publicKey ? String(data.publicKey) : "";
+      })
+      .catch(err => {
+        console.warn("[raising] VAPID config failed:", err);
+        return "";
+      });
+  }
+  return vapidPublicKeyPromise;
+}
+
+function buildRaisingCloudRecords() {
+  if (!state.dataLoaded) return [];
+  return state.raisingPigs
+    .map(item => {
+      const pig = getPigByPNo(item.pNo);
+      if (!pig) return null;
+      return {
+        id: String(item.id),
+        pNo: item.pNo,
+        floor: RAISING_FLOORS[state.raisingFloor] ? state.raisingFloor : "normal",
+        startedAt: Number(item.startedAt) || Date.now(),
+        lastFedAt: Number(item.lastFedAt) || Date.now(),
+        feedCount: Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0),
+        nextFeedAt: getRaisingDueMs(item, pig),
+        notifiedNextFeedAt: item.notifiedAt || null,
+      };
+    })
+    .filter(Boolean);
+}
+
+async function syncRaisingRecordsToCloud({ silent = true } = {}) {
+  if (!raisingPushEnabled || !state.dataLoaded) return;
+  if (raisingPushSyncInFlight) {
+    raisingPushSyncPending = true;
+    return raisingPushSyncInFlight;
+  }
+
+  raisingPushSyncPending = false;
+  const payload = {
+    deviceId: deviceId(),
+    floor: RAISING_FLOORS[state.raisingFloor] ? state.raisingFloor : "normal",
+    records: buildRaisingCloudRecords(),
+  };
+
+  raisingPushSyncInFlight = apiJson("/api/raising-sync", payload)
+    .then(() => {
+      if (!silent) toast("后台提醒数据已同步");
+    })
+    .catch(err => {
+      console.warn("[raising] cloud sync failed:", err);
+      if (!silent) toast(`后台提醒同步失败: ${err.message || err}`);
+    })
+    .finally(() => {
+      raisingPushSyncInFlight = null;
+      if (raisingPushSyncPending) {
+        raisingPushSyncPending = false;
+        scheduleRaisingPushSync(0);
+      }
+    });
+  return raisingPushSyncInFlight;
+}
+
+function scheduleRaisingPushSync(delay = 500) {
+  if (!raisingPushEnabled || !state.dataLoaded) return;
+  clearTimeout(raisingPushSyncTimer);
+  raisingPushSyncTimer = setTimeout(() => {
+    syncRaisingRecordsToCloud({ silent: true });
+  }, delay);
+}
+
 function raisingStatusClass(dueMs) {
   const diff = dueMs - Date.now();
   if (diff <= 0) return "due";
@@ -503,6 +630,7 @@ function raisingStatusClass(dueMs) {
 
 function saveRaisingState() {
   saveRaisingPigs(state.raisingPigs);
+  scheduleRaisingPushSync();
 }
 
 function addRaisingPig(pNo) {
@@ -834,12 +962,38 @@ function updateRaisingNotificationButton() {
   }
   btn.disabled = Notification.permission === "denied";
   if (Notification.permission === "granted") {
-    btn.textContent = "提醒已开启";
+    btn.textContent = raisingPushEnabled ? "后台提醒已开启" : "提醒已开启";
   } else if (Notification.permission === "denied") {
     btn.textContent = "提醒被拒绝";
   } else {
     btn.textContent = "开启提醒";
   }
+}
+
+async function subscribeRaisingPush() {
+  if (!webPushSupported()) {
+    throw new Error("当前浏览器不支持后台推送");
+  }
+  const publicKey = await getVapidPublicKey();
+  if (!publicKey) {
+    throw new Error("还没有配置 VAPID_PUBLIC_KEY");
+  }
+  const reg = await serviceWorkerReady();
+  let subscription = await reg.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+  }
+  await apiJson("/api/push-subscribe", {
+    deviceId: deviceId(),
+    subscription: subscription.toJSON(),
+  });
+  raisingPushEnabled = true;
+  savePushEnabled(true);
+  await syncRaisingRecordsToCloud({ silent: true });
+  return subscription;
 }
 
 async function requestRaisingNotificationPermission() {
@@ -849,7 +1003,18 @@ async function requestRaisingNotificationPermission() {
     return;
   }
   if (Notification.permission === "granted") {
-    toast("提醒已经开启");
+    if (!raisingPushEnabled) {
+      try {
+        await subscribeRaisingPush();
+        toast("后台提醒已开启");
+      } catch (err) {
+        console.warn("[raising] push subscribe failed:", err);
+        toast(`提醒已开启，后台推送未完成: ${err.message || err}`, 3200);
+      }
+    } else {
+      syncRaisingRecordsToCloud({ silent: true });
+      toast("提醒已经开启");
+    }
     updateRaisingNotificationButton();
     return;
   }
@@ -862,6 +1027,14 @@ async function requestRaisingNotificationPermission() {
   updateRaisingNotificationButton();
   toast(permission === "granted" ? "提醒已开启" : "没有开启提醒权限");
   if (permission === "granted") {
+    try {
+      await subscribeRaisingPush();
+      toast("后台提醒已开启");
+    } catch (err) {
+      console.warn("[raising] push subscribe failed:", err);
+      toast(`提醒已开启，后台推送未完成: ${err.message || err}`, 3200);
+    }
+    updateRaisingNotificationButton();
     const now = Date.now();
     let changed = false;
     for (const item of state.raisingPigs) {
@@ -1830,6 +2003,23 @@ if (/iPad|iPhone|iPod/.test(ua) && !window.navigator.standalone) {
   $("#installText").textContent = "在 Safari 点击分享 → 加到主屏幕";
 }
 
+function syncTabbarViewportOffset() {
+  if (!window.visualViewport) {
+    document.documentElement.style.setProperty("--tabbar-bottom-offset", "0px");
+    return;
+  }
+  const vv = window.visualViewport;
+  const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+  document.documentElement.style.setProperty("--tabbar-bottom-offset", `${offset}px`);
+}
+
+syncTabbarViewportOffset();
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", syncTabbarViewportOffset);
+  window.visualViewport.addEventListener("scroll", syncTabbarViewportOffset);
+}
+window.addEventListener("resize", syncTabbarViewportOffset);
+
 // ----- tab switching -----
 const TABS = {
   atlas: { panel: "#tabAtlas", btn: "#tabBtnAtlas" },
@@ -1846,7 +2036,6 @@ function activateTab(name) {
     $(ids.btn).classList.toggle("active", active);
     $(ids.btn).setAttribute("aria-selected", String(active));
   }
-  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   if (name === "mine") renderNameResults();
   if (name === "raising") {
     renderRaisingBody();
@@ -1854,6 +2043,10 @@ function activateTab(name) {
     updateRaisingCountdownNodes();
   }
   if (name === "auction") renderAuctionTab();
+  requestAnimationFrame(() => {
+    syncTabbarViewportOffset();
+    window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+  });
 }
 $("#tabBtnAtlas").addEventListener("click", () => activateTab("atlas"));
 $("#tabBtnEvents").addEventListener("click", () => activateTab("events"));
@@ -2952,6 +3145,7 @@ function init() {
       // → 解锁并弹庆祝。注意这里 hiddenUnlocked=true 时 loadData 已经把隐藏并入了。
       checkAndUnlockHidden();
       render();
+      syncRaisingRecordsToCloud({ silent: true });
     })
     .catch(err => {
       console.error(err);
