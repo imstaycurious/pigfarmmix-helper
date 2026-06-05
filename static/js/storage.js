@@ -8,6 +8,9 @@ import {
   STORAGE_KEY_BADGE_SMALL,
   STORAGE_KEY_BADGE_BIG,
   STORAGE_KEY_HIDDEN_UNLOCK,
+  STORAGE_KEY_RAISING,
+  STORAGE_KEY_RAISING_FLOOR,
+  RAISING_FLOORS,
   LANG_KEY,
 } from './constants.js';
 
@@ -78,6 +81,56 @@ export function loadHiddenUnlocked() {
 export function saveHiddenUnlocked(unlocked) {
   try {
     localStorage.setItem(STORAGE_KEY_HIDDEN_UNLOCK, unlocked ? "1" : "0");
+  } catch { }
+}
+
+export function loadRaisingPigs() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_RAISING);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map(item => ({
+        id: String(item.id || ""),
+        pNo: Number.parseInt(item.pNo, 10),
+        startedAt: Number.parseInt(item.startedAt, 10),
+        lastFedAt: Number.parseInt(item.lastFedAt, 10),
+        notifiedAt: Number.parseInt(item.notifiedAt || 0, 10) || 0,
+        feedCount: Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0),
+      }))
+      .filter(item =>
+        item.id &&
+        Number.isInteger(item.pNo) &&
+        Number.isFinite(item.startedAt) &&
+        Number.isFinite(item.lastFedAt)
+      );
+  } catch {
+    return [];
+  }
+}
+
+export function saveRaisingPigs(raisingPigs) {
+  try {
+    localStorage.setItem(STORAGE_KEY_RAISING, JSON.stringify(raisingPigs || []));
+  } catch { }
+}
+
+export function loadRaisingFloor() {
+  try {
+    const floor = localStorage.getItem(STORAGE_KEY_RAISING_FLOOR);
+    return RAISING_FLOORS[floor] ? floor : "normal";
+  } catch {
+    return "normal";
+  }
+}
+
+export function saveRaisingFloor(floor) {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY_RAISING_FLOOR,
+      RAISING_FLOORS[floor] ? floor : "normal"
+    );
   } catch { }
 }
 

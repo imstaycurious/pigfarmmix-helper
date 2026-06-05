@@ -13,12 +13,12 @@ import * as F from './js/filters.js';
 const { $, $$, el, text, toast, escHtml, imgUrl, stars, badgeWeights, badgeMetaHTML, 
         feedIntervalText, pigPicky, isEventPigId, pigIsOwned, showUnlockCelebration, fmtKg } = U;
 const { METHOD_LABELS, HUNT_SITES, FEED_LABELS, BLEED_TYPE_TEXT, COLOR_ORDER_PROG,
-        COLOR_DOT_PROG } = C;
+        COLOR_DOT_PROG, RAISING_FLOORS } = C;
 const { loadData, setPigOwned, setPigBadge, deriveAcquisitions, checkAndUnlockHidden, 
         buildBreedingIndex, mergeHiddenIntoMain, basePigPNos } = D;
 const { currentAtlasPigs, currentEventPigs, currentMinePigs } = F;
 const { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, 
-        saveHiddenUnlocked, currentLang, saveLang } = S;
+        saveHiddenUnlocked, saveRaisingPigs, saveRaisingFloor, currentLang, saveLang } = S;
 
 function buildCard(p, opts) {
   const { showCollected = true, showBadges = false } = opts || {};
@@ -433,13 +433,550 @@ function renderStatsBar() {
   }
 }
 
+// ----- raising tab -----
+const MS_MIN = 60 * 1000;
+const MS_HOUR = 60 * MS_MIN;
+const RAISING_SOON_MS = 10 * MS_MIN;
+const raisingSearchState = { q: "", results: [] };
+let raisingTicker = null;
+
+function makeRaisingId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function currentRaisingFloor() {
+  return RAISING_FLOORS[state.raisingFloor] || RAISING_FLOORS.normal;
+}
+
+function baseFeedIntervalMs(pig) {
+  const raw = pig && pig.feeding && typeof pig.feeding.interval === "number"
+    ? pig.feeding.interval
+    : 0;
+  if (raw === 0) return 58 * MS_MIN;
+  return Math.max(1, Math.round(raw * MS_HOUR));
+}
+
+function adjustedFeedIntervalMs(pig) {
+  return Math.max(1, Math.round(baseFeedIntervalMs(pig) * currentRaisingFloor().multiplier));
+}
+
+function formatDuration(ms) {
+  if (ms <= 0) return "可喂食";
+  const totalSec = Math.ceil(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function formatIntervalMs(ms) {
+  const mins = Math.round(ms / MS_MIN);
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h > 0 && m > 0) return `${h} 小时 ${m} 分钟`;
+  if (h > 0) return `${h} 小时`;
+  return `${m} 分钟`;
+}
+
+function formatDateTime(ms) {
+  if (!ms) return "—";
+  return new Date(ms).toLocaleString([], {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getRaisingDueMs(item, pig) {
+  return item.lastFedAt + adjustedFeedIntervalMs(pig);
+}
+
+function raisingStatusClass(dueMs) {
+  const diff = dueMs - Date.now();
+  if (diff <= 0) return "due";
+  if (diff <= RAISING_SOON_MS) return "soon";
+  return "";
+}
+
+function saveRaisingState() {
+  saveRaisingPigs(state.raisingPigs);
+}
+
+function addRaisingPig(pNo) {
+  if (!state.dataLoaded) {
+    toast("数据还没加载好");
+    return;
+  }
+  const pig = getPigByPNo(pNo);
+  if (!pig) {
+    toast("找不到这只猪");
+    return;
+  }
+  const now = Date.now();
+  state.raisingPigs.push({
+    id: makeRaisingId(),
+    pNo,
+    startedAt: now,
+    lastFedAt: now,
+    notifiedAt: 0,
+    feedCount: 0,
+  });
+  saveRaisingState();
+  renderRaisingBody();
+  renderRaisingSearchResults();
+  updateRaisingCountdownNodes();
+  toast(`已加入养成中: ${pig.name}`);
+}
+
+function markRaisingFed(id) {
+  const item = state.raisingPigs.find(x => x.id === id);
+  if (!item) return;
+  item.lastFedAt = Date.now();
+  item.notifiedAt = 0;
+  item.feedCount = Math.max(0, (Number.parseInt(item.feedCount || 0, 10) || 0) + 1);
+  saveRaisingState();
+  renderRaisingBody();
+  checkRaisingReminders();
+  const pig = getPigByPNo(item.pNo);
+  toast(pig ? `已记录喂食: ${pig.name}` : "已记录喂食");
+}
+
+function adjustRaisingFeedCount(id, delta) {
+  const item = state.raisingPigs.find(x => x.id === id);
+  if (!item) return;
+  item.feedCount = Math.max(0, (Number.parseInt(item.feedCount || 0, 10) || 0) + delta);
+  saveRaisingState();
+  renderRaisingBody();
+}
+
+function removeRaisingPig(id) {
+  const item = state.raisingPigs.find(x => x.id === id);
+  const pig = item ? getPigByPNo(item.pNo) : null;
+  if (!item) return;
+  if (!confirm(`确定从养成中移除${pig ? "「" + pig.name + "」" : "这条记录"}吗?`)) return;
+  state.raisingPigs = state.raisingPigs.filter(x => x.id !== id);
+  saveRaisingState();
+  renderRaisingBody();
+  renderRaisingSearchResults();
+  toast("已移除养成记录");
+}
+
+function clearRaisingPigs() {
+  if (state.raisingPigs.length === 0) {
+    toast("养成中已经是空的");
+    return;
+  }
+  if (!confirm(`确定清空养成中的 ${state.raisingPigs.length} 条记录吗?`)) return;
+  state.raisingPigs = [];
+  saveRaisingState();
+  renderRaisingBody();
+  renderRaisingSearchResults();
+  toast("已清空养成中");
+}
+
+function searchRaisingPigs(q) {
+  const ql = q.trim().toLowerCase();
+  if (!ql || !state.dataLoaded) return [];
+  const byId = new Map();
+  for (const p of state.pigsById.values()) byId.set(p.pNo, p);
+  for (const p of state.eventPigsById.values()) byId.set(p.pNo, p);
+  for (const p of state.hiddenPigsById.values()) {
+    if (state.pigsById.has(p.pNo)) byId.set(p.pNo, p);
+  }
+  const out = [];
+  for (const p of byId.values()) {
+    const hay = ((p.name || "") + " " + (p.description || "") + " #" + p.pNo).toLowerCase();
+    if (hay.includes(ql)) out.push(p);
+    if (out.length >= 80) break;
+  }
+  out.sort((a, b) => {
+    const aMain = a.book && a.book <= 6 ? 0 : 1;
+    const bMain = b.book && b.book <= 6 ? 0 : 1;
+    if (aMain !== bMain) return aMain - bMain;
+    if (aMain === 0) return (a.book - b.book) || (a.page - b.page) || (a.slot - b.slot) || (a.pNo - b.pNo);
+    return a.pNo - b.pNo;
+  });
+  return out;
+}
+
+function renderRaisingSearchResults() {
+  const box = $("#raisingResults");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!raisingSearchState.q) {
+    box.classList.remove("show");
+    return;
+  }
+  box.classList.add("show");
+  if (raisingSearchState.results.length === 0) {
+    box.appendChild(el("div", { class: "empty-row" }, "没有匹配的猪"));
+    return;
+  }
+  const counts = new Map();
+  for (const item of state.raisingPigs) counts.set(item.pNo, (counts.get(item.pNo) || 0) + 1);
+  for (const p of raisingSearchState.results) {
+    const posText = p.book && p.book <= 6
+      ? `图鉴${p.book}/页${p.page}/格${p.slot}`
+      : "Events图鉴";
+    const count = counts.get(p.pNo) || 0;
+    const row = el("div", {
+      class: "row",
+      onclick: () => addRaisingPig(p.pNo),
+    }, [
+      el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }),
+      el("div", { class: "meta" }, [
+        el("div", { class: "r-name" }, `#${p.pNo} ${p.name}`),
+        el("div", { class: "r-sub" }, `${p.color_text || ""} · ${posText} · 间隔 ${formatIntervalMs(adjustedFeedIntervalMs(p))}`),
+      ]),
+      el("span", { class: "r-in" }, count ? `养成中 ${count}` : "添加"),
+    ]);
+    box.appendChild(row);
+  }
+}
+
+function buildRaisingRow(item) {
+  const pig = getPigByPNo(item.pNo);
+  if (!pig) {
+    return el("div", { class: "raising-card missing" }, [
+      el("div", { class: "raising-info" }, [
+        el("div", { class: "raising-name" }, `#${item.pNo} 找不到数据`),
+        el("div", { class: "raising-meta" }, "数据可能已变更"),
+      ]),
+      el("button", {
+        type: "button",
+        class: "add-btn danger-btn",
+        onclick: () => removeRaisingPig(item.id),
+      }, "移除"),
+    ]);
+  }
+  const intervalMs = adjustedFeedIntervalMs(pig);
+  const dueMs = getRaisingDueMs(item, pig);
+  const diff = dueMs - Date.now();
+  const status = raisingStatusClass(dueMs);
+  const pct = Math.max(0, Math.min(100, ((Date.now() - item.lastFedAt) / intervalMs) * 100));
+  const posText = pig.book && pig.book <= 6
+    ? `图鉴${pig.book} 页${pig.page} #${pig.slot}`
+    : "Events图鉴";
+  const feedN = (pig.feeding && pig.feeding.times) || 0;
+  const feedCount = Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0);
+  const feedDone = feedN > 0 && feedCount >= feedN;
+  const feedStatusText = feedN > 0
+    ? (feedDone ? "已达到最少喂食次数" : `已喂 ${feedCount}/${feedN} 次`)
+    : "无需累计喂食次数";
+
+  return el("div", { class: "raising-card" + (status ? ` is-${status}` : "") }, [
+    el("button", {
+      type: "button",
+      class: "raising-remove",
+      title: "移除",
+      onclick: ev => {
+        ev.stopPropagation();
+        removeRaisingPig(item.id);
+      },
+    }, "×"),
+    el("div", {
+      class: "raising-main",
+      onclick: () => showDetail(pig.pNo),
+    }, [
+      el("div", { class: "raising-thumb" },
+        el("img", { src: imgUrl(pig.pNo), loading: "lazy", alt: pig.name })
+      ),
+      el("div", { class: "raising-info" }, [
+        el("div", { class: "raising-name" }, [
+          el("span", { class: "pno" }, `#${pig.pNo}`),
+          ` ${pig.name}`,
+          el("span", { class: pig.special ? "stars special" : "stars" }, stars(pig.rare, pig.special)),
+        ]),
+        el("div", { class: "raising-meta" }, `${pig.color_text || ""} · ${posText}`),
+        el("div", { class: "raising-meta" }, `当前间隔 ${formatIntervalMs(intervalMs)} · 最少喂 ${feedN} 次`),
+        el("div", { class: "raising-meta" }, `上次 ${formatDateTime(item.lastFedAt)} · 下次 ${formatDateTime(dueMs)}`),
+        el("div", { class: "raising-feed-line" + (feedDone ? " is-done" : "") }, [
+          el("span", { class: "raising-feed-status" }, feedStatusText),
+          el("span", { class: "raising-feed-stepper" }, [
+            el("button", {
+              type: "button",
+              title: "减少一次",
+              onclick: ev => {
+                ev.stopPropagation();
+                adjustRaisingFeedCount(item.id, -1);
+              },
+            }, "−"),
+            el("span", { class: "raising-feed-count" }, String(feedCount)),
+            el("button", {
+              type: "button",
+              title: "增加一次",
+              onclick: ev => {
+                ev.stopPropagation();
+                adjustRaisingFeedCount(item.id, 1);
+              },
+            }, "+"),
+          ]),
+        ]),
+        el("div", { class: "raising-progress" }, [
+          el("div", {
+            class: "raising-progress-fill",
+            style: `width:${pct.toFixed(1)}%`,
+            "data-raising-progress": item.id,
+          }),
+        ]),
+      ]),
+      el("div", { class: "raising-time" }, [
+        el("span", {
+          class: "raising-countdown " + status,
+          "data-raising-countdown": item.id,
+          "data-due-ms": String(dueMs),
+          "data-last-fed-ms": String(item.lastFedAt),
+          "data-interval-ms": String(intervalMs),
+        }, formatDuration(diff)),
+      ]),
+    ]),
+    el("div", { class: "raising-actions" }, [
+      el("button", {
+        type: "button",
+        class: "add-btn",
+        onclick: () => markRaisingFed(item.id),
+      }, "已喂食"),
+      el("button", {
+        type: "button",
+        class: "add-btn secondary",
+        onclick: () => showDetail(pig.pNo),
+      }, "详情"),
+    ]),
+  ]);
+}
+
+function renderRaisingStats() {
+  const stats = $("#raisingStatsBar");
+  if (!stats) return;
+  if (!state.dataLoaded) {
+    stats.textContent = "加载中…";
+    return;
+  }
+  const floor = currentRaisingFloor();
+  let due = 0;
+  const now = Date.now();
+  for (const item of state.raisingPigs) {
+    const pig = getPigByPNo(item.pNo);
+    if (pig && getRaisingDueMs(item, pig) <= now) due++;
+  }
+  stats.textContent = `养成中 ${state.raisingPigs.length} 只 · ${floor.label} · 待喂 ${due}`;
+}
+
+function renderRaisingBody() {
+  renderRaisingStats();
+  updateRaisingNotificationButton();
+  const box = $("#raisingBody");
+  if (!box) return;
+  box.innerHTML = "";
+  if (!state.dataLoaded) {
+    box.appendChild(el("div", { class: "loading" }, [
+      el("div", { class: "spinner" }),
+      el("div", {}, "正在加载图鉴数据…"),
+    ]));
+    return;
+  }
+  if (state.raisingPigs.length === 0) {
+    box.appendChild(el("div", { class: "empty" }, [
+      el("div", { class: "title" }, "暂时还没有添加正在养成的猪"),
+      el("div", { class: "hint" }, "搜索猪名或编号，选择后开始记录喂食时间"),
+    ]));
+    return;
+  }
+  const items = state.raisingPigs.slice().sort((a, b) => {
+    const ap = getPigByPNo(a.pNo);
+    const bp = getPigByPNo(b.pNo);
+    const ad = ap ? getRaisingDueMs(a, ap) : Number.MAX_SAFE_INTEGER;
+    const bd = bp ? getRaisingDueMs(b, bp) : Number.MAX_SAFE_INTEGER;
+    return ad - bd;
+  });
+  box.appendChild(el("div", { class: "raising-list" }, items.map(buildRaisingRow)));
+}
+
+function updateRaisingCountdownNodes() {
+  const now = Date.now();
+  $$("#raisingBody [data-raising-countdown]").forEach(node => {
+    const dueMs = Number(node.getAttribute("data-due-ms")) || 0;
+    const lastFedMs = Number(node.getAttribute("data-last-fed-ms")) || 0;
+    const intervalMs = Number(node.getAttribute("data-interval-ms")) || 1;
+    const diff = dueMs - now;
+    const cls = raisingStatusClass(dueMs);
+    node.textContent = formatDuration(diff);
+    node.classList.remove("due", "soon");
+    if (cls) node.classList.add(cls);
+    const card = node.closest(".raising-card");
+    if (card) {
+      card.classList.toggle("is-due", cls === "due");
+      card.classList.toggle("is-soon", cls === "soon");
+    }
+    const fill = document.querySelector(`[data-raising-progress="${node.dataset.raisingCountdown}"]`);
+    if (fill) {
+      const pct = Math.max(0, Math.min(100, ((now - lastFedMs) / intervalMs) * 100));
+      fill.style.width = `${pct.toFixed(1)}%`;
+    }
+  });
+  renderRaisingStats();
+}
+
+function notificationsSupported() {
+  return "Notification" in window;
+}
+
+function updateRaisingNotificationButton() {
+  const btn = $("#raisingNotifyBtn");
+  if (!btn) return;
+  if (!notificationsSupported()) {
+    btn.textContent = "不支持提醒";
+    btn.disabled = true;
+    return;
+  }
+  btn.disabled = Notification.permission === "denied";
+  if (Notification.permission === "granted") {
+    btn.textContent = "提醒已开启";
+  } else if (Notification.permission === "denied") {
+    btn.textContent = "提醒被拒绝";
+  } else {
+    btn.textContent = "开启提醒";
+  }
+}
+
+async function requestRaisingNotificationPermission() {
+  if (!notificationsSupported()) {
+    toast("当前浏览器不支持系统通知");
+    updateRaisingNotificationButton();
+    return;
+  }
+  if (Notification.permission === "granted") {
+    toast("提醒已经开启");
+    updateRaisingNotificationButton();
+    return;
+  }
+  if (Notification.permission === "denied") {
+    toast("提醒权限已被浏览器拒绝");
+    updateRaisingNotificationButton();
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  updateRaisingNotificationButton();
+  toast(permission === "granted" ? "提醒已开启" : "没有开启提醒权限");
+  if (permission === "granted") {
+    const now = Date.now();
+    let changed = false;
+    for (const item of state.raisingPigs) {
+      const pig = getPigByPNo(item.pNo);
+      if (pig && getRaisingDueMs(item, pig) <= now) {
+        item.notifiedAt = 0;
+        changed = true;
+      }
+    }
+    if (changed) saveRaisingState();
+    checkRaisingReminders();
+  }
+}
+
+async function showFeedNotification(item, pig, dueMs) {
+  if (!notificationsSupported() || Notification.permission !== "granted") return;
+  const title = "该喂猪了";
+  const options = {
+    body: `#${pig.pNo} ${pig.name} 可以喂食了`,
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    tag: `raising-feed-${item.id}-${dueMs}`,
+    renotify: true,
+    data: { tab: "raising", itemId: item.id },
+  };
+  try {
+    if ("serviceWorker" in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.showNotification) {
+        await reg.showNotification(title, options);
+        return;
+      }
+    }
+    new Notification(title, options);
+  } catch (err) {
+    console.warn("[raising] notification failed:", err);
+  }
+}
+
+function checkRaisingReminders() {
+  if (!state.dataLoaded || state.raisingPigs.length === 0) return;
+  const now = Date.now();
+  let changed = false;
+  for (const item of state.raisingPigs) {
+    const pig = getPigByPNo(item.pNo);
+    if (!pig) continue;
+    const dueMs = getRaisingDueMs(item, pig);
+    if (now < dueMs || item.notifiedAt === dueMs) continue;
+    item.notifiedAt = dueMs;
+    changed = true;
+    toast(`#${pig.pNo} ${pig.name} 可以喂食了`, 2600);
+    showFeedNotification(item, pig, dueMs);
+  }
+  if (changed) saveRaisingState();
+  updateRaisingCountdownNodes();
+}
+
+function startRaisingTicker() {
+  if (raisingTicker) return;
+  raisingTicker = setInterval(() => {
+    checkRaisingReminders();
+    updateRaisingCountdownNodes();
+  }, 1000);
+  checkRaisingReminders();
+  updateRaisingCountdownNodes();
+}
+
+function syncRaisingFloorSelect() {
+  const select = $("#raisingFloorSelect");
+  if (!select) return;
+  select.value = RAISING_FLOORS[state.raisingFloor] ? state.raisingFloor : "normal";
+}
+
+syncRaisingFloorSelect();
+
+let raisingSearchTimer = null;
+$("#raisingSearch").addEventListener("input", e => {
+  clearTimeout(raisingSearchTimer);
+  const v = e.target.value;
+  raisingSearchTimer = setTimeout(() => {
+    raisingSearchState.q = v.trim();
+    raisingSearchState.results = searchRaisingPigs(v);
+    renderRaisingSearchResults();
+  }, 160);
+});
+
+$("#raisingFloorSelect").addEventListener("change", e => {
+  const floor = e.target.value;
+  if (!RAISING_FLOORS[floor]) return;
+  state.raisingFloor = floor;
+  saveRaisingFloor(floor);
+  // 地板切换会改变 dueMs；允许新的到点时间重新触发提醒。
+  for (const item of state.raisingPigs) item.notifiedAt = 0;
+  saveRaisingState();
+  syncRaisingFloorSelect();
+  renderRaisingBody();
+  renderRaisingSearchResults();
+  checkRaisingReminders();
+});
+
+$("#raisingNotifyBtn").addEventListener("click", requestRaisingNotificationPermission);
+$("#raisingClearBtn").addEventListener("click", clearRaisingPigs);
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) checkRaisingReminders();
+});
+
 $("#clearBtn").addEventListener("click", () => {
   const nColl = state.collection.length;
   const nEv = state.ownedEventPigs.size;
   const nSm = state.smallBadges.size;
   const nBg = state.bigBadges.size;
+  const nRaising = state.raisingPigs.length;
   const wasUnlocked = state.hiddenUnlocked;
-  const total = nColl + nEv + nSm + nBg + (wasUnlocked ? 1 : 0);
+  const total = nColl + nEv + nSm + nBg + nRaising + (wasUnlocked ? 1 : 0);
   if (total === 0) {
     toast("记录已经是空的");
     return;
@@ -449,10 +986,12 @@ $("#clearBtn").addEventListener("click", () => {
   state.ownedEventPigs = new Set();
   state.smallBadges = new Set();
   state.bigBadges = new Set();
+  state.raisingPigs = [];
   saveCollection(state.collection);
   saveOwnedEventPigs(state.ownedEventPigs);
   saveSmallBadges(state.smallBadges);
   saveBigBadges(state.bigBadges);
+  saveRaisingState();
   // 重置隐藏图鉴解锁状态 + 把 4 只皇室猪从 pigsById / pigsByListKey 抽回去
   if (state.hiddenUnlocked) {
     state.hiddenUnlocked = false;
@@ -470,6 +1009,7 @@ $("#clearBtn").addEventListener("click", () => {
   }
   if ($("#drawer").classList.contains("open")) closeDrawer();
   render();
+  renderRaisingSearchResults();
   toast("已清空全部记录");
 });
 
@@ -477,10 +1017,11 @@ function render() {
   renderStatsBar();
   renderAtlasBody();
   renderEventsBody();
+  renderRaisingBody();
   renderMineBody();
   // sync 我的 tab 收藏管理 count
   const mc = $("#manageCount");
-  if (mc) mc.textContent = `186 已拥有 ${state.collection.length} 只 · Events 已拥有 ${state.ownedEventPigs.size} 只 · 小章 ${state.smallBadges.size} · 大章 ${state.bigBadges.size}`;
+  if (mc) mc.textContent = `186 已拥有 ${state.collection.length} 只 · Events 已拥有 ${state.ownedEventPigs.size} 只 · 小章 ${state.smallBadges.size} · 大章 ${state.bigBadges.size} · 养成中 ${state.raisingPigs.length} 只`;
   // keep name-search results fresh (e.g. "已添加" tag)
   if ($("#tabMine") && $("#tabMine").classList.contains("active")) renderNameResults();
 }
@@ -760,8 +1301,12 @@ wireSearch("#eventSearch", state.eventFilter);
 wireSearch("#mineSearch", state.mineFilter);
 
 // Return true if a pNo resolves to either a 186 pig or an event pig.
+function getPigByPNo(pNo) {
+  return state.pigsById.get(pNo) || state.eventPigsById.get(pNo) || state.hiddenPigsById.get(pNo) || null;
+}
+
 function isKnownPig(pNo) {
-  return state.pigsById.has(pNo) || state.eventPigsById.has(pNo);
+  return !!getPigByPNo(pNo);
 }
 // `data-pno` attribute snippet — only emitted when the pNo resolves to a
 // pig we have data for (so drawer navigation never dead-links).
@@ -1289,11 +1834,12 @@ if (/iPad|iPhone|iPod/.test(ua) && !window.navigator.standalone) {
 const TABS = {
   atlas: { panel: "#tabAtlas", btn: "#tabBtnAtlas" },
   events: { panel: "#tabEvents", btn: "#tabBtnEvents" },
+  raising: { panel: "#tabRaising", btn: "#tabBtnRaising" },
   auction: { panel: "#tabAuction", btn: "#tabBtnAuction" },
   mine: { panel: "#tabMine", btn: "#tabBtnMine" },
 };
 function activateTab(name) {
-  if (!TABS[name]) name = "atlas";
+  if (!TABS[name]) name = "raising";
   for (const [k, ids] of Object.entries(TABS)) {
     const active = k === name;
     $(ids.panel).classList.toggle("active", active);
@@ -1302,12 +1848,30 @@ function activateTab(name) {
   }
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   if (name === "mine") renderNameResults();
+  if (name === "raising") {
+    renderRaisingBody();
+    renderRaisingSearchResults();
+    updateRaisingCountdownNodes();
+  }
   if (name === "auction") renderAuctionTab();
 }
 $("#tabBtnAtlas").addEventListener("click", () => activateTab("atlas"));
 $("#tabBtnEvents").addEventListener("click", () => activateTab("events"));
+$("#tabBtnRaising").addEventListener("click", () => activateTab("raising"));
 $("#tabBtnAuction").addEventListener("click", () => activateTab("auction"));
 $("#tabBtnMine").addEventListener("click", () => activateTab("mine"));
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", e => {
+    if (e.data && e.data.type === "open-tab") activateTab(e.data.tab);
+  });
+}
+
+const initialTab = new URLSearchParams(window.location.search).get("tab");
+if (initialTab && TABS[initialTab]) {
+  activateTab(initialTab);
+  window.history.replaceState({}, "", window.location.pathname);
+}
 
 // ----- 拍卖场 tab -----
 const AUCTION_PAGE_SIZE = 30;
@@ -1905,12 +2469,13 @@ $("#batchClearBtn").addEventListener("click", () => {
 // 导出的 JSON 结构。version 用于日后兼容性升级。
 //
 // v1 (老版): collection / collectionTriplets 装的是 "未拥有" 列表 (inverted)
-// v2 (本版): owned186Pigs / owned186Triplets 装的是 "已拥有" 列表 (positive),
-//            语义跟 ownedEventPigs / smallBadges / bigBadges 一致。
+// v2: owned186Pigs / owned186Triplets 装的是 "已拥有" 列表 (positive),
+//     语义跟 ownedEventPigs / smallBadges / bigBadges 一致。
+// v3: 额外包含 raisingPigs / raisingFloor。
 //
 // 导入时按 version 字段或具体字段存在性自动判定语义,详见 parseImportText。
 const EXPORT_TYPE = "pigfarm-helper-backup";
-const EXPORT_VERSION = 2;
+const EXPORT_VERSION = 3;
 
 function buildExportPayload() {
   // 主图鉴按 book/page/slot 排序后只输出 pNo 列表 (owned186Triplets 已废弃,
@@ -1930,6 +2495,15 @@ function buildExportPayload() {
     ownedEventPigs: Array.from(state.ownedEventPigs).sort((a, b) => a - b),
     smallBadges: Array.from(state.smallBadges).sort((a, b) => a - b),
     bigBadges: Array.from(state.bigBadges).sort((a, b) => a - b),
+    raisingPigs: state.raisingPigs.map(item => ({
+      id: item.id,
+      pNo: item.pNo,
+      startedAt: item.startedAt,
+      lastFedAt: item.lastFedAt,
+      notifiedAt: item.notifiedAt || 0,
+      feedCount: Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0),
+    })),
+    raisingFloor: state.raisingFloor,
     hiddenUnlocked: state.hiddenUnlocked,
   };
 }
@@ -1975,11 +2549,12 @@ function runExport(alsoCopy) {
   const nOwned = payload.ownedEventPigs.length;
   const nSmall = payload.smallBadges.length;
   const nBig = payload.bigBadges.length;
-  if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0) {
+  const nRaising = payload.raisingPigs.length;
+  if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0 && nRaising === 0) {
     msg.innerHTML = `<span class="err">记录为空, 没什么可导出</span>`;
     return;
   }
-  const summary = `186 已拥有 ${nColl} · Events 已拥有 ${nOwned} · 小章 ${nSmall} · 大章 ${nBig}`;
+  const summary = `186 已拥有 ${nColl} · Events 已拥有 ${nOwned} · 小章 ${nSmall} · 大章 ${nBig} · 养成中 ${nRaising}`;
   if (alsoCopy) {
     copyText(txt).then(ok => {
       if (ok) {
@@ -2003,7 +2578,7 @@ function runExportDownload() {
     return;
   }
   const payload = buildExportPayload();
-  if (payload.owned186Pigs.length === 0 && payload.ownedEventPigs.length === 0 && payload.smallBadges.length === 0 && payload.bigBadges.length === 0) {
+  if (payload.owned186Pigs.length === 0 && payload.ownedEventPigs.length === 0 && payload.smallBadges.length === 0 && payload.bigBadges.length === 0 && payload.raisingPigs.length === 0) {
     msg.innerHTML = `<span class="err">记录为空, 没什么可导出</span>`;
     return;
   }
@@ -2028,7 +2603,7 @@ function runExportDownload() {
 }
 
 // 解析导入文本,返回 { collection, ownedEventPigs, smallBadges, bigBadges,
-//                       hiddenUnlocked?, source, formatVersion } 或 { err }。
+//                       raisingPigs, raisingFloor?, hiddenUnlocked?, source, formatVersion } 或 { err }。
 //
 // 兼容三种来源:
 //   A) v2+ JSON (本版): owned186Pigs / owned186Triplets 是 "已拥有" 列表 → 直读
@@ -2121,9 +2696,30 @@ function parseImportText(raw) {
         if (Number.isInteger(n) && (state.pigsById.has(n) || state.eventPigsById.has(n))) bigBadges.push(n);
       }
     }
+    const raisingPigs = [];
+    if (Array.isArray(obj.raisingPigs)) {
+      for (const raw of obj.raisingPigs) {
+        const pNo = Number.parseInt(raw && raw.pNo, 10);
+        if (!Number.isInteger(pNo) || !getPigByPNo(pNo)) continue;
+        const now = Date.now();
+        const startedAt = Number.parseInt(raw.startedAt, 10);
+        const lastFedAt = Number.parseInt(raw.lastFedAt, 10);
+        const notifiedAt = Number.parseInt(raw.notifiedAt || 0, 10) || 0;
+        const feedCount = Math.max(0, Number.parseInt(raw.feedCount || 0, 10) || 0);
+        raisingPigs.push({
+          id: String(raw.id || makeRaisingId()),
+          pNo,
+          startedAt: Number.isFinite(startedAt) ? startedAt : now,
+          lastFedAt: Number.isFinite(lastFedAt) ? lastFedAt : now,
+          notifiedAt,
+          feedCount,
+        });
+      }
+    }
+    const raisingFloor = RAISING_FLOORS[obj.raisingFloor] ? obj.raisingFloor : undefined;
     const hiddenUnlocked = obj.hiddenUnlocked === true ? true : undefined;
-    return { collection, ownedEventPigs, smallBadges, bigBadges,
-             hiddenUnlocked, source: "json", formatVersion: isV2 ? 2 : 1 };
+    return { collection, ownedEventPigs, smallBadges, bigBadges, raisingPigs, raisingFloor,
+             hiddenUnlocked, source: "json", formatVersion: isV2 ? Math.max(2, fileVersion) : 1 };
   }
 
   // Fallback: 三元组裸文本 (positive — 用户手动列出 "已拥有" 的)
@@ -2138,7 +2734,7 @@ function parseImportText(raw) {
     const pNo = state.pigsByListKey.get(`${b}-${(p - 1) * 6 + s}`);
     if (pNo) collection.push(pNo); else skipped++;
   }
-  return { collection, ownedEventPigs: [], smallBadges: [], bigBadges: [],
+  return { collection, ownedEventPigs: [], smallBadges: [], bigBadges: [], raisingPigs: [],
            source: "triplets", formatVersion: 2, skipped };
 }
 
@@ -2148,11 +2744,13 @@ function applyImport(parsed, { replace }) {
   const desiredOwned = new Set(parsed.ownedEventPigs);
   const desiredSmall = new Set(parsed.smallBadges || []);
   const desiredBig = new Set(parsed.bigBadges || []);
+  const desiredRaising = Array.isArray(parsed.raisingPigs) ? parsed.raisingPigs : [];
 
   let addedColl = 0, removedColl = 0;
   let addedOwned = 0, removedOwned = 0;
   let addedSmall = 0, removedSmall = 0;
   let addedBig = 0, removedBig = 0;
+  let addedRaising = 0, removedRaising = 0;
 
   if (replace) {
     const prevColl = new Set(state.collection);
@@ -2175,6 +2773,11 @@ function applyImport(parsed, { replace }) {
     state.bigBadges = new Set(desiredBig);
     for (const n of desiredBig) if (!prevBig.has(n)) addedBig++;
     for (const n of prevBig) if (!desiredBig.has(n)) removedBig++;
+
+    const prevRaising = state.raisingPigs.length;
+    state.raisingPigs = desiredRaising.map(item => ({ ...item }));
+    addedRaising = state.raisingPigs.length;
+    removedRaising = prevRaising;
   } else {
     const have = new Set(state.collection);
     for (const n of desiredColl) {
@@ -2189,12 +2792,26 @@ function applyImport(parsed, { replace }) {
     for (const n of desiredBig) {
       if (!state.bigBadges.has(n)) { state.bigBadges.add(n); addedBig++; }
     }
+    const haveIds = new Set(state.raisingPigs.map(item => item.id));
+    for (const item of desiredRaising) {
+      const next = { ...item };
+      if (haveIds.has(next.id)) next.id = makeRaisingId();
+      state.raisingPigs.push(next);
+      haveIds.add(next.id);
+      addedRaising++;
+    }
+  }
+  if (parsed.raisingFloor && RAISING_FLOORS[parsed.raisingFloor]) {
+    state.raisingFloor = parsed.raisingFloor;
+    saveRaisingFloor(state.raisingFloor);
+    syncRaisingFloorSelect();
   }
 
   saveCollection(state.collection);
   saveOwnedEventPigs(state.ownedEventPigs);
   saveSmallBadges(state.smallBadges);
   saveBigBadges(state.bigBadges);
+  saveRaisingState();
   // hiddenUnlocked: 备份里如果带 true 就尊重它(已解锁过的就别再藏起来),
   // 反之不动 (覆盖导入不强制 re-lock,避免误清成就)
   let unlocked = false;
@@ -2206,7 +2823,8 @@ function applyImport(parsed, { replace }) {
     unlocked = true;
   }
   return { addedColl, removedColl, addedOwned, removedOwned,
-           addedSmall, removedSmall, addedBig, removedBig, unlocked };
+           addedSmall, removedSmall, addedBig, removedBig,
+           addedRaising, removedRaising, unlocked };
 }
 
 function runImport(replace) {
@@ -2225,7 +2843,8 @@ function runImport(replace) {
   const nOwned = parsed.ownedEventPigs.length;
   const nSmall = parsed.smallBadges.length;
   const nBig = parsed.bigBadges.length;
-  if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0) {
+  const nRaising = (parsed.raisingPigs || []).length;
+  if (nColl === 0 && nOwned === 0 && nSmall === 0 && nBig === 0 && nRaising === 0) {
     msg.innerHTML = `<span class="err">解析成功但内容为空 (可能 pNo 对不上当前数据)</span>`;
     return;
   }
@@ -2238,7 +2857,8 @@ function runImport(replace) {
       `  186 已拥有 ${state.collection.length} → 导入 ${nColl}\n` +
       `  Events 已拥有 ${state.ownedEventPigs.size} → 导入 ${nOwned}\n` +
       `  小章 ${state.smallBadges.size} → 导入 ${nSmall}\n` +
-      `  大章 ${state.bigBadges.size} → 导入 ${nBig}` + fmtHint + `\n\n` +
+      `  大章 ${state.bigBadges.size} → 导入 ${nBig}\n` +
+      `  养成中 ${state.raisingPigs.length} → 导入 ${nRaising}` + fmtHint + `\n\n` +
       `确定要覆盖吗?`;
     if (!confirm(confirmMsg)) return;
   }
@@ -2270,6 +2890,8 @@ function runImport(replace) {
     showUnlockCelebration();
   }
   render();
+  renderRaisingSearchResults();
+  checkRaisingReminders();
   const parts = [];
   if (r.addedColl) parts.push(`186新增 ${r.addedColl}`);
   if (r.removedColl) parts.push(`186移除 ${r.removedColl}`);
@@ -2279,9 +2901,12 @@ function runImport(replace) {
   if (r.removedSmall) parts.push(`小章移除 ${r.removedSmall}`);
   if (r.addedBig) parts.push(`大章新增 ${r.addedBig}`);
   if (r.removedBig) parts.push(`大章移除 ${r.removedBig}`);
+  if (r.addedRaising) parts.push(`养成新增 ${r.addedRaising}`);
+  if (r.removedRaising) parts.push(`养成移除 ${r.removedRaising}`);
   const tags = [];
   if (parsed.source === "triplets") tags.push("三元组裸文本");
   else if (parsed.formatVersion === 1) tags.push("v1 老版 · 已自动反转 collection");
+  else if (parsed.formatVersion >= 3) tags.push("v3 新版");
   else tags.push("v2 新版");
   if (r.unlocked) tags.push("隐藏图鉴已解锁");
   const suffix = ` <span style="color:var(--muted)">· ${tags.join(" · ")}</span>`;
@@ -2320,6 +2945,7 @@ $("#importFile").addEventListener("change", async e => {
 // ----- bootstrap -----
 function init() {
   render(); // initial loading state
+  startRaisingTicker();
   loadData()
     .then(() => {
       // 启动时已经 owned 186 但 hiddenUnlocked 还是 false (比如导入备份场景)
