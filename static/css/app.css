@@ -908,7 +908,7 @@
 
     .raising-floor-row select {
       flex: 0 0 auto;
-      width: 132px;
+      width: 156px;
       padding: 8px 34px 8px 12px;
       border-radius: 8px;
       border: 1px solid var(--border);
