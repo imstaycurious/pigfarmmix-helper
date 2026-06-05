@@ -10,6 +10,8 @@ import {
   STORAGE_KEY_HIDDEN_UNLOCK,
   STORAGE_KEY_RAISING,
   STORAGE_KEY_RAISING_FLOOR,
+  STORAGE_KEY_DEVICE_ID,
+  STORAGE_KEY_PUSH_ENABLED,
   RAISING_FLOORS,
   LANG_KEY,
 } from './constants.js';
@@ -131,6 +133,47 @@ export function saveRaisingFloor(floor) {
       STORAGE_KEY_RAISING_FLOOR,
       RAISING_FLOORS[floor] ? floor : "normal"
     );
+  } catch { }
+}
+
+function makeLocalId() {
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj && cryptoObj.randomUUID) return cryptoObj.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (cryptoObj && cryptoObj.getRandomValues) {
+    cryptoObj.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, "0"));
+  return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+}
+
+export function loadDeviceId() {
+  try {
+    const existing = localStorage.getItem(STORAGE_KEY_DEVICE_ID);
+    if (existing) return existing;
+    const next = makeLocalId();
+    localStorage.setItem(STORAGE_KEY_DEVICE_ID, next);
+    return next;
+  } catch {
+    return makeLocalId();
+  }
+}
+
+export function loadPushEnabled() {
+  try {
+    return localStorage.getItem(STORAGE_KEY_PUSH_ENABLED) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function savePushEnabled(enabled) {
+  try {
+    localStorage.setItem(STORAGE_KEY_PUSH_ENABLED, enabled ? "1" : "0");
   } catch { }
 }
 
