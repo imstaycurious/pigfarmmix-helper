@@ -10,7 +10,7 @@
 //   - 已浏览过的猪头像从缓存读取
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
-const CACHE = "pigfarm-v73";
+const CACHE = "pigfarm-v74";
 const SHELL = [
   "/",
   "/index.html",
@@ -96,4 +96,37 @@ self.addEventListener("fetch", e => {
       return new Response("", { status: 504 });
     }))
   );
+});
+
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const tab = (e.notification.data && e.notification.data.tab) || "raising";
+  e.waitUntil((async () => {
+    const list = await clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of list) {
+      if ("focus" in client) {
+        client.postMessage({ type: "open-tab", tab });
+        return client.focus();
+      }
+    }
+    if (clients.openWindow) return clients.openWindow(`/?tab=${encodeURIComponent(tab)}`);
+  })());
+});
+
+self.addEventListener("push", e => {
+  let payload = {};
+  try {
+    payload = e.data ? e.data.json() : {};
+  } catch {
+    payload = { body: e.data ? e.data.text() : "" };
+  }
+  const title = payload.title || "养猪场mix图鉴助手";
+  const options = {
+    body: payload.body || "你有一条新提醒",
+    icon: payload.icon || "/icon-192.png",
+    badge: payload.badge || "/icon-192.png",
+    tag: payload.tag,
+    data: payload.data || { tab: "raising" },
+  };
+  e.waitUntil(self.registration.showNotification(title, options));
 });

@@ -7,6 +7,8 @@ export const STORAGE_KEY_OWNED_EVENT = "pig_owned_event_v1";
 export const STORAGE_KEY_BADGE_SMALL = "pig_badge_small_v1";
 export const STORAGE_KEY_BADGE_BIG = "pig_badge_big_v1";
 export const STORAGE_KEY_HIDDEN_UNLOCK = "pig_hidden_unlocked_v1";
+export const STORAGE_KEY_RAISING = "pig_raising_v1";
+export const STORAGE_KEY_RAISING_FLOOR = "pig_raising_floor_v1";
 export const LANG_KEY = "lang_v1";
 
 export const DATA_URL_BY_LANG = {
@@ -102,3 +104,9 @@ export const COLOR_DOT_PROG = {
 };
 
 export const WEIGHT_OFFSET_BASE = 120;
+
+export const RAISING_FLOORS = {
+  woodchip: { label: "木屑地板", multiplier: 0.8 },
+  normal: { label: "普通地板", multiplier: 1 },
+  straw: { label: "稻草地板", multiplier: 1.2 },
+};
