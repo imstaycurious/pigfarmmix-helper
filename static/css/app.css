@@ -407,13 +407,6 @@
       letter-spacing: 0.01em;
     }
 
-    .card .name .pno {
-      color: var(--muted);
-      font-weight: 500;
-      margin-right: 4px;
-      font-variant-numeric: tabular-nums;
-    }
-
     .card .sub {
       font-size: 11px;
       color: var(--muted);
@@ -620,6 +613,24 @@
     }
     .card-badge-w {
       font-variant-numeric: tabular-nums;
+    }
+
+    .card-raising-btn {
+      width: 100%;
+      min-height: 30px;
+      margin-top: 2px;
+      border: 1px solid var(--accent-muted);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--accent) 8%, var(--card));
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .card-raising-btn:hover {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 14%, var(--card));
     }
 
     /* 我的 tab 筛选行里小章/大章 label 的小图标 */
@@ -1005,12 +1016,6 @@
       line-height: 1.25;
     }
 
-    .raising-name .pno {
-      color: var(--muted);
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-    }
-
     .raising-name .stars {
       color: var(--star);
       font-size: 12px;
@@ -1026,6 +1031,34 @@
       font-size: 11px;
       color: var(--muted);
       line-height: 1.35;
+    }
+
+    .raising-badge-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .raising-badge-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 7px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--chip-bg) 72%, var(--card));
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .raising-badge-chip img {
+      width: 14px;
+      height: 14px;
+      object-fit: contain;
     }
 
     .raising-feed-line {
@@ -2061,7 +2094,7 @@
       cursor: pointer;
     }
 
-    /* bottom tab bar — nailed to the visual viewport bottom.
+    /* bottom tab bar — nailed to the layout viewport bottom.
      `!important` on positioning props is defensive in case some future layout
      CSS tries to re-flow the nav. `transform: translateZ(0)` hoists the bar to
      its own compositor layer which fixes a class of mobile-browser bugs where
@@ -2070,7 +2103,7 @@
       position: fixed !important;
       left: 0 !important;
       right: 0 !important;
-      bottom: var(--tabbar-bottom-offset, 0px) !important;
+      bottom: 0 !important;
       width: 100%;
       height: calc(56px + env(safe-area-inset-bottom));
       padding-bottom: env(safe-area-inset-bottom);

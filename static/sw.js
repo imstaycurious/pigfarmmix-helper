@@ -10,7 +10,7 @@
 //   - 已浏览过的猪头像从缓存读取
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
-const CACHE = "pigfarm-v75";
+const CACHE = "pigfarm-v79";
 const SHELL = [
   "/",
   "/index.html",
@@ -120,9 +120,9 @@ self.addEventListener("push", e => {
   } catch {
     payload = { body: e.data ? e.data.text() : "" };
   }
-  const title = payload.title || "养猪场mix图鉴助手";
+  const title = payload.title || "又到了喂猪的时候了";
   const options = {
-    body: payload.body || "你有一条新提醒",
+    body: payload.body || "有猪可以喂食了",
     icon: payload.icon || "/icon-192.png",
     badge: payload.badge || "/icon-192.png",
     tag: payload.tag,

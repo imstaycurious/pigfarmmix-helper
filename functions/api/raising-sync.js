@@ -29,6 +29,11 @@ function cleanFloor(value) {
   return value === "woodchip" || value === "straw" || value === "normal" ? value : "normal";
 }
 
+function cleanPigName(value) {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, 80);
+}
+
 function cleanRecord(raw, deviceId, fallbackFloor) {
   if (!raw || typeof raw !== "object") return null;
   const localId = typeof raw.id === "string" ? raw.id.trim() : "";
@@ -46,6 +51,7 @@ function cleanRecord(raw, deviceId, fallbackFloor) {
     id: `${deviceId}:${localId}`,
     deviceId,
     pNo,
+    pigName: cleanPigName(raw.pigName),
     floor: cleanFloor(raw.floor || fallbackFloor),
     startedAt,
     lastFedAt,
@@ -53,6 +59,11 @@ function cleanRecord(raw, deviceId, fallbackFloor) {
     nextFeedAt,
     notifiedNextFeedAt,
   };
+}
+
+async function hasPigNameColumn(db) {
+  const result = await db.prepare("PRAGMA table_info(raising_records)").all();
+  return (result.results || []).some(row => row.name === "pig_name");
 }
 
 export async function onRequestPost(context) {
@@ -79,6 +90,7 @@ export async function onRequestPost(context) {
   }
 
   const now = Date.now();
+  const canStorePigName = await hasPigNameColumn(db);
   const statements = [
     db.prepare(`
       INSERT INTO devices (id, created_at, updated_at)
@@ -100,6 +112,42 @@ export async function onRequestPost(context) {
   }
 
   for (const record of records) {
+    if (canStorePigName) {
+      statements.push(
+        db.prepare(`
+        INSERT INTO raising_records (
+          id, device_id, p_no, pig_name, floor, started_at, last_fed_at,
+          feed_count, next_feed_at, notified_next_feed_at, updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          device_id = excluded.device_id,
+          p_no = excluded.p_no,
+          pig_name = excluded.pig_name,
+          floor = excluded.floor,
+          started_at = excluded.started_at,
+          last_fed_at = excluded.last_fed_at,
+          feed_count = excluded.feed_count,
+          next_feed_at = excluded.next_feed_at,
+          notified_next_feed_at = excluded.notified_next_feed_at,
+          updated_at = excluded.updated_at
+      `).bind(
+        record.id,
+        record.deviceId,
+        record.pNo,
+        record.pigName,
+        record.floor,
+        record.startedAt,
+        record.lastFedAt,
+        record.feedCount,
+        record.nextFeedAt,
+        record.notifiedNextFeedAt,
+        now,
+      )
+      );
+      continue;
+    }
+
     statements.push(
       db.prepare(`
         INSERT INTO raising_records (
@@ -133,5 +181,5 @@ export async function onRequestPost(context) {
   }
 
   await db.batch(statements);
-  return jsonResponse({ ok: true, synced: records.length });
+  return jsonResponse({ ok: true, synced: records.length, pigName: canStorePigName });
 }

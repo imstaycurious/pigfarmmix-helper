@@ -22,7 +22,7 @@ const { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges,
         loadPushEnabled, savePushEnabled, currentLang, saveLang } = S;
 
 function buildCard(p, opts) {
-  const { showCollected = true, showBadges = false } = opts || {};
+  const { showCollected = true, showBadges = false, showRaisingAction = false } = opts || {};
   const posText = p.book && p.book <= 6
     ? `图鉴${p.book} 页${p.page} #${p.slot}`
     : (p.book === 7 ? "Events图鉴" : "");
@@ -93,17 +93,26 @@ function buildCard(p, opts) {
         makeBadgeChip("big", hasBg, w.big, "≥", "/img/big.png", "大章"),
       ])
     : null;
+  const raisingAction = showRaisingAction
+    ? el("button", {
+        type: "button",
+        class: "card-raising-btn",
+        title: "加入正在养成",
+        onclick: ev => {
+          ev.stopPropagation();
+          addRaisingPig(p.pNo);
+        },
+      }, "+ 加入养成")
+    : null;
   children.push(el("div", { class: "body" }, [
-    el("div", { class: "name" }, [
-      el("span", { class: "pno" }, `#${p.pNo}`),
-      ` ${p.name}`,
-    ]),
+    el("div", { class: "name" }, p.name),
     el("div", { class: "stars-row" + (p.special ? " special" : "") }, [
       el("span", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
     ]),
     el("div", { class: "sub" }, `${p.color_text || ""}${posText ? " · " + posText : ""}`),
     el("div", { class: "chip-row" }, [feedBadge, grazeBadge, pickyEl].filter(Boolean)),
     badgeRow,
+    raisingAction,
   ]));
   return el("div", {
     class: "card" + (showCollected && isOwn ? " collected" : ""),
@@ -354,7 +363,11 @@ function renderAtlasBody() {
   }
 
   const grid = el("div", { class: "grid" });
-  for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true, showBadges: true }));
+  for (const p of pigs) grid.appendChild(buildCard(p, {
+    showCollected: true,
+    showBadges: true,
+    showRaisingAction: true,
+  }));
   box.appendChild(grid);
 }
 
@@ -381,7 +394,11 @@ function renderEventsBody() {
   }
 
   const grid = el("div", { class: "grid" });
-  for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true, showBadges: true }));
+  for (const p of pigs) grid.appendChild(buildCard(p, {
+    showCollected: true,
+    showBadges: true,
+    showRaisingAction: true,
+  }));
   box.appendChild(grid);
 }
 
@@ -570,6 +587,7 @@ function buildRaisingCloudRecords() {
       return {
         id: String(item.id),
         pNo: item.pNo,
+        pigName: pig.name || "",
         floor: RAISING_FLOORS[state.raisingFloor] ? state.raisingFloor : "normal",
         startedAt: Number(item.startedAt) || Date.now(),
         lastFedAt: Number(item.lastFedAt) || Date.now(),
@@ -785,15 +803,25 @@ function buildRaisingRow(item) {
   const diff = dueMs - Date.now();
   const status = raisingStatusClass(dueMs);
   const pct = Math.max(0, Math.min(100, ((Date.now() - item.lastFedAt) / intervalMs) * 100));
-  const posText = pig.book && pig.book <= 6
-    ? `图鉴${pig.book} 页${pig.page} #${pig.slot}`
-    : "Events图鉴";
   const feedN = (pig.feeding && pig.feeding.times) || 0;
   const feedCount = Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0);
   const feedDone = feedN > 0 && feedCount >= feedN;
   const feedStatusText = feedN > 0
     ? (feedDone ? "已达到最少喂食次数" : `已喂 ${feedCount}/${feedN} 次`)
     : "无需累计喂食次数";
+  const weights = badgeWeights(pig);
+  const badgeLine = weights
+    ? el("div", { class: "raising-badge-line" }, [
+        el("span", { class: "raising-badge-chip" }, [
+          el("img", { src: "/img/small.png", alt: "小章" }),
+          el("span", {}, `≤${fmtKg(weights.small)}kg`),
+        ]),
+        el("span", { class: "raising-badge-chip" }, [
+          el("img", { src: "/img/big.png", alt: "大章" }),
+          el("span", {}, `≥${fmtKg(weights.big)}kg`),
+        ]),
+      ])
+    : null;
 
   return el("div", { class: "raising-card" + (status ? ` is-${status}` : "") }, [
     el("button", {
@@ -814,13 +842,12 @@ function buildRaisingRow(item) {
       ),
       el("div", { class: "raising-info" }, [
         el("div", { class: "raising-name" }, [
-          el("span", { class: "pno" }, `#${pig.pNo}`),
-          ` ${pig.name}`,
+          pig.name,
           el("span", { class: pig.special ? "stars special" : "stars" }, stars(pig.rare, pig.special)),
         ]),
-        el("div", { class: "raising-meta" }, `${pig.color_text || ""} · ${posText}`),
-        el("div", { class: "raising-meta" }, `当前间隔 ${formatIntervalMs(intervalMs)} · 最少喂 ${feedN} 次`),
+        pig.color_text ? el("div", { class: "raising-meta" }, pig.color_text) : null,
         el("div", { class: "raising-meta" }, `上次 ${formatDateTime(item.lastFedAt)} · 下次 ${formatDateTime(dueMs)}`),
+        badgeLine,
         el("div", { class: "raising-feed-line" + (feedDone ? " is-done" : "") }, [
           el("span", { class: "raising-feed-status" }, feedStatusText),
           el("span", { class: "raising-feed-stepper" }, [
@@ -1049,31 +1076,6 @@ async function requestRaisingNotificationPermission() {
   }
 }
 
-async function showFeedNotification(item, pig, dueMs) {
-  if (!notificationsSupported() || Notification.permission !== "granted") return;
-  const title = "该喂猪了";
-  const options = {
-    body: `#${pig.pNo} ${pig.name} 可以喂食了`,
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
-    tag: `raising-feed-${item.id}-${dueMs}`,
-    renotify: true,
-    data: { tab: "raising", itemId: item.id },
-  };
-  try {
-    if ("serviceWorker" in navigator) {
-      const reg = await navigator.serviceWorker.getRegistration();
-      if (reg && reg.showNotification) {
-        await reg.showNotification(title, options);
-        return;
-      }
-    }
-    new Notification(title, options);
-  } catch (err) {
-    console.warn("[raising] notification failed:", err);
-  }
-}
-
 function checkRaisingReminders() {
   if (!state.dataLoaded || state.raisingPigs.length === 0) return;
   const now = Date.now();
@@ -1086,7 +1088,6 @@ function checkRaisingReminders() {
     item.notifiedAt = dueMs;
     changed = true;
     toast(`#${pig.pNo} ${pig.name} 可以喂食了`, 2600);
-    showFeedNotification(item, pig, dueMs);
   }
   if (changed) saveRaisingState();
   updateRaisingCountdownNodes();
@@ -1512,6 +1513,7 @@ function showDetail(pNo) {
   const collectBtn = isOwn
     ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">✅ 已拥有 — 点击取消</button>`
     : `<button type="button" class="add-btn" id="drawerCollectBtn">⬜ 未拥有 — 点击标记</button>`;
+  const raisingBtn = `<button type="button" class="add-btn secondary" id="drawerRaisingBtn">+ 加入养成</button>`;
 
   const groups = deriveAcquisitions(p);
   const acqOrder = ["shop", "hunt", "hunt_event", "fail", "feed_special"];
@@ -1712,7 +1714,7 @@ function showDetail(pNo) {
 
   box.innerHTML = `
     <h2>#${p.pNo} ${escHtml(p.name)}</h2>
-    <div class="drawer-actions">${collectBtn}</div>
+    <div class="drawer-actions">${collectBtn}${raisingBtn}</div>
     <div class="hero">
       ${pigImg ? `<img src="${pigImg}" alt="${escHtml(p.name)}">` : ""}
       <div class="info">
@@ -1752,6 +1754,12 @@ function showDetail(pNo) {
       toast(wasOwn ? `已取消: ${p.name}` : `已标记拥有: ${p.name}`);
       render();
       showDetail(p.pNo); // re-render drawer so the button label flips
+    });
+  }
+  const rbtn = $("#drawerRaisingBtn");
+  if (rbtn) {
+    rbtn.addEventListener("click", () => {
+      addRaisingPig(p.pNo);
     });
   }
 
@@ -2003,23 +2011,6 @@ if (/iPad|iPhone|iPod/.test(ua) && !window.navigator.standalone) {
   $("#installText").textContent = "在 Safari 点击分享 → 加到主屏幕";
 }
 
-function syncTabbarViewportOffset() {
-  if (!window.visualViewport) {
-    document.documentElement.style.setProperty("--tabbar-bottom-offset", "0px");
-    return;
-  }
-  const vv = window.visualViewport;
-  const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-  document.documentElement.style.setProperty("--tabbar-bottom-offset", `${offset}px`);
-}
-
-syncTabbarViewportOffset();
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", syncTabbarViewportOffset);
-  window.visualViewport.addEventListener("scroll", syncTabbarViewportOffset);
-}
-window.addEventListener("resize", syncTabbarViewportOffset);
-
 // ----- tab switching -----
 const TABS = {
   atlas: { panel: "#tabAtlas", btn: "#tabBtnAtlas" },
@@ -2044,7 +2035,6 @@ function activateTab(name) {
   }
   if (name === "auction") renderAuctionTab();
   requestAnimationFrame(() => {
-    syncTabbarViewportOffset();
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   });
 }
