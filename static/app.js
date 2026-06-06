@@ -10,19 +10,19 @@ import * as D from './js/data.js';
 import * as F from './js/filters.js';
 
 // 解构常用函数
-const { $, $$, el, text, toast, escHtml, imgUrl, stars, badgeWeights, badgeMetaHTML, 
-        feedIntervalText, pigPicky, isEventPigId, pigIsOwned, showUnlockCelebration, fmtKg } = U;
+const { $, $$, el, text, toast, escHtml, imgUrl, stars, badgeWeights, badgeMetaHTML,
+  feedIntervalText, pigPicky, isEventPigId, pigIsOwned, showUnlockCelebration, fmtKg } = U;
 const { METHOD_LABELS, HUNT_SITES, FEED_LABELS, BLEED_TYPE_TEXT, COLOR_ORDER_PROG,
-        COLOR_DOT_PROG, RAISING_FLOORS, VAPID_PUBLIC_KEY } = C;
-const { loadData, setPigOwned, setPigBadge, deriveAcquisitions, checkAndUnlockHidden, 
-        buildBreedingIndex, mergeHiddenIntoMain, basePigPNos } = D;
+  COLOR_DOT_PROG, RAISING_FLOORS, VAPID_PUBLIC_KEY } = C;
+const { loadData, setPigOwned, setPigBadge, deriveAcquisitions, checkAndUnlockHidden,
+  buildBreedingIndex, mergeHiddenIntoMain, basePigPNos } = D;
 const { currentAtlasPigs, currentEventPigs, currentMinePigs } = F;
-const { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, 
-        saveHiddenUnlocked, saveRaisingPigs, saveRaisingFloor, loadDeviceId,
-        loadPushEnabled, savePushEnabled, currentLang, saveLang } = S;
+const { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges,
+  saveHiddenUnlocked, saveRaisingPigs, saveRaisingFloor, loadDeviceId,
+  loadPushEnabled, savePushEnabled, currentLang, saveLang } = S;
 
 function buildCard(p, opts) {
-  const { showCollected = true, showBadges = false, showRaisingAction = false } = opts || {};
+  const { showCollected = true, showBadges = false } = opts || {};
   const posText = p.book && p.book <= 6
     ? `图鉴${p.book} 页${p.page} #${p.slot}`
     : (p.book === 7 ? "Events图鉴" : "");
@@ -89,20 +89,9 @@ function buildCard(p, opts) {
   };
   const badgeRow = w
     ? el("div", { class: "card-badge-row" + (showBadges ? " interactive" : "") }, [
-        makeBadgeChip("small", hasSm, w.small, "≤", "/img/small.png", "小章"),
-        makeBadgeChip("big", hasBg, w.big, "≥", "/img/big.png", "大章"),
-      ])
-    : null;
-  const raisingAction = showRaisingAction
-    ? el("button", {
-        type: "button",
-        class: "card-raising-btn",
-        title: "加入正在养成",
-        onclick: ev => {
-          ev.stopPropagation();
-          addRaisingPig(p.pNo);
-        },
-      }, "+ 加入养成")
+      makeBadgeChip("small", hasSm, w.small, "≤", "/img/small.png", "小章"),
+      makeBadgeChip("big", hasBg, w.big, "≥", "/img/big.png", "大章"),
+    ])
     : null;
   children.push(el("div", { class: "body" }, [
     el("div", { class: "name" }, p.name),
@@ -112,7 +101,6 @@ function buildCard(p, opts) {
     el("div", { class: "sub" }, `${p.color_text || ""}${posText ? " · " + posText : ""}`),
     el("div", { class: "chip-row" }, [feedBadge, grazeBadge, pickyEl].filter(Boolean)),
     badgeRow,
-    raisingAction,
   ]));
   return el("div", {
     class: "card" + (showCollected && isOwn ? " collected" : ""),
@@ -366,7 +354,6 @@ function renderAtlasBody() {
   for (const p of pigs) grid.appendChild(buildCard(p, {
     showCollected: true,
     showBadges: true,
-    showRaisingAction: true,
   }));
   box.appendChild(grid);
 }
@@ -397,7 +384,6 @@ function renderEventsBody() {
   for (const p of pigs) grid.appendChild(buildCard(p, {
     showCollected: true,
     showBadges: true,
-    showRaisingAction: true,
   }));
   box.appendChild(grid);
 }
@@ -812,15 +798,15 @@ function buildRaisingRow(item) {
   const weights = badgeWeights(pig);
   const badgeLine = weights
     ? el("div", { class: "raising-badge-line" }, [
-        el("span", { class: "raising-badge-chip" }, [
-          el("img", { src: "/img/small.png", alt: "小章" }),
-          el("span", {}, `≤${fmtKg(weights.small)}kg`),
-        ]),
-        el("span", { class: "raising-badge-chip" }, [
-          el("img", { src: "/img/big.png", alt: "大章" }),
-          el("span", {}, `≥${fmtKg(weights.big)}kg`),
-        ]),
-      ])
+      el("span", { class: "raising-badge-chip" }, [
+        el("img", { src: "/img/small.png", alt: "小章" }),
+        el("span", {}, `≤${fmtKg(weights.small)}kg`),
+      ]),
+      el("span", { class: "raising-badge-chip" }, [
+        el("img", { src: "/img/big.png", alt: "大章" }),
+        el("span", {}, `≥${fmtKg(weights.big)}kg`),
+      ]),
+    ])
     : null;
 
   return el("div", { class: "raising-card" + (status ? ` is-${status}` : "") }, [
@@ -1511,9 +1497,9 @@ function showDetail(pNo) {
     ? state.ownedEventPigs.has(p.pNo)
     : state.collection.includes(p.pNo);
   const collectBtn = isOwn
-    ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">✅ 已拥有 — 点击取消</button>`
-    : `<button type="button" class="add-btn" id="drawerCollectBtn">⬜ 未拥有 — 点击标记</button>`;
-  const raisingBtn = `<button type="button" class="add-btn secondary" id="drawerRaisingBtn">+ 加入养成</button>`;
+    ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">✅ 已拥有</button>`
+    : `<button type="button" class="add-btn" id="drawerCollectBtn">⬜ 未拥有</button>`;
+  const raisingBtn = `<button type="button" class="add-btn secondary" id="drawerRaisingBtn">➕ 加入养成</button>`;
 
   const groups = deriveAcquisitions(p);
   const acqOrder = ["shop", "hunt", "hunt_event", "fail", "feed_special"];
@@ -2448,8 +2434,8 @@ function renderAuctionTab() {
   const footer = el("div", { class: "auction-footer" }, [
     auctionState.loadingMore
       ? el("div", { class: "loading-more" }, [
-          el("div", { class: "spinner small" }), el("div", {}, "加载更多…"),
-        ])
+        el("div", { class: "spinner small" }), el("div", {}, "加载更多…"),
+      ])
       : auctionState.atEnd
         ? el("div", { class: "load-end" }, `— 没有更多了 (cnt=${auctionState.count}) —`)
         : el("div", { class: "auction-sentinel" }, ""),
@@ -2901,8 +2887,10 @@ function parseImportText(raw) {
     }
     const raisingFloor = RAISING_FLOORS[obj.raisingFloor] ? obj.raisingFloor : undefined;
     const hiddenUnlocked = obj.hiddenUnlocked === true ? true : undefined;
-    return { collection, ownedEventPigs, smallBadges, bigBadges, raisingPigs, raisingFloor,
-             hiddenUnlocked, source: "json", formatVersion: isV2 ? Math.max(2, fileVersion) : 1 };
+    return {
+      collection, ownedEventPigs, smallBadges, bigBadges, raisingPigs, raisingFloor,
+      hiddenUnlocked, source: "json", formatVersion: isV2 ? Math.max(2, fileVersion) : 1
+    };
   }
 
   // Fallback: 三元组裸文本 (positive — 用户手动列出 "已拥有" 的)
@@ -2917,8 +2905,10 @@ function parseImportText(raw) {
     const pNo = state.pigsByListKey.get(`${b}-${(p - 1) * 6 + s}`);
     if (pNo) collection.push(pNo); else skipped++;
   }
-  return { collection, ownedEventPigs: [], smallBadges: [], bigBadges: [], raisingPigs: [],
-           source: "triplets", formatVersion: 2, skipped };
+  return {
+    collection, ownedEventPigs: [], smallBadges: [], bigBadges: [], raisingPigs: [],
+    source: "triplets", formatVersion: 2, skipped
+  };
 }
 
 function applyImport(parsed, { replace }) {
@@ -3005,9 +2995,11 @@ function applyImport(parsed, { replace }) {
     buildBreedingIndex(state.breedingTable);
     unlocked = true;
   }
-  return { addedColl, removedColl, addedOwned, removedOwned,
-           addedSmall, removedSmall, addedBig, removedBig,
-           addedRaising, removedRaising, unlocked };
+  return {
+    addedColl, removedColl, addedOwned, removedOwned,
+    addedSmall, removedSmall, addedBig, removedBig,
+    addedRaising, removedRaising, unlocked
+  };
 }
 
 function runImport(replace) {

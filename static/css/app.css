@@ -615,24 +615,6 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .card-raising-btn {
-      width: 100%;
-      min-height: 30px;
-      margin-top: 2px;
-      border: 1px solid var(--accent-muted);
-      border-radius: 8px;
-      background: color-mix(in srgb, var(--accent) 8%, var(--card));
-      color: var(--accent);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.15s, border-color 0.15s, color 0.15s;
-    }
-    .card-raising-btn:hover {
-      border-color: var(--accent);
-      background: color-mix(in srgb, var(--accent) 14%, var(--card));
-    }
-
     /* 我的 tab 筛选行里小章/大章 label 的小图标 */
     .badge-icon-tiny {
       width: 14px;
