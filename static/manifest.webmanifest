@@ -1,6 +1,6 @@
 {
   "name": "养猪场mix图鉴助手",
-  "short_name": "养猪场mix图鉴助手",
+  "short_name": "猪猪图鉴",
   "description": "pigfarmmix 图鉴收集快速查询与配种工具",
   "start_url": "/",
   "scope": "/",
