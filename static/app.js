@@ -21,6 +21,17 @@ const { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges,
   saveHiddenUnlocked, saveRaisingPigs, saveRaisingFloor, loadDeviceId,
   loadPushEnabled, savePushEnabled, currentLang, saveLang } = S;
 
+function confirmCancelOwned(p) {
+  const name = p && p.name ? `「${p.name}」` : "这只猪";
+  return confirm(`确定要把${name}改为未拥有吗?\n\n取消后，小章和大章记录也会一起清除。`);
+}
+
+function setPigOwnedAfterConfirm(pNo, owned) {
+  if (!owned && !confirmCancelOwned(getPigByPNo(pNo))) return false;
+  setPigOwned(pNo, owned);
+  return true;
+}
+
 function buildCard(p, opts) {
   const { showCollected = true, showBadges = false } = opts || {};
   const posText = p.book && p.book <= 6
@@ -38,7 +49,7 @@ function buildCard(p, opts) {
       title: isOwn ? "已拥有 — 点击取消" : "标记为已拥有",
       onclick: ev => {
         ev.stopPropagation();
-        setPigOwned(p.pNo, !isOwn);
+        if (!setPigOwnedAfterConfirm(p.pNo, !isOwn)) return;
         render();
       },
     }, isOwn ? "✅ 已拥有" : "⬜ 未拥有"));
@@ -1736,7 +1747,7 @@ function showDetail(pNo) {
   if (cbtn) {
     cbtn.addEventListener("click", () => {
       const wasOwn = isOwn;
-      setPigOwned(p.pNo, !wasOwn);
+      if (!setPigOwnedAfterConfirm(p.pNo, !wasOwn)) return;
       toast(wasOwn ? `已取消: ${p.name}` : `已标记拥有: ${p.name}`);
       render();
       showDetail(p.pNo); // re-render drawer so the button label flips
@@ -1886,7 +1897,7 @@ $("#drawerContent").addEventListener("click", e => {
     e.stopPropagation();
     const pNo = parseInt(chk.dataset.ownedPno, 10);
     if (!pNo) return;
-    setPigOwned(pNo, !state.ownedEventPigs.has(pNo));
+    if (!setPigOwnedAfterConfirm(pNo, !state.ownedEventPigs.has(pNo))) return;
     render();
     if (currentDetailPNo) showDetail(currentDetailPNo);
     return;
