@@ -51,6 +51,13 @@ export function enrichPig(p) {
     p.color_text = "其他";
   }
 
+  if (typeof p.graze === "boolean") {
+    p.isExer = p.graze;
+  } else {
+    p.isExer = p.isExer === true || p.isExer === 1 || p.isExer === "1";
+    p.graze = p.isExer;
+  }
+
   return p;
 }
 
