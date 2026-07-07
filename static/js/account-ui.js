@@ -14,6 +14,7 @@ import {
   STORAGE_KEY_BADGE_SMALL,
   STORAGE_KEY_BADGE_BIG,
 } from './constants.js';
+import { customAlert, customConfirm } from './modal.js';
 
 /**
  * 从 localStorage 重新加载 state
@@ -130,10 +131,16 @@ document.getElementById('registerBtn').addEventListener('click', async () => {
 
       // 显示设备码提示
       const deviceCode = result.user.deviceCode;
-      const message = `注册成功！\n\n你的设备码是：${deviceCode}\n\n请务必截图或记录保存，登录时需要使用！`;
+      const message = `注册成功！\n\n你的设备码是：${deviceCode}\n\n请务必截图或记录保存，登录时需要使用！\n\n是否立即同步数据到云端？`;
 
-      if (confirm(message + '\n\n点击"确定"自动同步数据到云端')) {
-        await syncWithCloud();
+      const shouldSync = await customConfirm(message, '注册成功');
+      if (shouldSync) {
+        await syncWithCloud({
+          onDataUpdated: () => {
+            reloadStateFromStorage();
+            render();
+          }
+        });
         toast('数据已同步到云端');
       }
 
@@ -202,8 +209,13 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 });
 
 // 退出登录
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  if (confirm('确定退出登录吗？\n\n本地数据不会丢失，下次登录后可以继续同步。')) {
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  const confirmed = await customConfirm(
+    '确定退出登录吗？\n\n本地数据不会丢失，下次登录后可以继续同步。',
+    '退出登录'
+  );
+
+  if (confirmed) {
     logout();
     updateAccountUI();
     toast('已退出登录');

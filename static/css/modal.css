@@ -1,0 +1,128 @@
+/* ========================================
+   通用模态框样式
+   ======================================== */
+
+.custom-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.custom-modal.show {
+  opacity: 1;
+}
+
+.custom-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.custom-modal-content {
+  position: relative;
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: auto;
+  transform: scale(0.9);
+  transition: transform 0.2s ease;
+}
+
+.custom-modal.show .custom-modal-content {
+  transform: scale(1);
+}
+
+.custom-modal-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.custom-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.custom-modal-body {
+  padding: 20px;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.custom-modal-body p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.custom-modal-footer {
+  padding: 16px 20px 20px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.custom-modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 80px;
+}
+
+.custom-modal-btn.primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.custom-modal-btn.primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.custom-modal-btn.secondary {
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+}
+
+.custom-modal-btn.secondary:hover {
+  background: var(--border);
+}
+
+.custom-modal-btn:active {
+  transform: translateY(0);
+}
+
+/* 响应式 */
+@media (max-width: 600px) {
+  .custom-modal-content {
+    max-width: 95%;
+    width: 95%;
+  }
+
+  .custom-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .custom-modal-btn {
+    width: 100%;
+  }
+}
