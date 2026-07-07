@@ -11,7 +11,7 @@ import * as F from './js/filters.js';
 import { getCurrentUser, isLoggedIn } from './js/auth.js';
 import { initAccountUI } from './js/account-ui.js';
 import { customConfirm, customAlert } from './js/modal.js';
-import { checkAndShowUpdateNotice } from './js/version.js';
+import { checkAndShowUpdateNotice, showUpdateManually } from './js/version.js';
 
 // 解构常用函数
 const { $, $$, el, text, toast, escHtml, imgUrl, stars, badgeWeights, badgeMetaHTML,
@@ -1977,6 +1977,12 @@ function updateLangButton() {
   btn.title = lang === "zhs" ? "当前简体, 点击切换为繁体" : "当前繁体, 点击切换为简体";
 }
 updateLangButton();
+
+// 更新按钮：手动查看更新内容
+$("#updateBtn").addEventListener("click", () => {
+  showUpdateManually();
+});
+
 $("#langBtn").addEventListener("click", async () => {
   const next = currentLang() === "zhs" ? "zht" : "zhs";
   saveLang(next);

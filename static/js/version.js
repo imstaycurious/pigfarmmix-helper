@@ -87,3 +87,10 @@ async function showUpdateNotice(version) {
 
   await customAlert(updateContent, '更新提示');
 }
+
+/**
+ * 手动显示更新内容（供按钮调用）
+ */
+export async function showUpdateManually() {
+  await showUpdateNotice();
+}
