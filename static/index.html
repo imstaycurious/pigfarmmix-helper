@@ -32,6 +32,7 @@
   </script>
 
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/account.css">
 </head>
 
 <body>
@@ -144,6 +145,98 @@
 
     <!-- 一级菜单 (默认) -->
     <div class="mine-menu" id="mineMenu">
+      <!-- 登录/账号管理区域 (置顶) -->
+      <div class="mine-account-section" id="mineAccountSection">
+        <!-- 未登录视图 -->
+        <div id="accountLoggedOut" class="account-card">
+          <div class="account-header">
+            <span class="mine-menu-ico">👤</span>
+            <span class="mine-menu-title">账号</span>
+          </div>
+          <div class="account-body">
+            <p class="account-hint">登录后可以在多设备同步收藏数据</p>
+            <div class="account-actions">
+              <button type="button" class="account-btn primary" id="showLoginFormBtn">登录</button>
+              <button type="button" class="account-btn secondary" id="showRegisterFormBtn">注册</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 已登录视图 -->
+        <div id="accountLoggedIn" class="account-card" style="display:none">
+          <div class="account-header">
+            <span class="mine-menu-ico">👤</span>
+            <div class="account-user-info">
+              <span class="account-nickname" id="accountNickname">用户昵称</span>
+              <span class="account-device-code" id="accountDeviceCode">设备码: ******</span>
+            </div>
+          </div>
+          <div class="account-body">
+            <p class="account-sync-hint" id="accountLastSync">尚未同步</p>
+            <div class="account-actions">
+              <button type="button" class="account-btn sync" id="syncUpBtn" title="上传本地数据到云端">
+                🔼 同步到云端
+              </button>
+              <button type="button" class="account-btn sync" id="syncDownBtn" title="从云端下载数据到本地">
+                🔽 同步到本地
+              </button>
+              <button type="button" class="account-btn sync primary" id="syncBothBtn" title="双向完整同步">
+                🔄 双向同步
+              </button>
+            </div>
+            <div class="account-actions">
+              <button type="button" class="account-btn secondary small" id="logoutBtn">退出登录</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 登录表单弹窗 -->
+        <div id="loginFormModal" class="account-modal" style="display:none">
+          <div class="account-modal-content">
+            <div class="account-modal-header">
+              <h3>登录</h3>
+              <button type="button" class="account-modal-close" id="closeLoginFormBtn">✕</button>
+            </div>
+            <div class="account-modal-body">
+              <div class="account-form-group">
+                <label for="loginNickname">昵称</label>
+                <input type="text" id="loginNickname" placeholder="输入你的昵称" autocomplete="username">
+              </div>
+              <div class="account-form-group">
+                <label for="loginDeviceCode">设备码（6位）</label>
+                <input type="text" id="loginDeviceCode" placeholder="如: ABC123" maxlength="6" autocomplete="off">
+              </div>
+              <div class="account-form-actions">
+                <button type="button" class="account-btn secondary" id="cancelLoginBtn">取消</button>
+                <button type="button" class="account-btn primary" id="loginBtn">登录</button>
+              </div>
+              <p class="account-form-hint" id="loginFormMsg"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 注册表单弹窗 -->
+        <div id="registerFormModal" class="account-modal" style="display:none">
+          <div class="account-modal-content">
+            <div class="account-modal-header">
+              <h3>注册</h3>
+              <button type="button" class="account-modal-close" id="closeRegisterFormBtn">✕</button>
+            </div>
+            <div class="account-modal-body">
+              <div class="account-form-group">
+                <label for="registerNickname">昵称（1-30字符）</label>
+                <input type="text" id="registerNickname" placeholder="输入你的昵称" maxlength="30" autocomplete="username">
+              </div>
+              <div class="account-form-actions">
+                <button type="button" class="account-btn secondary" id="cancelRegisterBtn">取消</button>
+                <button type="button" class="account-btn primary" id="registerBtn">注册</button>
+              </div>
+              <p class="account-form-hint" id="registerFormMsg"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <button type="button" class="mine-menu-card" data-mine-view="progress">
         <span class="mine-menu-ico">📊</span>
         <span class="mine-menu-title">进度总览</span>

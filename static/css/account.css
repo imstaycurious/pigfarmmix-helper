@@ -1,0 +1,295 @@
+/* ========================================
+   账号管理样式（我的 Tab 顶部）
+   ======================================== */
+
+.mine-account-section {
+  margin-bottom: 16px;
+}
+
+.account-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.account-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.account-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-nickname {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.account-device-code {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: monospace;
+}
+
+.account-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account-hint,
+.account-sync-hint {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.account-sync-hint {
+  font-size: 13px;
+  text-align: center;
+}
+
+.account-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.account-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.account-btn.primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.account-btn.primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.account-btn.secondary {
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+}
+
+.account-btn.secondary:hover {
+  background: var(--border);
+}
+
+.account-btn.sync {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+[data-theme="dark"] .account-btn.sync {
+  background: #0c4a6e;
+  color: #bae6fd;
+  border-color: #075985;
+}
+
+.account-btn.sync:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+}
+
+[data-theme="dark"] .account-btn.sync:hover {
+  background: #075985;
+  border-color: #0ea5e9;
+}
+
+.account-btn.sync.primary {
+  background: #0369a1;
+  color: white;
+  border-color: #0369a1;
+}
+
+[data-theme="dark"] .account-btn.sync.primary {
+  background: #0284c7;
+  color: white;
+  border-color: #0284c7;
+}
+
+.account-btn.sync.primary:hover {
+  background: #075985;
+}
+
+.account-btn.small {
+  flex: initial;
+  min-width: auto;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.account-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 弹窗样式 */
+.account-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.account-modal-content {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 100%;
+  animation: modalSlideUp 0.2s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.account-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.account-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.account-modal-close:hover {
+  background: var(--chip-bg);
+  color: var(--ink);
+}
+
+.account-modal-body {
+  padding: 20px;
+}
+
+.account-form-group {
+  margin-bottom: 16px;
+}
+
+.account-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.account-form-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--ink);
+  transition: border-color 0.2s;
+}
+
+.account-form-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.account-form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.account-form-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.account-form-hint.error {
+  color: var(--danger);
+}
+
+.account-form-hint.success {
+  color: var(--ok);
+}
+
+/* 响应式调整 */
+@media (max-width: 600px) {
+  .account-actions {
+    flex-direction: column;
+  }
+
+  .account-btn {
+    width: 100%;
+  }
+
+  .account-modal {
+    padding: 10px;
+  }
+}

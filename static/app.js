@@ -8,6 +8,8 @@ import { state } from './js/state.js';
 import * as U from './js/utils.js';
 import * as D from './js/data.js';
 import * as F from './js/filters.js';
+import { getCurrentUser, isLoggedIn } from './js/auth.js';
+import { initAccountUI } from './js/account-ui.js';
 
 // 解构常用函数
 const { $, $$, el, text, toast, escHtml, imgUrl, stars, badgeWeights, badgeMetaHTML,
@@ -2128,9 +2130,16 @@ async function fetchAuctions({ append = false, server } = {}) {
 
   const prevCount = auctionState.records.length;
   try {
+    // 检查登录状态（拍卖场功能需要登录）
+    if (!isLoggedIn()) {
+      throw new Error("请先登录才能使用拍卖场功能");
+    }
+
+    const user = getCurrentUser();
     const qs = new URLSearchParams({
       count: String(auctionState.count),
       server: auctionState.server,
+      userId: user.id, // 添加用户ID用于验证和统计
     });
     for (const [k, v] of Object.entries(auctionFilter)) {
       if (v === "") continue;
@@ -2144,7 +2153,12 @@ async function fetchAuctions({ append = false, server } = {}) {
       qs.set(k === "isExer" ? "is_exer" : k, v);
     }
     const res = await fetch("/api/auction-search?" + qs.toString(), { method: "POST" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 401) {
+        throw new Error("登录已过期，请重新登录");
+      }
+      throw new Error(`HTTP ${res.status}`);
+    }
     const data = await res.json();
     if (data.status !== "ok") throw new Error(data.error || "未知错误");
     const newRecords = data.records || [];
@@ -3132,6 +3146,10 @@ $("#importFile").addEventListener("change", async e => {
 function init() {
   render(); // initial loading state
   startRaisingTicker();
+
+  // 初始化账号管理 UI
+  initAccountUI({ toast, render });
+
   loadData()
     .then(() => {
       // 启动时已经 owned 186 但 hiddenUnlocked 还是 false (比如导入备份场景)

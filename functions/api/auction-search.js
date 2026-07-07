@@ -98,8 +98,66 @@ function jsonResponse(data, status = 200) {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
+      "Access-Control-Allow-Origin": "*",
     },
   });
+}
+
+
+function unauthorizedResponse() {
+  return jsonResponse(
+    { status: "error", error: "请先登录才能使用拍卖场功能" },
+    401,
+  );
+}
+
+
+/** 验证用户是否存在 */
+async function verifyUser(db, userId) {
+  if (!userId || typeof userId !== "string") return false;
+  // UUID v4 格式验证
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
+    return false;
+  }
+  const user = await db
+    .prepare("SELECT id FROM users WHERE id = ? LIMIT 1")
+    .bind(userId)
+    .first();
+  return !!user;
+}
+
+
+/** 记录拍卖场搜索行为（用于统计） */
+async function logAuctionSearch(db, userId, searchParams, resultCount) {
+  try {
+    const searchId = crypto.randomUUID();
+    const now = Date.now();
+    await db
+      .prepare(`
+        INSERT INTO auction_searches (
+          id, user_id, searched_at, server, rare, is_exer,
+          foodtype, sex, color, sort, result_count
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `)
+      .bind(
+        searchId,
+        userId,
+        now,
+        searchParams.server || DEFAULT_SERVER,
+        searchParams.rare || null,
+        searchParams.isExer || null,
+        searchParams.foodtype || null,
+        searchParams.sex || null,
+        searchParams.color || null,
+        searchParams.sort || "1",
+        resultCount,
+      )
+      .run();
+  } catch (err) {
+    // 记录失败不影响主功能
+    console.error("[auction-search] Failed to log search:", err);
+  }
 }
 
 
@@ -149,7 +207,31 @@ async function scrapeAllColors(opts) {
 
 
 export async function onRequestPost(context) {
+  const db = context.env.DB;
+
+  // 从请求中获取 userId（支持 query 参数或 body）
   const url = new URL(context.request.url);
+  let userId = url.searchParams.get("userId");
+
+  // 如果 query 中没有，尝试从 body 中读取
+  if (!userId) {
+    try {
+      const contentType = context.request.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const body = await context.request.json();
+        userId = body.userId;
+        // 注意：读取 body 后需要重新构造 request（但这里不需要原始 body）
+      }
+    } catch {
+      // JSON 解析失败，忽略
+    }
+  }
+
+  // 验证用户登录状态
+  if (!db || !(await verifyUser(db, userId))) {
+    return unauthorizedResponse();
+  }
+
   const sp = url.searchParams;
   const get = (k, def = "") => sp.get(k) ?? def;
 
@@ -180,6 +262,10 @@ export async function onRequestPost(context) {
       // 色组=全部 → 并行扫 6 个色组合并去重
       records = await scrapeAllColors(opts);
     }
+
+    // 记录搜索行为（异步，不阻塞响应）
+    context.waitUntil(logAuctionSearch(db, userId, opts, records.length));
+
     return jsonResponse({
       status: "ok",
       count: records.length,
@@ -202,4 +288,16 @@ export function onRequestGet() {
     { status: "error", error: "method not allowed; use POST" },
     405,
   );
+}
+
+
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
 }
