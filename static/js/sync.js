@@ -147,7 +147,19 @@ export async function syncWithCloud(options = {}) {
       smallBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_SMALL)),
       bigBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_BIG)),
     };
-    const localModifiedAt = getDataModifiedTime();
+    let localModifiedAt = getDataModifiedTime();
+
+    // 🔧 修复：老用户首次同步保护
+    // 如果本地有数据但 localModifiedAt = 0，说明是老用户（字段是新加的）
+    // 强制设置一个时间戳，确保本地数据能上传到云端
+    const hasLocalData = localData.collection.length > 0 ||
+                         localData.eventPigs.length > 0 ||
+                         localData.smallBadges.length > 0 ||
+                         localData.bigBadges.length > 0;
+    if (hasLocalData && localModifiedAt === 0) {
+      localModifiedAt = Date.now();
+      setDataModifiedTime(localModifiedAt);
+    }
 
     const response = await fetch(`${API_BASE}/api/sync/collection`, {
       method: "POST",

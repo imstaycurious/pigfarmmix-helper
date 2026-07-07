@@ -242,7 +242,39 @@ export async function onRequestPost(context) {
     let resultData = null;
 
     // Last-Write-Wins 策略：谁的时间戳更新，谁胜出
-    if (localModifiedAt > cloudModifiedAt) {
+    // 🔧 修复：当两边都是 0 时，比较哪边有数据
+    if (localModifiedAt === 0 && cloudModifiedAt === 0) {
+      // 老用户首次同步场景：比较数据量
+      const localCount = (localData.collection?.length || 0) +
+                        (localData.eventPigs?.length || 0) +
+                        (localData.smallBadges?.length || 0) +
+                        (localData.bigBadges?.length || 0);
+
+      const cloudData = await loadCloudData(db, userId);
+      const cloudCount = cloudData.collection.length +
+                        cloudData.eventPigs.length +
+                        cloudData.smallBadges.length +
+                        cloudData.bigBadges.length;
+
+      if (localCount > 0) {
+        // 本地有数据 → 上传本地数据
+        winner = "local";
+        await overwriteCloudData(db, userId, localData, now, now);
+        resultData = localData;
+      } else if (cloudCount > 0) {
+        // 云端有数据 → 下载云端数据
+        winner = "cloud";
+        resultData = cloudData;
+        await db
+          .prepare("UPDATE users SET last_sync_at = ?, updated_at = ? WHERE id = ?")
+          .bind(now, now, userId)
+          .run();
+      } else {
+        // 两边都没数据 → 无需同步
+        winner = "local";
+        resultData = localData;
+      }
+    } else if (localModifiedAt > cloudModifiedAt) {
       // 本地更新 → 用本地数据完全覆盖云端（支持删除同步）
       winner = "local";
       await overwriteCloudData(db, userId, localData, now, localModifiedAt);
