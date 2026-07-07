@@ -130,11 +130,18 @@ document.getElementById('registerBtn').addEventListener('click', async () => {
     if (result.ok) {
       hideModal('registerFormModal');
 
-      // 显示设备码提示
+      // 显示设备码并强调保存的重要性
       const deviceCode = result.user.deviceCode;
-      const message = `注册成功！\n\n你的设备码是：${deviceCode}\n\n请务必截图或记录保存，登录时需要使用！\n\n是否立即同步数据到云端？`;
+      await customAlert(
+        `⚠️ 请务必保存你的设备码：\n\n${deviceCode}\n\n请立即截图或抄写保存！\n丢失设备码将无法登录，可能导致数据永久丢失。`,
+        '注册成功'
+      );
 
-      const shouldSync = await customConfirm(message, '注册成功');
+      // 询问是否立即同步
+      const shouldSync = await customConfirm(
+        '是否立即同步数据到云端？',
+        '建议首次注册后立即同步，确保数据安全。'
+      );
       if (shouldSync) {
         await syncWithCloud({
           onDataUpdated: () => {
@@ -249,6 +256,7 @@ document.getElementById('syncBothBtn').addEventListener('click', async () => {
     });
     if (result.ok) {
       toast('同步完成');
+      updateLastSyncTime(); // 刷新同步时间显示
     } else {
       toast(`同步失败: ${result.error}`);
     }

@@ -11,6 +11,13 @@
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
 const CACHE = "pigfarm-v81";
+
+// 暴露版本号给主线程（用于更新提示）
+self.addEventListener("message", e => {
+  if (e.data && e.data.type === "GET_VERSION") {
+    e.ports[0].postMessage({ version: CACHE });
+  }
+});
 const SHELL = [
   "/",
   "/index.html",

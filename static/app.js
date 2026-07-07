@@ -10,6 +10,8 @@ import * as D from './js/data.js';
 import * as F from './js/filters.js';
 import { getCurrentUser, isLoggedIn } from './js/auth.js';
 import { initAccountUI } from './js/account-ui.js';
+import { customConfirm, customAlert } from './js/modal.js';
+import { checkAndShowUpdateNotice } from './js/version.js';
 
 // 解构常用函数
 const { $, $$, el, text, toast, escHtml, imgUrl, stars, badgeWeights, badgeMetaHTML,
@@ -23,13 +25,16 @@ const { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges,
   saveHiddenUnlocked, saveRaisingPigs, saveRaisingFloor, loadDeviceId,
   loadPushEnabled, savePushEnabled, currentLang, saveLang } = S;
 
-function confirmCancelOwned(p) {
+async function confirmCancelOwned(p) {
   const name = p && p.name ? `「${p.name}」` : "这只猪";
-  return confirm(`确定要把${name}改为未拥有吗?\n\n取消后，小章和大章记录也会一起清除。`);
+  return await customConfirm(
+    `确定要把${name}改为未拥有吗?`,
+    `取消后，小章和大章记录也会一起清除。`
+  );
 }
 
-function setPigOwnedAfterConfirm(pNo, owned) {
-  if (!owned && !confirmCancelOwned(getPigByPNo(pNo))) return false;
+async function setPigOwnedAfterConfirm(pNo, owned) {
+  if (!owned && !(await confirmCancelOwned(getPigByPNo(pNo)))) return false;
   setPigOwned(pNo, owned);
   return true;
 }
@@ -49,9 +54,9 @@ function buildCard(p, opts) {
       class: "card-owned-toggle" + (isOwn ? " is-on" : ""),
       "aria-pressed": String(isOwn),
       title: isOwn ? "已拥有 — 点击取消" : "标记为已拥有",
-      onclick: ev => {
+      onclick: async (ev) => {
         ev.stopPropagation();
-        if (!setPigOwnedAfterConfirm(p.pNo, !isOwn)) return;
+        if (!(await setPigOwnedAfterConfirm(p.pNo, !isOwn))) return;
         render();
       },
     }, isOwn ? "✅ 已拥有" : "⬜ 未拥有"));
@@ -699,11 +704,14 @@ function adjustRaisingFeedCount(id, delta) {
   renderRaisingBody();
 }
 
-function removeRaisingPig(id) {
+async function removeRaisingPig(id) {
   const item = state.raisingPigs.find(x => x.id === id);
   const pig = item ? getPigByPNo(item.pNo) : null;
   if (!item) return;
-  if (!confirm(`确定从养成中移除${pig ? "「" + pig.name + "」" : "这条记录"}吗?`)) return;
+  const confirmed = await customConfirm(
+    `确定从养成中移除${pig ? "「" + pig.name + "」" : "这条记录"}吗?`
+  );
+  if (!confirmed) return;
   state.raisingPigs = state.raisingPigs.filter(x => x.id !== id);
   saveRaisingState();
   renderRaisingBody();
@@ -711,12 +719,15 @@ function removeRaisingPig(id) {
   toast("已移除养成记录");
 }
 
-function clearRaisingPigs() {
+async function clearRaisingPigs() {
   if (state.raisingPigs.length === 0) {
     toast("养成中已经是空的");
     return;
   }
-  if (!confirm(`确定清空养成中的 ${state.raisingPigs.length} 条记录吗?`)) return;
+  const confirmed = await customConfirm(
+    `确定清空养成中的 ${state.raisingPigs.length} 条记录吗?`
+  );
+  if (!confirmed) return;
   state.raisingPigs = [];
   saveRaisingState();
   renderRaisingBody();
@@ -1144,7 +1155,7 @@ document.addEventListener("visibilitychange", () => {
   if (!document.hidden) checkRaisingReminders();
 });
 
-$("#clearBtn").addEventListener("click", () => {
+$("#clearBtn").addEventListener("click", async () => {
   const nColl = state.collection.length;
   const nEv = state.ownedEventPigs.size;
   const nSm = state.smallBadges.size;
@@ -1156,7 +1167,7 @@ $("#clearBtn").addEventListener("click", () => {
     toast("记录已经是空的");
     return;
   }
-  if (!confirm("确定要清空全部记录吗?")) return;
+  if (!(await customConfirm("确定要清空全部记录吗?"))) return;
   state.collection = [];
   state.ownedEventPigs = new Set();
   state.smallBadges = new Set();
@@ -1788,9 +1799,9 @@ function showDetail(pNo) {
   // 切换已拥有/未拥有 (主猪 + 活动猪都走 setPigOwned, 取消时联动清掉徽章)
   const cbtn = $("#drawerCollectBtn");
   if (cbtn) {
-    cbtn.addEventListener("click", () => {
+    cbtn.addEventListener("click", async () => {
       const wasOwn = isOwn;
-      if (!setPigOwnedAfterConfirm(p.pNo, !wasOwn)) return;
+      if (!(await setPigOwnedAfterConfirm(p.pNo, !wasOwn))) return;
       toast(wasOwn ? `已取消: ${p.name}` : `已标记拥有: ${p.name}`);
       render();
       showDetail(p.pNo); // re-render drawer so the button label flips
@@ -1917,7 +1928,7 @@ $("#drawerBg").addEventListener("click", closeDrawer);
 // `data-pno` re-renders the drawer for that pig (works for both 186 and
 // event pigs, and cross-navigates between them). Attached once; survives
 // drawer innerHTML re-renders because it listens on the container.
-$("#drawerContent").addEventListener("click", e => {
+$("#drawerContent").addEventListener("click", async (e) => {
   // 体型徽章 (小章 / 大章) 勾选 — 只响应 badge-state 按钮的点击，不触发抽屉导航。
   // 同一只猪可能在抽屉里出现多次（比如配种产出 slot），但徽章块目前只有
   // 一处（hero 区），不需要 ownedEventPigs 的多元素同步逻辑。
@@ -1940,7 +1951,7 @@ $("#drawerContent").addEventListener("click", e => {
     e.stopPropagation();
     const pNo = parseInt(chk.dataset.ownedPno, 10);
     if (!pNo) return;
-    if (!setPigOwnedAfterConfirm(pNo, !state.ownedEventPigs.has(pNo))) return;
+    if (!(await setPigOwnedAfterConfirm(pNo, !state.ownedEventPigs.has(pNo)))) return;
     render();
     if (currentDetailPNo) showDetail(currentDetailPNo);
     return;
@@ -2035,9 +2046,11 @@ $("#installBtn").addEventListener("click", async () => {
   if (!deferredPrompt) {
     const ua = navigator.userAgent;
     const isIOS = /iPad|iPhone|iPod/.test(ua);
-    alert(isIOS
-      ? "iOS:点击 Safari 下方分享按钮 → 加到主屏幕"
-      : "请用浏览器菜单选择「安装 App / 加到主屏幕」");
+    await customAlert(
+      isIOS
+        ? "iOS:点击 Safari 下方分享按钮 → 加到主屏幕"
+        : "请用浏览器菜单选择「安装 App / 加到主屏幕」"
+    );
     return;
   }
   deferredPrompt.prompt();
@@ -3068,7 +3081,7 @@ function applyImport(parsed, { replace }) {
   };
 }
 
-function runImport(replace) {
+async function runImport(replace) {
   const msg = $("#importMsg");
   if (!state.dataLoaded) {
     msg.innerHTML = `<span class="err">数据还没加载好</span>`;
@@ -3093,15 +3106,14 @@ function runImport(replace) {
     const fmtHint = parsed.formatVersion === 1
       ? `\n\n已识别为 v1 老版备份`
       : "";
-    const confirmMsg =
-      `覆盖导入会替换你现有的全部记录:\n` +
-      `  186 已拥有 ${state.collection.length} → 导入 ${nColl}\n` +
-      `  Events 已拥有 ${state.ownedEventPigs.size} → 导入 ${nOwned}\n` +
-      `  小章 ${state.smallBadges.size} → 导入 ${nSmall}\n` +
-      `  大章 ${state.bigBadges.size} → 导入 ${nBig}\n` +
-      `  养成中 ${state.raisingPigs.length} → 导入 ${nRaising}` + fmtHint + `\n\n` +
-      `确定要覆盖吗?`;
-    if (!confirm(confirmMsg)) return;
+    const confirmTitle = "覆盖导入会替换你现有的全部记录";
+    const confirmDetails =
+      `186 已拥有 ${state.collection.length} → 导入 ${nColl}\n` +
+      `Events 已拥有 ${state.ownedEventPigs.size} → 导入 ${nOwned}\n` +
+      `小章 ${state.smallBadges.size} → 导入 ${nSmall}\n` +
+      `大章 ${state.bigBadges.size} → 导入 ${nBig}\n` +
+      `养成中 ${state.raisingPigs.length} → 导入 ${nRaising}` + fmtHint;
+    if (!(await customConfirm(confirmTitle, confirmDetails))) return;
   }
   const r = applyImport(parsed, { replace });
   // 抽屉里可能在显示活动猪的「已拥有」勾选，导入后直接关掉以避免 UI 不同步。
@@ -3161,8 +3173,8 @@ $("#exportBtn").addEventListener("click", () => runExport(false));
 $("#exportCopyBtn").addEventListener("click", () => runExport(true));
 $("#exportDownloadBtn").addEventListener("click", runExportDownload);
 
-$("#importMergeBtn").addEventListener("click", () => runImport(false));
-$("#importReplaceBtn").addEventListener("click", () => runImport(true));
+$("#importMergeBtn").addEventListener("click", () => { runImport(false); });
+$("#importReplaceBtn").addEventListener("click", () => { runImport(true); });
 $("#importClearBtn").addEventListener("click", () => {
   $("#importIn").value = "";
   $("#importMsg").textContent = "合并：只追加缺失的项；覆盖：用导入数据替换现有全部配置";
@@ -3198,6 +3210,9 @@ function init() {
       checkAndUnlockHidden();
       render();
       syncRaisingRecordsToCloud({ silent: true });
+
+      // 检查版本更新并显示提示
+      checkAndShowUpdateNotice();
     })
     .catch(err => {
       console.error(err);
