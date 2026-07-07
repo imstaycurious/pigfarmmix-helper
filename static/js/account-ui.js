@@ -4,6 +4,26 @@
 
 import { getCurrentUser, isLoggedIn, register, login, logout } from './auth.js';
 import { syncWithCloud, pullFromCloud } from './sync.js';
+import { state } from './state.js';
+import {
+  loadCollection,
+  loadOwnedEventPigs,
+  loadBadgeSet,
+} from './storage.js';
+import {
+  STORAGE_KEY_BADGE_SMALL,
+  STORAGE_KEY_BADGE_BIG,
+} from './constants.js';
+
+/**
+ * 从 localStorage 重新加载 state
+ */
+function reloadStateFromStorage() {
+  state.collection = loadCollection();
+  state.ownedEventPigs = loadOwnedEventPigs();
+  state.smallBadges = loadBadgeSet(STORAGE_KEY_BADGE_SMALL);
+  state.bigBadges = loadBadgeSet(STORAGE_KEY_BADGE_BIG);
+}
 
 /**
  * 初始化账号管理 UI
@@ -203,7 +223,12 @@ document.getElementById('syncUpBtn').addEventListener('click', async () => {
   btn.textContent = '上传中...';
 
   try {
-    const result = await syncWithCloud();
+    const result = await syncWithCloud({
+      onDataUpdated: () => {
+        reloadStateFromStorage();
+        render();
+      }
+    });
     if (result.ok) {
       toast('已同步到云端');
       updateLastSyncTime();
@@ -231,12 +256,15 @@ document.getElementById('syncDownBtn').addEventListener('click', async () => {
   btn.textContent = '下载中...';
 
   try {
-    const result = await pullFromCloud();
+    const result = await pullFromCloud({
+      onDataUpdated: () => {
+        reloadStateFromStorage();
+        render();
+      }
+    });
     if (result.ok) {
       toast('已同步到本地');
       updateLastSyncTime();
-      // 重新渲染界面以显示新数据
-      render();
     } else {
       toast(`同步失败: ${result.error}`);
     }
@@ -261,11 +289,15 @@ document.getElementById('syncBothBtn').addEventListener('click', async () => {
   btn.textContent = '同步中...';
 
   try {
-    const result = await syncWithCloud();
+    const result = await syncWithCloud({
+      onDataUpdated: () => {
+        reloadStateFromStorage();
+        render();
+      }
+    });
     if (result.ok) {
       toast('双向同步完成');
       updateLastSyncTime();
-      render();
     } else {
       toast(`同步失败: ${result.error}`);
     }

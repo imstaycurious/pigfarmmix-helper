@@ -54,8 +54,11 @@ function notifySyncStatus(status, message = "") {
 
 /**
  * 从云端拉取数据（仅下载）
+ * @param {object} options - 可选配置
+ * @param {function} options.onDataUpdated - 数据更新后的回调函数（用于重新加载 state）
  */
-export async function pullFromCloud() {
+export async function pullFromCloud(options = {}) {
+  const { onDataUpdated } = options;
   const user = getCurrentUser();
   if (!user) {
     return { ok: false, error: "未登录" };
@@ -99,6 +102,11 @@ export async function pullFromCloud() {
 
     notifySyncStatus(SyncStatus.SUCCESS, "数据已同步");
 
+    // 通知数据已更新（触发 state 重新加载）
+    if (onDataUpdated && typeof onDataUpdated === 'function') {
+      onDataUpdated();
+    }
+
     return {
       ok: true,
       merged: {
@@ -117,8 +125,11 @@ export async function pullFromCloud() {
 
 /**
  * 上传本地数据到云端并获取合并结果
+ * @param {object} options - 可选配置
+ * @param {function} options.onDataUpdated - 数据更新后的回调函数（用于重新加载 state）
  */
-export async function syncWithCloud() {
+export async function syncWithCloud(options = {}) {
+  const { onDataUpdated } = options;
   const user = getCurrentUser();
   if (!user) {
     return { ok: false, error: "未登录" };
@@ -168,6 +179,11 @@ export async function syncWithCloud() {
     }
 
     notifySyncStatus(SyncStatus.SUCCESS, "同步完成");
+
+    // 通知数据已更新（触发 state 重新加载）
+    if (onDataUpdated && typeof onDataUpdated === 'function') {
+      onDataUpdated();
+    }
 
     return result;
   } catch (error) {
