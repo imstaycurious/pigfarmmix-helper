@@ -9,9 +9,11 @@ import {
   saveOwnedEventPigs,
   loadBadgeSet,
   saveBadgeSet,
+} from './storage.js';
+import {
   STORAGE_KEY_BADGE_SMALL,
   STORAGE_KEY_BADGE_BIG,
-} from './storage.js';
+} from './constants.js';
 import { getCurrentUser } from './auth.js';
 
 const API_BASE = ""; // 使用相对路径
