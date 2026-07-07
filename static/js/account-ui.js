@@ -196,7 +196,12 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
       updateAccountUI();
 
       // 登录后自动同步
-      await syncWithCloud();
+      await syncWithCloud({
+        onDataUpdated: () => {
+          reloadStateFromStorage();
+          render();
+        }
+      });
     } else {
       setFormMessage('loginFormMsg', result.error || '登录失败', true);
     }

@@ -2,20 +2,6 @@
  * 通用模态框组件
  */
 
-let modalContainer = null;
-
-/**
- * 初始化模态框容器
- */
-function initModalContainer() {
-  if (modalContainer) return;
-
-  modalContainer = document.createElement('div');
-  modalContainer.id = 'customModalContainer';
-  modalContainer.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 99999;';
-  document.body.appendChild(modalContainer);
-}
-
 /**
  * 显示通用模态框
  * @param {object} options - 配置选项
@@ -27,8 +13,6 @@ function initModalContainer() {
  * @returns {Promise<boolean>} - confirm 返回 true/false，alert 返回 true
  */
 export function showModal({ title = '提示', message = '', type = 'alert', confirmText = '确定', cancelText = '取消' }) {
-  initModalContainer();
-
   return new Promise((resolve) => {
     const modal = document.createElement('div');
     modal.className = 'custom-modal';
@@ -48,7 +32,7 @@ export function showModal({ title = '提示', message = '', type = 'alert', conf
       </div>
     `;
 
-    modalContainer.appendChild(modal);
+    document.body.appendChild(modal);
 
     // 动画进入
     requestAnimationFrame(() => {
