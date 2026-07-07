@@ -12,9 +12,24 @@ import {
   STORAGE_KEY_RAISING_FLOOR,
   STORAGE_KEY_DEVICE_ID,
   STORAGE_KEY_PUSH_ENABLED,
+  STORAGE_KEY_DATA_MODIFIED,
   RAISING_FLOORS,
   LANG_KEY,
 } from './constants.js';
+
+// 数据修改时间戳管理（用于 Last-Write-Wins 同步）
+export function getDataModifiedTime() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_DATA_MODIFIED);
+    return raw ? parseInt(raw, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function setDataModifiedTime(timestamp = Date.now()) {
+  localStorage.setItem(STORAGE_KEY_DATA_MODIFIED, String(timestamp));
+}
 
 export function loadCollection() {
   try {
@@ -29,6 +44,7 @@ export function loadCollection() {
 
 export function saveCollection(collection) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(collection));
+  setDataModifiedTime();
 }
 
 export function loadOwnedEventPigs() {
@@ -47,6 +63,7 @@ export function saveOwnedEventPigs(ownedEventPigs) {
     STORAGE_KEY_OWNED_EVENT,
     JSON.stringify(Array.from(ownedEventPigs))
   );
+  setDataModifiedTime();
 }
 
 export function loadBadgeSet(key) {
@@ -62,6 +79,7 @@ export function loadBadgeSet(key) {
 
 export function saveBadgeSet(key, set) {
   localStorage.setItem(key, JSON.stringify(Array.from(set).sort((a, b) => a - b)));
+  setDataModifiedTime();
 }
 
 export function saveSmallBadges(smallBadges) {

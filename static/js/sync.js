@@ -9,6 +9,8 @@ import {
   saveOwnedEventPigs,
   loadBadgeSet,
   saveBadgeSet,
+  getDataModifiedTime,
+  setDataModifiedTime,
 } from './storage.js';
 import {
   STORAGE_KEY_BADGE_SMALL,
@@ -145,6 +147,7 @@ export async function syncWithCloud(options = {}) {
       smallBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_SMALL)),
       bigBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_BIG)),
     };
+    const localModifiedAt = getDataModifiedTime();
 
     const response = await fetch(`${API_BASE}/api/sync/collection`, {
       method: "POST",
@@ -154,6 +157,7 @@ export async function syncWithCloud(options = {}) {
       body: JSON.stringify({
         userId: user.id,
         localData,
+        localModifiedAt,
       }),
     });
 
@@ -164,12 +168,20 @@ export async function syncWithCloud(options = {}) {
       return result;
     }
 
-    // 用云端合并后的数据更新本地
+    // 方案B（Last-Write-Wins）：服务器返回胜出方的数据
+    // 若云端更新 → winner=cloud，用云端数据覆盖本地
+    // 若本地更新 → winner=local，本地数据已是最新，无需改动
     const cloudData = result.cloudData || {};
-    saveCollection(cloudData.collection || []);
-    saveOwnedEventPigs(new Set(cloudData.eventPigs || []));
-    saveBadgeSet(STORAGE_KEY_BADGE_SMALL, new Set(cloudData.smallBadges || []));
-    saveBadgeSet(STORAGE_KEY_BADGE_BIG, new Set(cloudData.bigBadges || []));
+    if (result.winner === "cloud") {
+      saveCollection(cloudData.collection || []);
+      saveOwnedEventPigs(new Set(cloudData.eventPigs || []));
+      saveBadgeSet(STORAGE_KEY_BADGE_SMALL, new Set(cloudData.smallBadges || []));
+      saveBadgeSet(STORAGE_KEY_BADGE_BIG, new Set(cloudData.bigBadges || []));
+      // 用云端时间戳，避免下次同步误判本地更新
+      if (result.dataModifiedAt) {
+        setDataModifiedTime(result.dataModifiedAt);
+      }
+    }
 
     // 更新用户的最后同步时间
     if (result.lastSyncAt) {
@@ -181,7 +193,7 @@ export async function syncWithCloud(options = {}) {
     notifySyncStatus(SyncStatus.SUCCESS, "同步完成");
 
     // 通知数据已更新（触发 state 重新加载）
-    if (onDataUpdated && typeof onDataUpdated === 'function') {
+    if (result.winner === "cloud" && onDataUpdated && typeof onDataUpdated === 'function') {
       onDataUpdated();
     }
 

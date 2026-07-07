@@ -45,6 +45,7 @@ function updateAccountUI() {
     loggedIn.style.display = 'flex';
     document.getElementById('accountNickname').textContent = user.nickname;
     document.getElementById('accountDeviceCode').textContent = `设备码: ${user.deviceCode}`;
+    updateLastSyncTime();
   } else {
     // 未登录
     loggedOut.style.display = 'flex';
@@ -53,8 +54,27 @@ function updateAccountUI() {
 }
 
 function updateLastSyncTime() {
-  // 旧版本使用，新布局中已移除同步时间显示
-  // 保留空函数以防其他代码调用
+  const user = getCurrentUser();
+  const el = document.getElementById('accountSyncTime');
+  if (!el) return;
+
+  if (user && user.lastSyncAt) {
+    const now = Date.now();
+    const diff = now - user.lastSyncAt;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    let timeText;
+    if (minutes < 1) timeText = '刚刚';
+    else if (minutes < 60) timeText = `${minutes}分钟前`;
+    else if (hours < 24) timeText = `${hours}小时前`;
+    else timeText = `${days}天前`;
+
+    el.textContent = timeText;
+  } else {
+    el.textContent = '未同步';
+  }
 }
 
 function showModal(modalId) {

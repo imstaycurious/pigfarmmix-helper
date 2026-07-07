@@ -84,10 +84,16 @@ async function loadCloudData(db, userId) {
 }
 
 /**
- * 保存用户的收藏数据到数据库（合并策略）
+ * 用本地数据完全替换云端数据（Last-Write-Wins：本地胜出时调用）
+ * 先删除该用户所有数据，再插入本地数据 —— 这样删除操作也能同步
  */
-async function saveCollectionData(db, userId, localData, now) {
+async function overwriteCloudData(db, userId, localData, now, localModifiedAt) {
   const statements = [];
+
+  // 先清空该用户所有旧数据（支持删除同步）
+  statements.push(db.prepare("DELETE FROM collections WHERE user_id = ?").bind(userId));
+  statements.push(db.prepare("DELETE FROM event_collections WHERE user_id = ?").bind(userId));
+  statements.push(db.prepare("DELETE FROM badges WHERE user_id = ?").bind(userId));
 
   // 处理 186 图鉴收藏
   const collection = cleanNumberArray(localData.collection);
@@ -137,10 +143,10 @@ async function saveCollectionData(db, userId, localData, now) {
     );
   }
 
-  // 更新用户最后同步时间
+  // 更新用户最后同步时间和数据修改时间
   statements.push(
-    db.prepare("UPDATE users SET last_sync_at = ?, updated_at = ? WHERE id = ?")
-      .bind(now, now, userId)
+    db.prepare("UPDATE users SET last_sync_at = ?, updated_at = ?, data_modified_at = ? WHERE id = ?")
+      .bind(now, now, localModifiedAt, userId)
   );
 
   // 批量执行（D1 最多支持 100 条，需要分批）
@@ -192,7 +198,8 @@ export async function onRequestGet(context) {
 }
 
 /**
- * POST 请求：上传本地数据并合并
+ * POST 请求：Last-Write-Wins 同步
+ * 比较本地和云端的 modifiedAt 时间戳，谁更新就用谁的数据
  */
 export async function onRequestPost(context) {
   const db = context.env.DB;
@@ -215,10 +222,12 @@ export async function onRequestPost(context) {
     return badRequest("本地数据格式错误");
   }
 
+  const localModifiedAt = body.localModifiedAt || 0;
+
   try {
-    // 验证用户是否存在
+    // 验证用户是否存在，并获取云端数据修改时间
     const user = await db
-      .prepare("SELECT id FROM users WHERE id = ? LIMIT 1")
+      .prepare("SELECT id, data_modified_at FROM users WHERE id = ? LIMIT 1")
       .bind(userId)
       .first();
 
@@ -226,37 +235,35 @@ export async function onRequestPost(context) {
       return jsonResponse({ ok: false, error: "用户不存在" }, 404);
     }
 
+    const cloudModifiedAt = user.data_modified_at || 0;
     const now = Date.now();
 
-    // 先加载云端现有数据
-    const cloudDataBefore = await loadCloudData(db, userId);
+    let winner = "local";
+    let resultData = null;
 
-    // 保存本地数据到云端（合并）
-    await saveCollectionData(db, userId, localData, now);
+    // Last-Write-Wins 策略：谁的时间戳更新，谁胜出
+    if (localModifiedAt > cloudModifiedAt) {
+      // 本地更新 → 用本地数据完全覆盖云端（支持删除同步）
+      winner = "local";
+      await overwriteCloudData(db, userId, localData, now, localModifiedAt);
+      resultData = localData; // 客户端已经是最新的，不需要更新
+    } else {
+      // 云端更新 → 返回云端数据让客户端覆盖本地
+      winner = "cloud";
+      resultData = await loadCloudData(db, userId);
 
-    // 重新加载合并后的云端数据
-    const cloudDataAfter = await loadCloudData(db, userId);
-
-    // 计算新增数量
-    const added = {
-      collection: cloudDataAfter.collection.length - cloudDataBefore.collection.length,
-      eventPigs: cloudDataAfter.eventPigs.length - cloudDataBefore.eventPigs.length,
-      smallBadges: cloudDataAfter.smallBadges.length - cloudDataBefore.smallBadges.length,
-      bigBadges: cloudDataAfter.bigBadges.length - cloudDataBefore.bigBadges.length,
-    };
+      // 更新用户最后同步时间（但不修改 data_modified_at）
+      await db
+        .prepare("UPDATE users SET last_sync_at = ?, updated_at = ? WHERE id = ?")
+        .bind(now, now, userId)
+        .run();
+    }
 
     return jsonResponse({
       ok: true,
-      cloudData: cloudDataAfter,
-      merged: {
-        added,
-        total: {
-          collection: cloudDataAfter.collection.length,
-          eventPigs: cloudDataAfter.eventPigs.length,
-          smallBadges: cloudDataAfter.smallBadges.length,
-          bigBadges: cloudDataAfter.bigBadges.length,
-        },
-      },
+      winner,
+      cloudData: resultData,
+      dataModifiedAt: winner === "local" ? localModifiedAt : cloudModifiedAt,
       lastSyncAt: now,
     });
   } catch (error) {
