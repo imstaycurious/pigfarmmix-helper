@@ -630,6 +630,7 @@
       grid-template-columns: 1fr;
       gap: 12px;
       padding: 16px 12px;
+      align-items: start;
     }
     @media (min-width: 600px) {
       .mine-menu { grid-template-columns: repeat(2, 1fr); }

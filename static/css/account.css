@@ -9,9 +9,65 @@
 .account-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 18px;
   box-shadow: var(--shadow);
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.account-card-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.account-card-row .account-btn-small {
+  margin-left: auto;
+}
+
+.account-actions-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.account-btn-small {
+  min-width: 48px;
+  text-align: center;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.account-btn-small.primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.account-btn-small.primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.account-btn-small.secondary {
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+}
+
+.account-btn-small.secondary:hover {
+  background: var(--border);
 }
 
 .account-header {
@@ -28,7 +84,7 @@
 }
 
 .account-nickname {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--ink);
 }
@@ -172,7 +228,7 @@
 
 .account-modal-content {
   background: var(--card);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
   max-width: 400px;
   width: 100%;

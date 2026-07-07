@@ -42,38 +42,19 @@ function updateAccountUI() {
   if (user) {
     // 已登录
     loggedOut.style.display = 'none';
-    loggedIn.style.display = 'block';
+    loggedIn.style.display = 'flex';
     document.getElementById('accountNickname').textContent = user.nickname;
     document.getElementById('accountDeviceCode').textContent = `设备码: ${user.deviceCode}`;
-    updateLastSyncTime();
   } else {
     // 未登录
-    loggedOut.style.display = 'block';
+    loggedOut.style.display = 'flex';
     loggedIn.style.display = 'none';
   }
 }
 
 function updateLastSyncTime() {
-  const user = getCurrentUser();
-  const el = document.getElementById('accountLastSync');
-  if (user && user.lastSyncAt) {
-    const date = new Date(user.lastSyncAt);
-    const now = Date.now();
-    const diff = now - user.lastSyncAt;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    let timeText;
-    if (minutes < 1) timeText = '刚刚同步';
-    else if (minutes < 60) timeText = `${minutes} 分钟前`;
-    else if (hours < 24) timeText = `${hours} 小时前`;
-    else timeText = `${days} 天前`;
-
-    el.textContent = `最后同步: ${timeText}`;
-  } else {
-    el.textContent = '尚未同步';
-  }
+  // 旧版本使用，新布局中已移除同步时间显示
+  // 保留空函数以防其他代码调用
 }
 
 function showModal(modalId) {
@@ -227,73 +208,7 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
   }
 });
 
-// 同步到云端（上传）
-document.getElementById('syncUpBtn').addEventListener('click', async () => {
-  if (!isLoggedIn()) {
-    toast('请先登录');
-    return;
-  }
-
-  const btn = document.getElementById('syncUpBtn');
-  btn.disabled = true;
-  const originalText = btn.textContent;
-  btn.textContent = '上传中...';
-
-  try {
-    const result = await syncWithCloud({
-      onDataUpdated: () => {
-        reloadStateFromStorage();
-        render();
-      }
-    });
-    if (result.ok) {
-      toast('已同步到云端');
-      updateLastSyncTime();
-    } else {
-      toast(`同步失败: ${result.error}`);
-    }
-  } catch (error) {
-    toast('网络错误，请稍后重试');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
-  }
-});
-
-// 同步到本地（下载）
-document.getElementById('syncDownBtn').addEventListener('click', async () => {
-  if (!isLoggedIn()) {
-    toast('请先登录');
-    return;
-  }
-
-  const btn = document.getElementById('syncDownBtn');
-  btn.disabled = true;
-  const originalText = btn.textContent;
-  btn.textContent = '下载中...';
-
-  try {
-    const result = await pullFromCloud({
-      onDataUpdated: () => {
-        reloadStateFromStorage();
-        render();
-      }
-    });
-    if (result.ok) {
-      toast('已同步到本地');
-      updateLastSyncTime();
-    } else {
-      toast(`同步失败: ${result.error}`);
-    }
-  } catch (error) {
-    toast('网络错误，请稍后重试');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = originalText;
-  }
-});
-
-// 双向同步
+// 同步（双向）
 document.getElementById('syncBothBtn').addEventListener('click', async () => {
   if (!isLoggedIn()) {
     toast('请先登录');
@@ -303,7 +218,7 @@ document.getElementById('syncBothBtn').addEventListener('click', async () => {
   const btn = document.getElementById('syncBothBtn');
   btn.disabled = true;
   const originalText = btn.textContent;
-  btn.textContent = '同步中...';
+  btn.textContent = '⏳';
 
   try {
     const result = await syncWithCloud({
@@ -313,8 +228,7 @@ document.getElementById('syncBothBtn').addEventListener('click', async () => {
       }
     });
     if (result.ok) {
-      toast('双向同步完成');
-      updateLastSyncTime();
+      toast('同步完成');
     } else {
       toast(`同步失败: ${result.error}`);
     }

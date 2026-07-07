@@ -63,7 +63,7 @@ export function currentEventPigs() {
 }
 
 export function currentMinePigs() {
-  const { owned, small, big, q } = state.mineFilter;
+  const { owned, small, big, q, color, rare } = state.mineFilter;
   const ql = (q || "").toLowerCase();
   const out = [];
   const sources = [];
@@ -71,15 +71,23 @@ export function currentMinePigs() {
   else if (state.mineView === "event") sources.push(state.eventPigsById.values());
   for (const iter of sources) {
     for (const p of iter) {
+      // 颜色筛选
+      if (color && p.color_text !== color) continue;
+      // 星级筛选
+      if (rare && String(p.rare) !== rare) continue;
+      // 已拥有筛选
       const isOwn = pigIsOwned(p);
       if (owned === "yes" && !isOwn) continue;
       if (owned === "no" && isOwn) continue;
+      // 小章筛选
       const hasSmall = state.smallBadges.has(p.pNo);
       const hasBig = state.bigBadges.has(p.pNo);
       if (small === "yes" && !hasSmall) continue;
       if (small === "no" && hasSmall) continue;
+      // 大章筛选
       if (big === "yes" && !hasBig) continue;
       if (big === "no" && hasBig) continue;
+      // 搜索筛选
       if (ql) {
         const hay = ((p.name || "") + " " + (p.description || "") + " " + (p.pNo ?? "")).toLowerCase();
         if (!hay.includes(ql)) continue;

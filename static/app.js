@@ -78,8 +78,8 @@ function buildCard(p, opts) {
   }, `🍚 ${feedN}`);
   // 小章 / 大章 chip: 始终显示, 默认空 chip;showBadges=true 时可点击切换
   const w = badgeWeights(p);
-  const hasSm = state.smallBadges.has(p.pNo);
-  const hasBg = state.bigBadges.has(p.pNo);
+  const hasSm = showBadges && state.smallBadges.has(p.pNo);
+  const hasBg = showBadges && state.bigBadges.has(p.pNo);
   const makeBadgeChip = (kind, has, weight, op, iconSrc, label) => {
     const cls = `card-badge-chip ${kind}${has ? " is-on" : ""}`;
     const attrs = {
@@ -364,9 +364,10 @@ function renderAtlasBody() {
   }
 
   const grid = el("div", { class: "grid" });
+  // 186图鉴作为百科全书，不显示已拥有和徽章标记
   for (const p of pigs) grid.appendChild(buildCard(p, {
-    showCollected: true,
-    showBadges: true,
+    showCollected: false,
+    showBadges: false,
   }));
   box.appendChild(grid);
 }
@@ -394,9 +395,10 @@ function renderEventsBody() {
   }
 
   const grid = el("div", { class: "grid" });
+  // Events图鉴作为百科全书，不显示已拥有和徽章标记
   for (const p of pigs) grid.appendChild(buildCard(p, {
-    showCollected: true,
-    showBadges: true,
+    showCollected: false,
+    showBadges: false,
   }));
   box.appendChild(grid);
 }
@@ -1378,6 +1380,8 @@ wireFilter("#eventGrazeFilter", state.eventFilter, "graze");
 wireFilter("#eventPickyFilter", state.eventFilter, "picky");
 
 // 我的 tab filters (子视图共用)
+wireFilter("#mineColorFilter", state.mineFilter, "color");
+wireFilter("#mineRareFilter", state.mineFilter, "rare");
 wireFilter("#mineOwnedFilter", state.mineFilter, "owned");
 wireFilter("#mineSmallFilter", state.mineFilter, "small");
 wireFilter("#mineBigFilter", state.mineFilter, "big");
@@ -1408,6 +1412,39 @@ function setMineView(view) {
   if (progressView) progressView.style.display = view === "progress" ? "" : "none";
   subhead.style.display = view === "menu" ? "none" : "";
   if (subheadTitle) subheadTitle.textContent = MINE_VIEW_TITLES[view] || "";
+
+  // 根据当前视图调整星级筛选显示
+  const mineRareFilter = $("#mineRareFilter");
+  if (mineRareFilter && (view === "main" || view === "event")) {
+    const chips = mineRareFilter.querySelectorAll('.chip');
+    chips.forEach((chip, index) => {
+      const value = chip.dataset.value;
+      if (view === "event") {
+        // Events图鉴：隐藏1-2星，3-6星用紫色
+        if (value === "1" || value === "2") {
+          chip.style.display = "none";
+        } else {
+          chip.style.display = "";
+          const star = chip.querySelector('span');
+          if (star && value) {
+            star.style.color = "var(--star-special)";
+          }
+        }
+      } else {
+        // 186图鉴：显示1-5星（黄色），隐藏6星（186图鉴没有6星猪）
+        if (value === "6") {
+          chip.style.display = "none";
+        } else {
+          chip.style.display = "";
+          const star = chip.querySelector('span');
+          if (star && value) {
+            star.style.color = "var(--star)";
+          }
+        }
+      }
+    });
+  }
+
   render(); // 重新渲染列表 + 菜单上的统计
 }
 // 菜单卡片点击
@@ -1457,9 +1494,13 @@ function wireSearch(inputSel, filterObj) {
           resetChipRow("#eventGrazeFilter");
           resetChipRow("#eventPickyFilter");
         } else if (filterObj === state.mineFilter) {
+          filterObj.color = "";
+          filterObj.rare = "";
           filterObj.owned = "";
           filterObj.small = "";
           filterObj.big = "";
+          resetChipRow("#mineColorFilter");
+          resetChipRow("#mineRareFilter");
           resetChipRow("#mineOwnedFilter");
           resetChipRow("#mineSmallFilter");
           resetChipRow("#mineBigFilter");

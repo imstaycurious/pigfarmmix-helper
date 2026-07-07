@@ -30,7 +30,7 @@ export const state = {
   // 我的 tab 有两层导航: mineView = "menu" | "main" | "event" | "add"
   // 主/活动子视图共享 mineFilter; 子视图决定数据源 (186 vs 活动)
   mineView: "menu",
-  mineFilter: { owned: "", small: "", big: "", q: "" },
+  mineFilter: { owned: "", small: "", big: "", q: "", color: "", rare: "" },
   // 配种索引 (反向索引: 某猪作为父母时能产出哪些后代)
   breedByParent: new Map(), // pNo -> [{ partner, isview, any, result }, ...]
   breedingTable: [],        // 原始配种表 (从 JSON 加载)

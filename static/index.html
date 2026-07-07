@@ -150,45 +150,28 @@
       <div class="mine-account-section" id="mineAccountSection">
         <!-- 未登录视图 -->
         <div id="accountLoggedOut" class="account-card">
-          <div class="account-header">
+          <div class="account-card-row">
             <span class="mine-menu-ico">👤</span>
+            <button type="button" class="account-btn-small primary" id="showLoginFormBtn">登录</button>
+          </div>
+          <div class="account-card-row">
             <span class="mine-menu-title">账号</span>
+            <button type="button" class="account-btn-small secondary" id="showRegisterFormBtn">注册</button>
           </div>
-          <div class="account-body">
-            <p class="account-hint">登录后可以在多设备同步收藏数据</p>
-            <div class="account-actions">
-              <button type="button" class="account-btn primary" id="showLoginFormBtn">登录</button>
-              <button type="button" class="account-btn secondary" id="showRegisterFormBtn">注册</button>
-            </div>
-          </div>
+          <span class="mine-menu-sub">登录后可以在多设备同步收藏数据</span>
         </div>
 
         <!-- 已登录视图 -->
         <div id="accountLoggedIn" class="account-card" style="display:none">
-          <div class="account-header">
+          <div class="account-card-row">
             <span class="mine-menu-ico">👤</span>
-            <div class="account-user-info">
-              <span class="account-nickname" id="accountNickname">用户昵称</span>
-              <span class="account-device-code" id="accountDeviceCode">设备码: ******</span>
-            </div>
+            <button type="button" class="account-btn-small sync primary" id="syncBothBtn" title="双向完整同步">🔄</button>
           </div>
-          <div class="account-body">
-            <p class="account-sync-hint" id="accountLastSync">尚未同步</p>
-            <div class="account-actions">
-              <button type="button" class="account-btn sync" id="syncUpBtn" title="上传本地数据到云端">
-                🔼 同步到云端
-              </button>
-              <button type="button" class="account-btn sync" id="syncDownBtn" title="从云端下载数据到本地">
-                🔽 同步到本地
-              </button>
-              <button type="button" class="account-btn sync primary" id="syncBothBtn" title="双向完整同步">
-                🔄 双向同步
-              </button>
-            </div>
-            <div class="account-actions">
-              <button type="button" class="account-btn secondary small" id="logoutBtn">退出登录</button>
-            </div>
+          <div class="account-card-row">
+            <span class="mine-menu-title" id="accountNickname">用户昵称</span>
+            <button type="button" class="account-btn-small secondary" id="logoutBtn">退出</button>
           </div>
+          <span class="mine-menu-sub" id="accountDeviceCode">设备码: ******</span>
         </div>
 
         <!-- 登录表单弹窗 -->
@@ -274,6 +257,26 @@
     <div class="mine-list-view" id="mineListView" style="display:none">
       <div class="filters">
         <input class="search" id="mineSearch" type="search" placeholder="搜索名称 / 描述…">
+        <div class="filter-row" id="mineColorFilter">
+          <span class="label">🎨</span>
+          <button class="chip active" data-value="">✨ 全部</button>
+          <button class="chip" data-value="肉色">肉色</button>
+          <button class="chip" data-value="灰色">灰色</button>
+          <button class="chip" data-value="米色">米色</button>
+          <button class="chip" data-value="粉红">粉红</button>
+          <button class="chip" data-value="白色">白色</button>
+          <button class="chip" data-value="其他">其他</button>
+        </div>
+        <div class="filter-row" id="mineRareFilter">
+          <span class="label">⭐</span>
+          <button class="chip active" data-value="">✨ 全部</button>
+          <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
+          <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
+          <button class="chip" data-value="3"><span style="color:var(--star)">★★★</span></button>
+          <button class="chip" data-value="4"><span style="color:var(--star)">★★★★</span></button>
+          <button class="chip" data-value="5"><span style="color:var(--star)">★★★★★</span></button>
+          <button class="chip" data-value="6"><span style="color:var(--star-special)">★★★★★★</span></button>
+        </div>
         <div class="filter-row" id="mineOwnedFilter">
           <span class="label">🐽</span>
           <button class="chip active" data-value="">✨ 全部</button>
