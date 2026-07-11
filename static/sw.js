@@ -10,7 +10,7 @@
 //   - 已浏览过的猪头像从缓存读取
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
-const CACHE = "pigfarm-v83";
+const CACHE = "pigfarm-v84";
 
 // 暴露版本号给主线程（用于更新提示）
 self.addEventListener("message", e => {
@@ -28,7 +28,14 @@ const SHELL = [
   "/js/utils.js",
   "/js/data.js",
   "/js/filters.js",
+  "/js/auth.js",
+  "/js/sync.js",
+  "/js/account-ui.js",
+  "/js/modal.js",
+  "/js/version.js",
   "/css/app.css",
+  "/css/account.css",
+  "/css/modal.css",
   "/manifest.webmanifest",
   "/icon-192.png",
   "/icon-512.png",
@@ -95,13 +102,29 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // same-origin shell: cache-first, network fallback
+  // same-origin shell: cache-first + 运行时回填缓存
+  // 命中即用；未命中则 fetch 并写回缓存（排除 /api/ 动态接口），
+  // 这样未列进 SHELL 的模块/样式首次在线加载后也能离线用，新增文件自动覆盖。
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request).catch(() => {
-      // fallback for navigation requests when totally offline
-      if (e.request.mode === "navigate") return caches.match("/index.html");
-      return new Response("", { status: 504 });
-    }))
+    caches.open(CACHE).then(async cache => {
+      const hit = await cache.match(e.request);
+      if (hit) return hit;
+      try {
+        const res = await fetch(e.request);
+        if (
+          res.ok &&
+          url.origin === self.location.origin &&
+          !url.pathname.startsWith("/api/")
+        ) {
+          cache.put(e.request, res.clone());
+        }
+        return res;
+      } catch {
+        // 完全离线时的兜底：导航请求回退到首页
+        if (e.request.mode === "navigate") return caches.match("/index.html");
+        return new Response("", { status: 504 });
+      }
+    })
   );
 });
 
