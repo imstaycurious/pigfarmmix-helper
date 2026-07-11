@@ -18,6 +18,7 @@ Thumbs.db
 
 # Local secrets
 .env
+.dev.vars
 
 # Scratch / scraped artifacts (if they come back)
 *.tmp
