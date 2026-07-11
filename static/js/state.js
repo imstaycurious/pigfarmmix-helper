@@ -18,6 +18,7 @@ export const state = {
   eventPigsById: new Map(),      // pNo -> 活动猪详情 (仅用于反向配种索引 + 抽屉产出显示)
   pigsByListKey: new Map(),      // `${book}-${listno}` -> pNo
   collection: loadCollection(),  // array of pNo
+  ownedSet: new Set(loadCollection()), // 与 collection 同步的成员判断镜像 (O(1) has)，由 refreshOwnedSet 维护
   ownedEventPigs: loadOwnedEventPigs(), // Set<pNo>, 仅针对活动猪
   smallBadges: loadBadgeSet(STORAGE_KEY_BADGE_SMALL), // Set<pNo>, 已拿过小章
   bigBadges: loadBadgeSet(STORAGE_KEY_BADGE_BIG),   // Set<pNo>, 已拿过大章

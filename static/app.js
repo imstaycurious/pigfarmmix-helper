@@ -47,7 +47,7 @@ function buildCard(p, opts) {
   const isEvent = p.book === 7 || !state.pigsById.has(p.pNo);
   const isOwn = isEvent
     ? state.ownedEventPigs.has(p.pNo)
-    : state.collection.includes(p.pNo);
+    : state.ownedSet.has(p.pNo);
   const children = [];
   if (showCollected) {
     children.push(el("button", {
@@ -408,52 +408,53 @@ function renderEventsBody() {
   box.appendChild(grid);
 }
 
-function renderStatsBar() {
+function renderAtlasStats() {
   // 186图鉴 tab: 当前筛选结果 / 总数 · 已拥有
   const asb = $("#atlasStatsBar");
-  if (asb) {
-    if (!state.dataLoaded) {
-      asb.textContent = "";
-    } else {
-      const total = state.pigsById.size;
-      const shown = currentAtlasPigs().length;
-      const coll = state.collection.length;
-      asb.textContent = `显示 ${shown} / 共 ${total} 只 · 已拥有 ${coll}`;
-    }
+  if (!asb) return;
+  if (!state.dataLoaded) {
+    asb.textContent = "";
+  } else {
+    const total = state.pigsById.size;
+    const shown = currentAtlasPigs().length;
+    const coll = state.collection.length;
+    asb.textContent = `显示 ${shown} / 共 ${total} 只 · 已拥有 ${coll}`;
   }
+}
 
+function renderEventsStats() {
   // Events图鉴 tab: 当前筛选结果 / 共 425 · 已拥有
   const esb = $("#eventStatsBar");
-  if (esb) {
-    if (!state.dataLoaded) {
-      esb.textContent = "";
-    } else {
-      const total = state.eventPigsById.size;
-      const shown = currentEventPigs().length;
-      const owned = state.ownedEventPigs.size;
-      esb.textContent = `显示 ${shown} / 共 ${total} 只 · 已拥有 ${owned}`;
-    }
+  if (!esb) return;
+  if (!state.dataLoaded) {
+    esb.textContent = "";
+  } else {
+    const total = state.eventPigsById.size;
+    const shown = currentEventPigs().length;
+    const owned = state.ownedEventPigs.size;
+    esb.textContent = `显示 ${shown} / 共 ${total} 只 · 已拥有 ${owned}`;
   }
+}
 
+function renderMineStats() {
   // 我的 tab: 当前筛选结果 + 总览
   const msb = $("#mineStatsBar");
-  if (msb) {
-    if (!state.dataLoaded || (state.mineView !== "main" && state.mineView !== "event")) {
-      msb.textContent = "";
-    } else {
-      const shown = currentMinePigs().length;
-      const isMain = state.mineView === "main";
-      const total = isMain ? state.pigsById.size : state.eventPigsById.size;
-      const own = isMain ? state.collection.length : state.ownedEventPigs.size;
-      // 小章/大章: 只统计属于当前子视图范围的猪
-      const inScope = isMain
-        ? (pNo) => state.pigsById.has(pNo)
-        : (pNo) => state.eventPigsById.has(pNo);
-      let sm = 0, bg = 0;
-      for (const pNo of state.smallBadges) if (inScope(pNo)) sm++;
-      for (const pNo of state.bigBadges) if (inScope(pNo)) bg++;
-      msb.textContent = `显示 ${shown} 只 · 已拥有 ${own}/${total} · 小章 ${sm} · 大章 ${bg}`;
-    }
+  if (!msb) return;
+  if (!state.dataLoaded || (state.mineView !== "main" && state.mineView !== "event")) {
+    msb.textContent = "";
+  } else {
+    const shown = currentMinePigs().length;
+    const isMain = state.mineView === "main";
+    const total = isMain ? state.pigsById.size : state.eventPigsById.size;
+    const own = isMain ? state.collection.length : state.ownedEventPigs.size;
+    // 小章/大章: 只统计属于当前子视图范围的猪
+    const inScope = isMain
+      ? (pNo) => state.pigsById.has(pNo)
+      : (pNo) => state.eventPigsById.has(pNo);
+    let sm = 0, bg = 0;
+    for (const pNo of state.smallBadges) if (inScope(pNo)) sm++;
+    for (const pNo of state.bigBadges) if (inScope(pNo)) bg++;
+    msb.textContent = `显示 ${shown} 只 · 已拥有 ${own}/${total} · 小章 ${sm} · 大章 ${bg}`;
   }
 }
 
@@ -1199,17 +1200,51 @@ $("#clearBtn").addEventListener("click", async () => {
   toast("已清空全部记录");
 });
 
-function render() {
-  renderStatsBar();
-  renderAtlasBody();
-  renderEventsBody();
-  renderRaisingBody();
-  renderMineBody();
-  // sync 我的 tab 收藏管理 count
+// 重建 ownedSet，使成员判断保持 O(1) 且与 collection 一致。
+// 在每次渲染前调用即可覆盖所有卡片构建路径。
+function refreshOwnedSet() {
+  state.ownedSet = new Set(state.collection);
+}
+
+// 当前处于激活态的 tab 名（tab-panel 上有 .active）
+function activeTabName() {
+  for (const [name, ids] of Object.entries(TABS)) {
+    const panel = $(ids.panel);
+    if (panel && panel.classList.contains("active")) return name;
+  }
+  return null;
+}
+
+// 只渲染当前可见 tab 的统计条 + 重列表，避免每次交互重建全部 4 个 tab。
+function renderActiveTab() {
+  const active = activeTabName();
+  if (active === "atlas") {
+    renderAtlasStats();
+    renderAtlasBody();
+  } else if (active === "events") {
+    renderEventsStats();
+    renderEventsBody();
+  } else if (active === "raising") {
+    renderRaisingBody();
+  } else if (active === "mine") {
+    renderMineStats();
+    renderMineBody();
+    renderNameResults();
+  }
+  // auction tab 的列表不依赖收藏状态，由 renderAuctionTab 单独驱动
+}
+
+// 与收藏状态相关但很轻量的全局计数（textContent，无 filter），任何 tab 都保持最新
+function updateGlobalCounts() {
+  renderMineMenuCounts();
   const mc = $("#manageCount");
   if (mc) mc.textContent = `186 已拥有 ${state.collection.length} 只 · Events 已拥有 ${state.ownedEventPigs.size} 只 · 小章 ${state.smallBadges.size} · 大章 ${state.bigBadges.size} · 养成中 ${state.raisingPigs.length} 只`;
-  // keep name-search results fresh (e.g. "已添加" tag)
-  if ($("#tabMine") && $("#tabMine").classList.contains("active")) renderNameResults();
+}
+
+function render() {
+  refreshOwnedSet();
+  renderActiveTab();
+  updateGlobalCounts();
 }
 
 // ----- triplet add flow -----
@@ -2086,9 +2121,10 @@ function activateTab(name) {
     $(ids.btn).classList.toggle("active", active);
     $(ids.btn).setAttribute("aria-selected", String(active));
   }
-  if (name === "mine") renderNameResults();
+  // 切到某 tab 时才渲染它的重列表，反映在其他 tab 期间发生的收藏变化
+  refreshOwnedSet();
+  renderActiveTab();
   if (name === "raising") {
-    renderRaisingBody();
     renderRaisingSearchResults();
     updateRaisingCountdownNodes();
   }
