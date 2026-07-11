@@ -293,7 +293,14 @@ if (isLoggedIn()) {
 
   if (!user.lastSyncAt || now - user.lastSyncAt > fiveMinutes) {
     console.log('Auto syncing...');
-    syncWithCloud().catch(err => {
+    // 云端胜出时必须重载 state 并重渲染，否则内存里的旧数据会在下次
+    // 本地操作时写回 localStorage，把刚下载的云端数据覆盖掉
+    syncWithCloud({
+      onDataUpdated: () => {
+        reloadStateFromStorage();
+        render();
+      }
+    }).catch(err => {
       console.error('Auto sync failed:', err);
     });
   }

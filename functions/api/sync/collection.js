@@ -37,13 +37,28 @@ function validateUserId(userId) {
 }
 
 /**
- * 清理和验证编号数组
+ * 清理编号数组（只过滤非法值，不截断——长度校验在入口处做，超限直接报错）
  */
-function cleanNumberArray(arr, maxLength = 1000) {
+function cleanNumberArray(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr
-    .filter(n => Number.isInteger(n) && n > 0)
-    .slice(0, maxLength); // 限制数组长度
+  return arr.filter(n => Number.isInteger(n) && n > 0);
+}
+
+// 单个数组的长度上限。全部图鉴加起来远小于此值，正常用户永远碰不到；
+// 纯粹防恶意超大 payload。超限报错而不是截断——静默丢数据比失败更糟。
+const MAX_ARRAY_LENGTH = 10000;
+
+/**
+ * 校验 localData 各数组长度，超限返回错误信息，否则返回 null
+ */
+function validateLocalDataSize(localData) {
+  for (const key of ["collection", "eventPigs", "smallBadges", "bigBadges"]) {
+    const arr = localData[key];
+    if (Array.isArray(arr) && arr.length > MAX_ARRAY_LENGTH) {
+      return `${key} 数据量超过上限 (${arr.length} > ${MAX_ARRAY_LENGTH})，已拒绝同步以避免数据丢失`;
+    }
+  }
+  return null;
 }
 
 /**
@@ -220,6 +235,11 @@ export async function onRequestPost(context) {
   const localData = body.localData || {};
   if (typeof localData !== "object") {
     return badRequest("本地数据格式错误");
+  }
+
+  const sizeError = validateLocalDataSize(localData);
+  if (sizeError) {
+    return badRequest(sizeError);
   }
 
   const localModifiedAt = body.localModifiedAt || 0;
