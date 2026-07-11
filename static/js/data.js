@@ -318,6 +318,9 @@ export function setPigOwned(pNo, owned) {
     const i = state.collection.indexOf(pNo);
     if (owned && i < 0) state.collection.push(pNo);
     else if (!owned && i >= 0) state.collection.splice(i, 1);
+    // 同步维护 ownedSet，保证 O(1) 成员判断在两次 render 之间也是准的
+    if (owned) state.ownedSet.add(pNo);
+    else state.ownedSet.delete(pNo);
     saveCollection(state.collection);
   }
   if (!owned) {
@@ -343,7 +346,7 @@ export function setPigBadge(pNo, kind, on) {
     const isEvent = !state.pigsById.has(pNo) && state.eventPigsById.has(pNo);
     const alreadyOwned = isEvent
       ? state.ownedEventPigs.has(pNo)
-      : state.collection.includes(pNo);
+      : state.ownedSet.has(pNo);
     if (!alreadyOwned) setPigOwned(pNo, true);
   }
 }

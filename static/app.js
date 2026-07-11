@@ -57,7 +57,7 @@ function buildCard(p, opts) {
       onclick: async (ev) => {
         ev.stopPropagation();
         if (!(await setPigOwnedAfterConfirm(p.pNo, !isOwn))) return;
-        render();
+        updateOwnedUI(p.pNo);
       },
     }, isOwn ? "✅ 已拥有" : "⬜ 未拥有"));
   }
@@ -96,7 +96,7 @@ function buildCard(p, opts) {
         ev.stopPropagation();
         const set = kind === "small" ? state.smallBadges : state.bigBadges;
         setPigBadge(p.pNo, kind, !set.has(p.pNo));
-        render();
+        updateOwnedUI(p.pNo);
       };
     }
     const tag = showBadges ? "button" : "span";
@@ -122,6 +122,9 @@ function buildCard(p, opts) {
   ]));
   return el("div", {
     class: "card" + (showCollected && isOwn ? " collected" : ""),
+    "data-pno": String(p.pNo),
+    "data-show-collected": showCollected ? "1" : "0",
+    "data-show-badges": showBadges ? "1" : "0",
     onclick: () => showDetail(p.pNo),
   }, children);
 }
@@ -1247,6 +1250,39 @@ function render() {
   updateGlobalCounts();
 }
 
+// 单猪状态（拥有 / 徽章）变化后的轻量更新：只原位重建带该 pNo 的卡片，
+// 再刷新当前 tab 的统计条和全局计数，避免整个 grid 销毁重建。
+// 「我的」tab 若开着拥有/小章/大章筛选，列表成员本身会变 → 回退全量 render。
+function refreshPigCards(pNo) {
+  const p = getPigByPNo(pNo);
+  if (!p) return;
+  document.querySelectorAll(`.card[data-pno="${pNo}"]`).forEach(node => {
+    node.replaceWith(buildCard(p, {
+      showCollected: node.dataset.showCollected === "1",
+      showBadges: node.dataset.showBadges === "1",
+    }));
+  });
+}
+
+function updateOwnedUI(pNo) {
+  refreshOwnedSet();
+  const active = activeTabName();
+  const f = state.mineFilter;
+  if (active === "mine" && (state.mineView === "main" || state.mineView === "event")
+    && (f.owned || f.small || f.big)) {
+    render();
+    return;
+  }
+  refreshPigCards(pNo);
+  if (active === "atlas") renderAtlasStats();
+  else if (active === "events") renderEventsStats();
+  else if (active === "mine") {
+    renderMineStats();
+    renderProgressPanel();
+  }
+  updateGlobalCounts();
+}
+
 // ----- triplet add flow -----
 function parseTriple(book, page, slot) {
   const b = parseInt(book, 10), p = parseInt(page, 10), s = parseInt(slot, 10);
@@ -1260,10 +1296,11 @@ function addByPNo(pNo) {
   if (!state.dataLoaded) return { err: "数据还没加载好" };
   const p = state.pigsById.get(pNo);
   if (!p) return { err: `找不到 #${pNo}` };
-  if (state.collection.includes(pNo)) {
+  if (state.ownedSet.has(pNo)) {
     return { ok: false, pig: p, msg: `已在收藏中: #${pNo} ${p.name}` };
   }
   state.collection.push(pNo);
+  state.ownedSet.add(pNo);
   saveCollection(state.collection);
   return { ok: true, pig: p, msg: `已添加: #${pNo} ${p.name}` };
 }
@@ -1285,6 +1322,7 @@ function removePig(pNo) {
   const i = state.collection.indexOf(pNo);
   if (i < 0) return;
   state.collection.splice(i, 1);
+  state.ownedSet.delete(pNo);
   saveCollection(state.collection);
   render();
   if (p) toast(`已移除: ${p.name}`);
@@ -1595,7 +1633,7 @@ function showDetail(pNo) {
   // 统一: 主猪 + 活动猪都用同一个 已拥有/未拥有 切换按钮
   const isOwn = isEventPig
     ? state.ownedEventPigs.has(p.pNo)
-    : state.collection.includes(p.pNo);
+    : state.ownedSet.has(p.pNo);
   const collectBtn = isOwn
     ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">✅ 已拥有</button>`
     : `<button type="button" class="add-btn" id="drawerCollectBtn">⬜ 未拥有</button>`;
@@ -1838,7 +1876,7 @@ function showDetail(pNo) {
       const wasOwn = isOwn;
       if (!(await setPigOwnedAfterConfirm(p.pNo, !wasOwn))) return;
       toast(wasOwn ? `已取消: ${p.name}` : `已标记拥有: ${p.name}`);
-      render();
+      updateOwnedUI(p.pNo);
       showDetail(p.pNo); // re-render drawer so the button label flips
     });
   }
@@ -1975,8 +2013,8 @@ $("#drawerContent").addEventListener("click", async (e) => {
     if (!pNo || (kind !== "small" && kind !== "big")) return;
     const set = kind === "small" ? state.smallBadges : state.bigBadges;
     setPigBadge(pNo, kind, !set.has(pNo));
-    // 联动可能改了 owned 状态 → 整个抽屉重渲染最简洁
-    render();
+    // 联动可能改了 owned 状态 → 定点刷新卡片 + 重渲染抽屉
+    updateOwnedUI(pNo);
     if (currentDetailPNo) showDetail(currentDetailPNo);
     return;
   }
@@ -1987,7 +2025,7 @@ $("#drawerContent").addEventListener("click", async (e) => {
     const pNo = parseInt(chk.dataset.ownedPno, 10);
     if (!pNo) return;
     if (!(await setPigOwnedAfterConfirm(pNo, !state.ownedEventPigs.has(pNo)))) return;
-    render();
+    updateOwnedUI(pNo);
     if (currentDetailPNo) showDetail(currentDetailPNo);
     return;
   }
@@ -2301,7 +2339,7 @@ function filterAuctionByOwn(records, own) {
     const owned = known && (
       isEventPigId(pNo)
         ? state.ownedEventPigs.has(pNo)
-        : state.collection.includes(pNo)
+        : state.ownedSet.has(pNo)
     );
     if (own === "no") return !owned;
     if (own === "yes") return owned;
@@ -2370,7 +2408,7 @@ function buildAuctionOwnershipRow(pNo) {
   if (!known) return null;
   const owned = isEventPigId(pNo)
     ? state.ownedEventPigs.has(pNo)
-    : state.collection.includes(pNo);
+    : state.ownedSet.has(pNo);
   const sm = state.smallBadges.has(pNo);
   const bg = state.bigBadges.has(pNo);
   return el("div", { class: "auction-own-row" }, [
@@ -2637,7 +2675,7 @@ function renderNameResults() {
   }
   box.classList.add("show");
   for (const p of nameState.results) {
-    const already = state.collection.includes(p.pNo);
+    const already = state.ownedSet.has(p.pNo);
     const posText = p.book && p.book <= 6
       ? `图鉴${p.book}/页${p.page}/格${p.slot}`
       : (p.list && p.list.typeno === 7 ? "活动图鉴" : "");

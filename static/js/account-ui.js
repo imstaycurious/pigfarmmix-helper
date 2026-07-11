@@ -21,6 +21,7 @@ import { customAlert, customConfirm } from './modal.js';
  */
 function reloadStateFromStorage() {
   state.collection = loadCollection();
+  state.ownedSet = new Set(state.collection);
   state.ownedEventPigs = loadOwnedEventPigs();
   state.smallBadges = loadBadgeSet(STORAGE_KEY_BADGE_SMALL);
   state.bigBadges = loadBadgeSet(STORAGE_KEY_BADGE_BIG);

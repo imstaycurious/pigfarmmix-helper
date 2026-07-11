@@ -121,7 +121,7 @@ export function isEventPigId(pNo) {
 // 判断猪是否已拥有
 export function pigIsOwned(p) {
   if (p.book === 7) return state.ownedEventPigs.has(p.pNo);
-  return state.collection.includes(p.pNo);
+  return state.ownedSet.has(p.pNo);
 }
 
 // 集齐 186 后的解锁庆祝弹窗

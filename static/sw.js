@@ -10,7 +10,7 @@
 //   - 已浏览过的猪头像从缓存读取
 //
 // 更新数据: 重新部署时把 CACHE 版本号递增，强制重新获取。
-const CACHE = "pigfarm-v84";
+const CACHE = "pigfarm-v85";
 
 // 暴露版本号给主线程（用于更新提示）
 self.addEventListener("message", e => {
