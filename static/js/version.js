@@ -76,7 +76,7 @@ async function showUpdateNotice(version) {
 • 更新最新月限定猪（共 8 头）
 
 🙏 说明：
-• 新猪缺失的图片等待好心人提供
+• 新猪缺失的图片由小红书用户 @最爱你寂寞 提供
   `.trim();
 
   await customAlert(updateContent, '更新提示');
