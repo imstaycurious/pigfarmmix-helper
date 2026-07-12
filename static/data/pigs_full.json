@@ -2,7 +2,7 @@
   "version": 3,
   "source": "https://pigfarmmix.net/",
   "generatedAt": "2026-05-31T02:04:54.559Z",
-  "count": 646,
+  "count": 654,
   "pigs": [
     {
       "pNo": 1,
@@ -25395,6 +25395,225 @@
         "interval": 0,
         "times": 3,
         "picky": []
+      }
+    },
+    {
+      "pNo": 1198,
+      "name": "孔雀豬",
+      "rare": 4,
+      "color": 5,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "weight": {
+        "small": 128.9,
+        "big": 178.2
+      },
+      "rent": 0,
+      "price": 0,
+      "lifespan": 12,
+      "graze": false,
+      "feeding": {
+        "interval": 0,
+        "times": 2,
+        "picky": [
+          6
+        ]
+      }
+    },
+    {
+      "pNo": 1199,
+      "name": "斯廷法洛斯怪鳥豬",
+      "rare": 4,
+      "color": 2,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "weight": {
+        "small": 128.9,
+        "big": 179.4
+      },
+      "rent": 0,
+      "price": 0,
+      "lifespan": 14,
+      "graze": false,
+      "feeding": {
+        "interval": 0,
+        "times": 3,
+        "picky": []
+      }
+    },
+    {
+      "pNo": 1200,
+      "name": "聖方濟·沙勿略豬",
+      "rare": 3,
+      "color": 1,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "weight": {
+        "small": 125.9,
+        "big": 167
+      },
+      "rent": 0,
+      "price": 0,
+      "lifespan": 6,
+      "graze": true,
+      "feeding": {
+        "interval": 0,
+        "times": 1,
+        "picky": []
+      }
+    },
+    {
+      "pNo": 1201,
+      "name": "梵谷自書豬",
+      "rare": 3,
+      "color": 1,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "weight": {
+        "small": 125.7,
+        "big": 168.2
+      },
+      "rent": 0,
+      "price": 0,
+      "lifespan": 8,
+      "graze": false,
+      "feeding": {
+        "interval": 0,
+        "times": 2,
+        "picky": []
+      }
+    },
+    {
+      "pNo": 1202,
+      "name": "西楚霸王豬",
+      "rare": 6,
+      "color": 4,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "weight": {
+        "small": 120,
+        "big": 120
+      },
+      "rent": 0,
+      "price": 0,
+      "lifespan": 0,
+      "graze": false,
+      "feeding": {
+        "interval": 0,
+        "times": 0,
+        "picky": []
+      },
+      "breedingGuide": {
+        "requirements": "成豬時身邊最少4頭以上的豬；成豬時身邊的豬要相同顏色（不能粉色）；成豬前體重限制 >103.0 kg",
+        "tips": null
+      },
+      "hints": [
+        "似乎會陷入四面楚歌",
+        "身材魁武，看起來力氣很大",
+        "似乎打算要背水一戰了",
+        "據說一隻眼中有兩個瞳孔",
+        "據說出身名門"
+      ]
+    },
+    {
+      "pNo": 1203,
+      "name": "翠鳥豬",
+      "rare": 3,
+      "color": 5,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "weight": {
+        "small": 128.6,
+        "big": 170.6
+      },
+      "rent": 0,
+      "price": 0,
+      "lifespan": 12,
+      "graze": true,
+      "feeding": {
+        "interval": 0,
+        "times": 4,
+        "picky": []
+      }
+    },
+    {
+      "pNo": 1204,
+      "name": "克里特島公豬",
+      "rare": 4,
+      "color": 2,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "weight": {
+        "small": 132.4,
+        "big": 184.1
+      },
+      "rent": 0,
+      "price": 0,
+      "lifespan": 24,
+      "graze": true,
+      "feeding": {
+        "interval": 0,
+        "times": 6,
+        "picky": []
+      }
+    },
+    {
+      "pNo": 1205,
+      "name": "座敷小豬",
+      "rare": 5,
+      "color": 1,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "rent": 0,
+      "price": 0,
+      "lifespan": 16,
+      "graze": false,
+      "feeding": {
+        "interval": 0,
+        "times": 0,
+        "picky": [
+          1
+        ]
       }
     }
   ],

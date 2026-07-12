@@ -72,17 +72,11 @@ export async function checkAndShowUpdateNotice() {
  */
 async function showUpdateNotice(version) {
   const updateContent = `
-🎉 新功能：
-• 账号系统上线：支持多设备数据同步
-• 智能同步：自动检测最新修改
+🐷 数据更新：
+• 更新最新月限定猪（共 8 头）
 
-✨ 优化：
-• 简洁账号卡片布局
-
-⚠️ 重要提示：
-• 首次使用请先注册账号
-• 务必保存好你的设备码（6位）
-• 建议注册后立即同步数据到云端
+🙏 说明：
+• 新猪缺失的图片等待好心人提供
   `.trim();
 
   await customAlert(updateContent, '更新提示');
