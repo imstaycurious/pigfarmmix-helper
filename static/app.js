@@ -1013,6 +1013,44 @@ function updateRaisingNotificationButton() {
   }
 }
 
+function classifyPushError(err) {
+  const msg = err && err.message ? String(err.message) : String(err);
+  const lower = msg.toLowerCase();
+  if (lower.includes("push service") || lower.includes("registration failed") || lower.includes("not subscribed")) {
+    return {
+      type: "push-service",
+      message: "浏览器推送服务不可用（可能是夸克/UC/QQ 等浏览器，或无法连接 Google FCM）",
+      canRetry: true,
+    };
+  }
+  if (lower.includes("permission") || lower.includes("denied") || lower.includes("not allowed")) {
+    return {
+      type: "permission",
+      message: "通知权限被浏览器或系统拒绝",
+      canRetry: false,
+    };
+  }
+  if (lower.includes("network") || lower.includes("fetch") || lower.includes("internet") || lower.includes("abort")) {
+    return {
+      type: "network",
+      message: "网络连接失败，无法连接推送服务器",
+      canRetry: true,
+    };
+  }
+  if (lower.includes("vapid") || lower.includes("application server key") || lower.includes("invalid key")) {
+    return {
+      type: "vapid",
+      message: "推送服务配置错误（VAPID 公钥无效）",
+      canRetry: false,
+    };
+  }
+  return {
+    type: "unknown",
+    message: msg || "未知错误",
+    canRetry: true,
+  };
+}
+
 async function subscribeRaisingPush() {
   if (!webPushSupported()) {
     throw new Error("当前浏览器不支持后台推送");
@@ -1023,11 +1061,26 @@ async function subscribeRaisingPush() {
   }
   const reg = await serviceWorkerReady();
   let subscription = await reg.pushManager.getSubscription();
-  if (!subscription) {
+  if (subscription) {
+    try {
+      await subscription.unsubscribe();
+    } catch (err) {
+      console.warn("[raising] failed to unsubscribe old push subscription:", err);
+    }
+    subscription = null;
+  }
+  try {
     subscription = await reg.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(publicKey),
     });
+  } catch (err) {
+    const classified = classifyPushError(err);
+    const wrapped = new Error(classified.message);
+    wrapped.type = classified.type;
+    wrapped.canRetry = classified.canRetry;
+    wrapped.original = err;
+    throw wrapped;
   }
   await apiJson("/api/push-subscribe", {
     deviceId: deviceId(),
@@ -1037,6 +1090,12 @@ async function subscribeRaisingPush() {
   savePushEnabled(true);
   await syncRaisingRecordsToCloud({ silent: true });
   return subscription;
+}
+
+function pushSubscribeErrorToast(err) {
+  const classified = err && err.type ? err : classifyPushError(err);
+  const suffix = classified.canRetry ? "，可刷新页面后重试" : "";
+  toast(`${classified.message}${suffix}`, 4000);
 }
 
 async function requestRaisingNotificationPermission() {
@@ -1052,7 +1111,7 @@ async function requestRaisingNotificationPermission() {
         toast("后台提醒已开启");
       } catch (err) {
         console.warn("[raising] push subscribe failed:", err);
-        toast(`提醒已开启，后台推送未完成: ${err.message || err}`, 3200);
+        pushSubscribeErrorToast(err);
       }
     } else {
       syncRaisingRecordsToCloud({ silent: true });
@@ -1075,7 +1134,7 @@ async function requestRaisingNotificationPermission() {
       toast("后台提醒已开启");
     } catch (err) {
       console.warn("[raising] push subscribe failed:", err);
-      toast(`提醒已开启，后台推送未完成: ${err.message || err}`, 3200);
+      pushSubscribeErrorToast(err);
     }
     updateRaisingNotificationButton();
     const now = Date.now();
