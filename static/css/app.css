@@ -1187,6 +1187,47 @@
       gap: 10px;
     }
 
+    /* 「等待进货中」分组:用更低饱和度的边框/背景与养成卡片区分 */
+    .raising-section-divider {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 18px 4px 8px;
+      padding-top: 14px;
+      border-top: 1px dashed rgba(0, 0, 0, 0.18);
+    }
+    .raising-section-title {
+      font-weight: 600;
+      font-size: 0.95em;
+      opacity: 0.78;
+    }
+    .raising-section-hint {
+      font-size: 0.78em;
+      opacity: 0.55;
+    }
+    .raising-list-waiting {
+      opacity: 0.92;
+    }
+    .raising-card.is-waiting {
+      border-style: dashed;
+      background: rgba(0, 0, 0, 0.02);
+    }
+    .raising-card.is-waiting .raising-progress {
+      display: none;
+    }
+    .raising-waiting-tag {
+      font-size: 0.7em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(120, 120, 120, 0.15);
+      color: rgba(60, 60, 60, 0.85);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .raising-countdown.waiting {
+      color: rgba(0, 0, 0, 0.35);
+    }
+
     @media (max-width: 520px) {
       .raising-main {
         grid-template-columns: 52px minmax(0, 1fr);

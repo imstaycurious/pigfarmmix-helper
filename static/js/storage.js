@@ -118,6 +118,9 @@ export function loadRaisingPigs() {
         lastFedAt: Number.parseInt(item.lastFedAt, 10),
         notifiedAt: Number.parseInt(item.notifiedAt || 0, 10) || 0,
         feedCount: Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0),
+        // status: "active" = 正在养成 (有提醒/倒计时); "waiting" = 等待进货中 (无提醒)
+        // 旧版本 localStorage 里没有这个字段,统一归一为 active 避免历史数据被当等待进货处理。
+        status: item.status === "waiting" ? "waiting" : "active",
       }))
       .filter(item =>
         item.id &&

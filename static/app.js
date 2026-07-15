@@ -592,6 +592,8 @@ function buildRaisingCloudRecords() {
   if (!state.dataLoaded) return [];
   return state.raisingPigs
     .map(item => {
+      // 等待进货中的猪不进云端提醒表,只保留在本地
+      if (item.status === "waiting") return null;
       const pig = getPigByPNo(item.pNo);
       if (!pig) return null;
       return {
@@ -661,7 +663,7 @@ function saveRaisingState() {
   scheduleRaisingPushSync();
 }
 
-function addRaisingPig(pNo) {
+function addRaisingPig(pNo, status = "active") {
   if (!state.dataLoaded) {
     toast("数据还没加载好");
     return;
@@ -679,17 +681,23 @@ function addRaisingPig(pNo) {
     lastFedAt: now,
     notifiedAt: 0,
     feedCount: 0,
+    status,
   });
   saveRaisingState();
   renderRaisingBody();
   renderRaisingSearchResults();
   updateRaisingCountdownNodes();
-  toast(`已加入养成中: ${pig.name}`);
+  if (status === "waiting") {
+    toast(`已加入等待进货中: ${pig.name}`);
+  } else {
+    toast(`已加入养成中: ${pig.name}`);
+  }
 }
 
 function markRaisingFed(id) {
   const item = state.raisingPigs.find(x => x.id === id);
   if (!item) return;
+  if (item.status === "waiting") return; // 等待进货中的猪不走喂食计时
   item.lastFedAt = Date.now();
   item.notifiedAt = 0;
   item.feedCount = Math.max(0, (Number.parseInt(item.feedCount || 0, 10) || 0) + 1);
@@ -702,10 +710,34 @@ function markRaisingFed(id) {
 
 function adjustRaisingFeedCount(id, delta) {
   const item = state.raisingPigs.find(x => x.id === id);
-  if (!item) return;
+  if (!item || item.status === "waiting") return;
   item.feedCount = Math.max(0, (Number.parseInt(item.feedCount || 0, 10) || 0) + delta);
   saveRaisingState();
   renderRaisingBody();
+}
+
+// 把养成中的猪挪到「等待进货中」或挪回来。纯本地切换,不动后端 schema。
+function moveRaisingPig(id) {
+  const item = state.raisingPigs.find(x => x.id === id);
+  if (!item) return;
+  const pig = getPigByPNo(item.pNo);
+  if (item.status === "waiting") {
+    // 从等待进货挪回养成:从现在开始算,等价于刚加入
+    item.lastFedAt = Date.now();
+    item.notifiedAt = 0;
+    item.feedCount = 0;
+    item.status = "active";
+    saveRaisingState();
+    renderRaisingBody();
+    updateRaisingCountdownNodes();
+    toast(pig ? `已移回养成中: ${pig.name}` : "已移回养成中");
+  } else {
+    item.status = "waiting";
+    saveRaisingState();
+    renderRaisingBody();
+    updateRaisingCountdownNodes();
+    toast(pig ? `已移入等待进货中: ${pig.name}` : "已移入等待进货中");
+  }
 }
 
 async function removeRaisingPig(id) {
@@ -802,7 +834,7 @@ function renderRaisingSearchResults() {
 function buildRaisingRow(item) {
   const pig = getPigByPNo(item.pNo);
   if (!pig) {
-    return el("div", { class: "raising-card missing" }, [
+    return el("div", { class: "raising-card missing" + (item.status === "waiting" ? " is-waiting" : "") }, [
       el("div", { class: "raising-info" }, [
         el("div", { class: "raising-name" }, `#${item.pNo} 找不到数据`),
         el("div", { class: "raising-meta" }, "数据可能已变更"),
@@ -814,6 +846,14 @@ function buildRaisingRow(item) {
       }, "移除"),
     ]);
   }
+  // 等待进货中的猪走简化渲染:无喂食/倒计时/进度,只有"移回养成"和"移除"。
+  if (item.status === "waiting") {
+    return buildWaitingRow(item, pig);
+  }
+  return buildActiveRow(item, pig);
+}
+
+function buildActiveRow(item, pig) {
   const intervalMs = adjustedFeedIntervalMs(pig);
   const dueMs = getRaisingDueMs(item, pig);
   const diff = dueMs - Date.now();
@@ -915,6 +955,67 @@ function buildRaisingRow(item) {
         class: "add-btn secondary",
         onclick: () => showDetail(pig.pNo),
       }, "详情"),
+      el("button", {
+        type: "button",
+        class: "add-btn secondary",
+        title: "移入等待进货中 (不提醒)",
+        onclick: () => moveRaisingPig(item.id),
+      }, "移入等待进货中"),
+    ]),
+  ]);
+}
+
+// 等待进货中的简化卡片:不挂倒计时/进度,不显示喂食步骤
+function buildWaitingRow(item, pig) {
+  return el("div", { class: "raising-card is-waiting" }, [
+    el("button", {
+      type: "button",
+      class: "raising-remove",
+      title: "移除",
+      onclick: ev => {
+        ev.stopPropagation();
+        removeRaisingPig(item.id);
+      },
+    }, "×"),
+    el("div", {
+      class: "raising-main",
+      onclick: () => showDetail(pig.pNo),
+    }, [
+      el("div", { class: "raising-thumb" },
+        el("img", { src: imgUrl(pig.pNo), loading: "lazy", alt: pig.name })
+      ),
+      el("div", { class: "raising-info" }, [
+        el("div", { class: "raising-name" }, [
+          pig.name,
+          el("span", { class: "raising-waiting-tag" }, "等待进货中"),
+          el("span", { class: pig.special ? "stars special" : "stars" }, stars(pig.rare, pig.special)),
+        ]),
+        pig.color_text ? el("div", { class: "raising-meta" }, pig.color_text) : null,
+        el("div", { class: "raising-meta" }, `加入于 ${formatDateTime(item.startedAt)}`),
+      ]),
+      el("div", { class: "raising-time" }, [
+        el("span", {
+          class: "raising-countdown waiting",
+          "data-raising-countdown": item.id,
+          "data-raising-waiting": "1",
+          "data-due-ms": "0",
+          "data-last-fed-ms": "0",
+          "data-interval-ms": "1",
+        }, "—"),
+      ]),
+    ]),
+    el("div", { class: "raising-actions" }, [
+      el("button", {
+        type: "button",
+        class: "add-btn",
+        title: "移回正在养成中 (开始计时/提醒)",
+        onclick: () => moveRaisingPig(item.id),
+      }, "移回养成中"),
+      el("button", {
+        type: "button",
+        class: "add-btn secondary",
+        onclick: () => showDetail(pig.pNo),
+      }, "详情"),
     ]),
   ]);
 }
@@ -927,13 +1028,22 @@ function renderRaisingStats() {
     return;
   }
   const floor = currentRaisingFloor();
+  let active = 0;
+  let waiting = 0;
   let due = 0;
   const now = Date.now();
   for (const item of state.raisingPigs) {
+    if (item.status === "waiting") {
+      waiting++;
+      continue;
+    }
+    active++;
     const pig = getPigByPNo(item.pNo);
     if (pig && getRaisingDueMs(item, pig) <= now) due++;
   }
-  stats.textContent = `养成中 ${state.raisingPigs.length} 只 · ${floor.label} · 待喂 ${due}`;
+  const head = waiting > 0 ? `· 等待进货中 ${waiting} ` : "";
+  const tail = `· 养成中 ${active} 只 · ${floor.label} · 待喂 ${due}`;
+  stats.textContent = (head + tail).trim();
 }
 
 function renderRaisingBody() {
@@ -956,19 +1066,43 @@ function renderRaisingBody() {
     ]));
     return;
   }
-  const items = state.raisingPigs.slice().sort((a, b) => {
+
+  // 分组:active(正在养成)+waiting(等待进货中),并各自按到期时间/加入时间排序
+  const active = [];
+  const waiting = [];
+  for (const item of state.raisingPigs) {
+    if (item.status === "waiting") waiting.push(item);
+    else active.push(item);
+  }
+  active.sort((a, b) => {
     const ap = getPigByPNo(a.pNo);
     const bp = getPigByPNo(b.pNo);
     const ad = ap ? getRaisingDueMs(a, ap) : Number.MAX_SAFE_INTEGER;
     const bd = bp ? getRaisingDueMs(b, bp) : Number.MAX_SAFE_INTEGER;
     return ad - bd;
   });
-  box.appendChild(el("div", { class: "raising-list" }, items.map(buildRaisingRow)));
+  waiting.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0));
+
+  if (active.length > 0) {
+    box.appendChild(el("div", { class: "raising-section-divider" }, [
+      el("span", { class: "raising-section-title" }, "🐷 正在养成中"),
+    ]));
+    box.appendChild(el("div", { class: "raising-list" }, active.map(buildRaisingRow)));
+  }
+
+  if (waiting.length > 0) {
+    box.appendChild(el("div", { class: "raising-section-divider" }, [
+      el("span", { class: "raising-section-title" }, "📦 等待进货中"),
+    ]));
+    box.appendChild(el("div", { class: "raising-list raising-list-waiting" }, waiting.map(buildRaisingRow)));
+  }
 }
 
 function updateRaisingCountdownNodes() {
   const now = Date.now();
   $$("#raisingBody [data-raising-countdown]").forEach(node => {
+    // 等待进货中的卡片不挂倒计时节点,但万一已渲染就跳过以防异常
+    if (node.dataset.raisingWaiting === "1") return;
     const dueMs = Number(node.getAttribute("data-due-ms")) || 0;
     const lastFedMs = Number(node.getAttribute("data-last-fed-ms")) || 0;
     const intervalMs = Number(node.getAttribute("data-interval-ms")) || 1;
@@ -1140,6 +1274,8 @@ async function requestRaisingNotificationPermission() {
     const now = Date.now();
     let changed = false;
     for (const item of state.raisingPigs) {
+      // 等待进货中不需要重置提醒标记
+      if (item.status === "waiting") continue;
       const pig = getPigByPNo(item.pNo);
       if (pig && getRaisingDueMs(item, pig) <= now) {
         item.notifiedAt = 0;
@@ -1156,6 +1292,8 @@ function checkRaisingReminders() {
   const now = Date.now();
   let changed = false;
   for (const item of state.raisingPigs) {
+    // 等待进货中的猪不参与提醒
+    if (item.status === "waiting") continue;
     const pig = getPigByPNo(item.pNo);
     if (!pig) continue;
     const dueMs = getRaisingDueMs(item, pig);
@@ -1203,7 +1341,11 @@ $("#raisingFloorSelect").addEventListener("change", e => {
   state.raisingFloor = floor;
   saveRaisingFloor(floor);
   // 地板切换会改变 dueMs；允许新的到点时间重新触发提醒。
-  for (const item of state.raisingPigs) item.notifiedAt = 0;
+  // 等待进货中的猪不参与提醒,跳过重置。
+  for (const item of state.raisingPigs) {
+    if (item.status === "waiting") continue;
+    item.notifiedAt = 0;
+  }
   saveRaisingState();
   syncRaisingFloorSelect();
   renderRaisingBody();
@@ -2889,6 +3031,7 @@ function buildExportPayload() {
       lastFedAt: item.lastFedAt,
       notifiedAt: item.notifiedAt || 0,
       feedCount: Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0),
+      status: item.status === "waiting" ? "waiting" : "active",
     })),
     raisingFloor: state.raisingFloor,
     hiddenUnlocked: state.hiddenUnlocked,
@@ -3093,6 +3236,8 @@ function parseImportText(raw) {
         const lastFedAt = Number.parseInt(raw.lastFedAt, 10);
         const notifiedAt = Number.parseInt(raw.notifiedAt || 0, 10) || 0;
         const feedCount = Math.max(0, Number.parseInt(raw.feedCount || 0, 10) || 0);
+        // status 仅区分 active / waiting,旧版本备份没有该字段视为 active
+        const status = raw.status === "waiting" ? "waiting" : "active";
         raisingPigs.push({
           id: String(raw.id || makeRaisingId()),
           pNo,
@@ -3100,6 +3245,7 @@ function parseImportText(raw) {
           lastFedAt: Number.isFinite(lastFedAt) ? lastFedAt : now,
           notifiedAt,
           feedCount,
+          status,
         });
       }
     }
