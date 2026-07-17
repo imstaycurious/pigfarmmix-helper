@@ -1839,6 +1839,7 @@ function showDetail(pNo) {
     ? `<button type="button" class="add-btn danger" id="drawerCollectBtn">✅ 已拥有</button>`
     : `<button type="button" class="add-btn" id="drawerCollectBtn">⬜ 未拥有</button>`;
   const raisingBtn = `<button type="button" class="add-btn secondary" id="drawerRaisingBtn">➕ 加入养成</button>`;
+  const waitingBtn = `<button type="button" class="add-btn secondary" id="drawerWaitingBtn">📦 加入等待进货</button>`;
 
   const groups = deriveAcquisitions(p);
   const acqOrder = ["shop", "hunt", "hunt_event", "fail", "feed_special"];
@@ -2039,7 +2040,7 @@ function showDetail(pNo) {
 
   box.innerHTML = `
     <h2>#${p.pNo} ${escHtml(p.name)}</h2>
-    <div class="drawer-actions">${collectBtn}${raisingBtn}</div>
+    <div class="drawer-actions">${collectBtn}${raisingBtn}${waitingBtn}</div>
     <div class="hero">
       ${pigImg ? `<img src="${pigImg}" alt="${escHtml(p.name)}">` : ""}
       <div class="info">
@@ -2085,6 +2086,12 @@ function showDetail(pNo) {
   if (rbtn) {
     rbtn.addEventListener("click", () => {
       addRaisingPig(p.pNo);
+    });
+  }
+  const wbtn = $("#drawerWaitingBtn");
+  if (wbtn) {
+    wbtn.addEventListener("click", () => {
+      addRaisingPig(p.pNo, "waiting");
     });
   }
 
