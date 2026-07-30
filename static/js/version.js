@@ -73,9 +73,7 @@ export async function checkAndShowUpdateNotice() {
 async function showUpdateNotice(version) {
   const updateContent = `
 🐷 本次更新：
-• 养成中新增「📦 等待进货中」分类
-• 正在养的猪可一键移入等待进货,不再发送喂食提醒
-• 等待进货中的猪可一键移回养成,自动重置上次喂食时间
+• 茶杯神猪 不放牧 -> 放牧
   `.trim();
 
   await customAlert(updateContent, '更新提示');

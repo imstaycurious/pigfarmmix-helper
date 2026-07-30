@@ -21599,7 +21599,7 @@
       },
       "price": 10000,
       "lifespan": 36,
-      "graze": false,
+      "graze": true,
       "feeding": {
         "interval": 0,
         "times": 16,
