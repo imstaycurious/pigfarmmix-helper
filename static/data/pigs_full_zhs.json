@@ -2,7 +2,7 @@
   "version": 3,
   "source": "https://pigfarmmix.net/",
   "generatedAt": "2026-05-31T02:04:54.580Z",
-  "count": 654,
+  "count": 658,
   "pigs": [
     {
       "pNo": 1,
@@ -25614,6 +25614,97 @@
         "picky": [
           1
         ]
+      }
+    },
+    {
+      "pNo": 1206,
+      "name": "猪红鹤",
+      "rare": 4,
+      "color": 4,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "rent": 0,
+      "price": 0,
+      "lifespan": 12,
+      "graze": true,
+      "feeding": {
+        "interval": 0,
+        "times": 3,
+        "picky": [
+          2,
+          7
+        ]
+      }
+    },
+    {
+      "pNo": 1207,
+      "name": "狄俄墨得斯的食人猪",
+      "rare": 4,
+      "color": 3,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "rent": 0,
+      "price": 0,
+      "lifespan": 14,
+      "graze": true,
+      "feeding": {
+        "interval": 0,
+        "times": 4,
+        "picky": []
+      }
+    },
+    {
+      "pNo": 1208,
+      "name": "棉花糖猪",
+      "rare": 3,
+      "color": 2,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "rent": 0,
+      "price": 0,
+      "lifespan": 8,
+      "graze": false,
+      "feeding": {
+        "interval": 0,
+        "times": 1,
+        "picky": []
+      }
+    },
+    {
+      "pNo": 1209,
+      "name": "苹果糖猪",
+      "rare": 3,
+      "color": 1,
+      "description": "",
+      "atlas": {
+        "type": 7,
+        "index": 0,
+        "visible": true
+      },
+      "special": true,
+      "rent": 0,
+      "price": 0,
+      "lifespan": 12,
+      "graze": false,
+      "feeding": {
+        "interval": 0,
+        "times": 1,
+        "picky": []
       }
     }
   ],

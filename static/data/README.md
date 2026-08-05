@@ -155,7 +155,7 @@
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `lifespan` | number | 寿命 (天) |
+| `lifespan` | number | 成猪时间 (小时) |
 | `graze` | boolean | 是否可以放牧 |
 | `feeding` | object | 喂食属性 (可选，不挑食的猪省略) |
 | `feeding.interval` | number | 喂食间隔 (小时) |

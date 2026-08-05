@@ -73,7 +73,7 @@ export async function checkAndShowUpdateNotice() {
 async function showUpdateNotice(version) {
   const updateContent = `
 🐷 本次更新：
-• 茶杯神猪 不放牧 -> 放牧
+• 新增活动猪 4 头：猪红鹤、狄俄墨得斯的食人猪、棉花糖猪、苹果糖猪
   `.trim();
 
   await customAlert(updateContent, '更新提示');
