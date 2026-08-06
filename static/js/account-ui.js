@@ -204,13 +204,22 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
       toast('登录成功');
       updateAccountUI();
 
-      // 登录后自动同步
-      await syncWithCloud({
-        onDataUpdated: () => {
-          reloadStateFromStorage();
-          render();
-        }
-      });
+      // 登录后必须「先合并再上传」，不能直接 syncWithCloud。
+      // 登录设备只要在登录前勾过任何一只猪，本地时间戳就是最新的，
+      // LWW 会判本地胜出，服务端随即删光云端收藏再写入本地这一份 ——
+      // 另一台设备上攒的数据就没了。先并集合并再上传可以避免这点。
+      const onDataUpdated = () => {
+        reloadStateFromStorage();
+        render();
+      };
+      const pulled = await pullFromCloud({ onDataUpdated });
+      if (pulled.ok) {
+        await syncWithCloud({ onDataUpdated });
+        updateLastSyncTime();
+      } else {
+        // 拉取失败时绝不上传：否则又会退化成用本地数据覆盖云端
+        toast(`云端数据读取失败：${pulled.error || '未知错误'}，本次未上传`);
+      }
     } else {
       setFormMessage('loginFormMsg', result.error || '登录失败', true);
     }

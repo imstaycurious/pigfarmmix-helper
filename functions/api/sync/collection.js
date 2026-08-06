@@ -37,16 +37,42 @@ function validateUserId(userId) {
 }
 
 /**
- * 清理编号数组（只过滤非法值，不截断——长度校验在入口处做，超限直接报错）
+ * 清理编号数组（过滤非法值 + 去重；长度校验在入口处做，超限直接报错）
  */
 function cleanNumberArray(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr.filter(n => Number.isInteger(n) && n > 0);
+  return Array.from(new Set(arr.filter(n => Number.isInteger(n) && n > 0)));
 }
 
 // 单个数组的长度上限。全部图鉴加起来远小于此值，正常用户永远碰不到；
 // 纯粹防恶意超大 payload。超限报错而不是截断——静默丢数据比失败更糟。
 const MAX_ARRAY_LENGTH = 10000;
+
+// D1 单条语句的绑定参数上限是 100，留点余量。多行 INSERT 按这个预算分块，
+// 既压缩语句条数（好让整次覆盖塞进一个 batch），又不会超限。
+const MAX_BOUND_PARAMS = 96;
+
+/**
+ * 构造多行 INSERT 语句数组，单条语句的绑定参数不超过 MAX_BOUND_PARAMS
+ */
+function buildInsertStatements(db, { table, columns, conflictTarget, rows, buildRowParams }) {
+  const rowsPerStatement = Math.max(1, Math.floor(MAX_BOUND_PARAMS / columns.length));
+  const rowPlaceholder = `(${columns.map(() => "?").join(", ")})`;
+  const statements = [];
+
+  for (let i = 0; i < rows.length; i += rowsPerStatement) {
+    const slice = rows.slice(i, i + rowsPerStatement);
+    statements.push(
+      db.prepare(`
+        INSERT INTO ${table} (${columns.join(", ")})
+        VALUES ${slice.map(() => rowPlaceholder).join(", ")}
+        ON CONFLICT ${conflictTarget} DO NOTHING
+      `).bind(...slice.flatMap(buildRowParams))
+    );
+  }
+
+  return statements;
+}
 
 /**
  * 校验 localData 各数组长度，超限返回错误信息，否则返回 null
@@ -103,59 +129,40 @@ async function loadCloudData(db, userId) {
  * 先删除该用户所有数据，再插入本地数据 —— 这样删除操作也能同步
  */
 async function overwriteCloudData(db, userId, localData, now, localModifiedAt) {
-  const statements = [];
-
   // 先清空该用户所有旧数据（支持删除同步）
-  statements.push(db.prepare("DELETE FROM collections WHERE user_id = ?").bind(userId));
-  statements.push(db.prepare("DELETE FROM event_collections WHERE user_id = ?").bind(userId));
-  statements.push(db.prepare("DELETE FROM badges WHERE user_id = ?").bind(userId));
+  const statements = [
+    db.prepare("DELETE FROM collections WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM event_collections WHERE user_id = ?").bind(userId),
+    db.prepare("DELETE FROM badges WHERE user_id = ?").bind(userId),
+  ];
 
-  // 处理 186 图鉴收藏
-  const collection = cleanNumberArray(localData.collection);
-  for (const pNo of collection) {
-    statements.push(
-      db.prepare(`
-        INSERT INTO collections (user_id, p_no, added_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT (user_id, p_no) DO NOTHING
-      `).bind(userId, pNo, now)
-    );
-  }
+  // 186 图鉴收藏
+  statements.push(...buildInsertStatements(db, {
+    table: "collections",
+    columns: ["user_id", "p_no", "added_at"],
+    conflictTarget: "(user_id, p_no)",
+    rows: cleanNumberArray(localData.collection),
+    buildRowParams: pNo => [userId, pNo, now],
+  }));
 
-  // 处理 Events 猪收藏
-  const eventPigs = cleanNumberArray(localData.eventPigs);
-  for (const pNo of eventPigs) {
-    statements.push(
-      db.prepare(`
-        INSERT INTO event_collections (user_id, p_no, added_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT (user_id, p_no) DO NOTHING
-      `).bind(userId, pNo, now)
-    );
-  }
+  // Events 猪收藏
+  statements.push(...buildInsertStatements(db, {
+    table: "event_collections",
+    columns: ["user_id", "p_no", "added_at"],
+    conflictTarget: "(user_id, p_no)",
+    rows: cleanNumberArray(localData.eventPigs),
+    buildRowParams: pNo => [userId, pNo, now],
+  }));
 
-  // 处理小徽章
-  const smallBadges = cleanNumberArray(localData.smallBadges);
-  for (const pNo of smallBadges) {
-    statements.push(
-      db.prepare(`
-        INSERT INTO badges (user_id, badge_type, p_no, added_at)
-        VALUES (?, 'small', ?, ?)
-        ON CONFLICT (user_id, badge_type, p_no) DO NOTHING
-      `).bind(userId, pNo, now)
-    );
-  }
-
-  // 处理大徽章
-  const bigBadges = cleanNumberArray(localData.bigBadges);
-  for (const pNo of bigBadges) {
-    statements.push(
-      db.prepare(`
-        INSERT INTO badges (user_id, badge_type, p_no, added_at)
-        VALUES (?, 'big', ?, ?)
-        ON CONFLICT (user_id, badge_type, p_no) DO NOTHING
-      `).bind(userId, pNo, now)
-    );
+  // 徽章（小 / 大）
+  for (const [badgeType, key] of [["small", "smallBadges"], ["big", "bigBadges"]]) {
+    statements.push(...buildInsertStatements(db, {
+      table: "badges",
+      columns: ["user_id", "badge_type", "p_no", "added_at"],
+      conflictTarget: "(user_id, badge_type, p_no)",
+      rows: cleanNumberArray(localData[key]),
+      buildRowParams: pNo => [userId, badgeType, pNo, now],
+    }));
   }
 
   // 更新用户最后同步时间和数据修改时间
@@ -164,12 +171,10 @@ async function overwriteCloudData(db, userId, localData, now, localModifiedAt) {
       .bind(now, now, localModifiedAt, userId)
   );
 
-  // 批量执行（D1 最多支持 100 条，需要分批）
-  const batchSize = 100;
-  for (let i = 0; i < statements.length; i += batchSize) {
-    const batch = statements.slice(i, i + batchSize);
-    await db.batch(batch);
-  }
+  // 必须整体原子提交：D1 只保证单个 batch 内是一个事务。以前按 100 条分批顺序
+  // await，一旦后面某批失败，前面已提交的 DELETE 就把云端数据删掉一半，且末尾的
+  // data_modified_at 更新也不会执行。现在一次 batch，要么全部生效要么原样不动。
+  await db.batch(statements);
 }
 
 /**
