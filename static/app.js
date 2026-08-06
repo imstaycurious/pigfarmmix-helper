@@ -570,6 +570,15 @@ function getRaisingDueMs(item, pig) {
   return item.lastFedAt + adjustedFeedIntervalMs(pig);
 }
 
+function getRaisingClockNow(item, now = Date.now()) {
+  const pausedAt = Number(item && item.pausedAt) || 0;
+  return pausedAt > 0 ? pausedAt : now;
+}
+
+function getRaisingRemainingMs(item, pig, now = Date.now()) {
+  return getRaisingDueMs(item, pig) - getRaisingClockNow(item, now);
+}
+
 let vapidPublicKeyPromise = null;
 async function getVapidPublicKey() {
   if (VAPID_PUBLIC_KEY) return VAPID_PUBLIC_KEY;
@@ -592,8 +601,8 @@ function buildRaisingCloudRecords() {
   if (!state.dataLoaded) return [];
   return state.raisingPigs
     .map(item => {
-      // 等待进货中的猪不进云端提醒表,只保留在本地
-      if (item.status === "waiting") return null;
+      // 等待进货和使用晚安药的猪不进云端提醒表，避免暂停期间继续推送。
+      if (item.status === "waiting" || item.pausedAt) return null;
       const pig = getPigByPNo(item.pNo);
       if (!pig) return null;
       return {
@@ -681,6 +690,7 @@ function addRaisingPig(pNo, status = "active") {
     lastFedAt: now,
     notifiedAt: 0,
     feedCount: 0,
+    pausedAt: 0,
     status,
   });
   saveRaisingState();
@@ -697,7 +707,7 @@ function addRaisingPig(pNo, status = "active") {
 function markRaisingFed(id) {
   const item = state.raisingPigs.find(x => x.id === id);
   if (!item) return;
-  if (item.status === "waiting") return; // 等待进货中的猪不走喂食计时
+  if (item.status === "waiting" || item.pausedAt) return;
   item.lastFedAt = Date.now();
   item.notifiedAt = 0;
   item.feedCount = Math.max(0, (Number.parseInt(item.feedCount || 0, 10) || 0) + 1);
@@ -716,6 +726,34 @@ function adjustRaisingFeedCount(id, delta) {
   renderRaisingBody();
 }
 
+function toggleRaisingPause(id) {
+  const item = state.raisingPigs.find(x => x.id === id);
+  if (!item || item.status === "waiting") return;
+  const pig = getPigByPNo(item.pNo);
+  const now = Date.now();
+  const pausedAt = Number(item.pausedAt) || 0;
+
+  if (pausedAt > 0) {
+    // 把暂停时长补到上次喂食时间，倒计时会从冻结位置继续。
+    item.lastFedAt += Math.max(0, now - pausedAt);
+    item.pausedAt = 0;
+    item.notifiedAt = 0;
+    saveRaisingState();
+    renderRaisingBody();
+    updateRaisingCountdownNodes();
+    checkRaisingReminders();
+    toast(pig ? `${pig.name} 已继续倒计时` : "已继续倒计时");
+    return;
+  }
+
+  item.pausedAt = now;
+  item.notifiedAt = 0;
+  saveRaisingState();
+  renderRaisingBody();
+  updateRaisingCountdownNodes();
+  toast(pig ? `${pig.name} 已使用晚安药` : "已使用晚安药");
+}
+
 // 把养成中的猪挪到「等待进货中」或挪回来。纯本地切换,不动后端 schema。
 function moveRaisingPig(id) {
   const item = state.raisingPigs.find(x => x.id === id);
@@ -726,12 +764,14 @@ function moveRaisingPig(id) {
     item.lastFedAt = Date.now();
     item.notifiedAt = 0;
     item.feedCount = 0;
+    item.pausedAt = 0;
     item.status = "active";
     saveRaisingState();
     renderRaisingBody();
     updateRaisingCountdownNodes();
     toast(pig ? `已移回养成中: ${pig.name}` : "已移回养成中");
   } else {
+    item.pausedAt = 0;
     item.status = "waiting";
     saveRaisingState();
     renderRaisingBody();
@@ -856,9 +896,12 @@ function buildRaisingRow(item) {
 function buildActiveRow(item, pig) {
   const intervalMs = adjustedFeedIntervalMs(pig);
   const dueMs = getRaisingDueMs(item, pig);
-  const diff = dueMs - Date.now();
-  const status = raisingStatusClass(dueMs);
-  const pct = Math.max(0, Math.min(100, ((Date.now() - item.lastFedAt) / intervalMs) * 100));
+  const pausedAt = Number(item.pausedAt) || 0;
+  const isPaused = pausedAt > 0;
+  const clockNow = getRaisingClockNow(item);
+  const diff = dueMs - clockNow;
+  const status = isPaused ? "paused" : raisingStatusClass(dueMs);
+  const pct = Math.max(0, Math.min(100, ((clockNow - item.lastFedAt) / intervalMs) * 100));
   const feedN = (pig.feeding && pig.feeding.times) || 0;
   const feedCount = Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0);
   const feedDone = feedN > 0 && feedCount >= feedN;
@@ -899,10 +942,13 @@ function buildActiveRow(item, pig) {
       el("div", { class: "raising-info" }, [
         el("div", { class: "raising-name" }, [
           pig.name,
+          isPaused ? el("span", { class: "raising-paused-tag" }, "晚安药生效中") : null,
           el("span", { class: pig.special ? "stars special" : "stars" }, stars(pig.rare, pig.special)),
         ]),
         pig.color_text ? el("div", { class: "raising-meta" }, pig.color_text) : null,
-        el("div", { class: "raising-meta" }, `上次 ${formatDateTime(item.lastFedAt)} · 下次 ${formatDateTime(dueMs)}`),
+        el("div", { class: "raising-meta" }, isPaused
+          ? `暂停于 ${formatDateTime(pausedAt)} · 剩余 ${formatDuration(diff)}`
+          : `上次 ${formatDateTime(item.lastFedAt)} · 下次 ${formatDateTime(dueMs)}`),
         badgeLine,
         el("div", { class: "raising-feed-line" + (feedDone ? " is-done" : "") }, [
           el("span", { class: "raising-feed-status" }, feedStatusText),
@@ -935,12 +981,23 @@ function buildActiveRow(item, pig) {
         ]),
       ]),
       el("div", { class: "raising-time" }, [
+        el("button", {
+          type: "button",
+          class: "raising-sleep-btn" + (isPaused ? " is-active" : ""),
+          "aria-pressed": String(isPaused),
+          title: isPaused ? "继续喂食倒计时和后台提醒" : "暂停喂食倒计时和后台提醒",
+          onclick: ev => {
+            ev.stopPropagation();
+            toggleRaisingPause(item.id);
+          },
+        }, isPaused ? "☀️ 唤\u00a0醒" : "💊 晚安药"),
         el("span", {
           class: "raising-countdown " + status,
           "data-raising-countdown": item.id,
           "data-due-ms": String(dueMs),
           "data-last-fed-ms": String(item.lastFedAt),
           "data-interval-ms": String(intervalMs),
+          "data-paused-at": String(pausedAt),
         }, formatDuration(diff)),
       ]),
     ]),
@@ -948,6 +1005,8 @@ function buildActiveRow(item, pig) {
       el("button", {
         type: "button",
         class: "add-btn",
+        title: isPaused ? "晚安药生效期间不能记录喂食" : "记录已喂食",
+        ...(isPaused ? { disabled: "" } : {}),
         onclick: () => markRaisingFed(item.id),
       }, "已喂食"),
       el("button", {
@@ -1030,6 +1089,7 @@ function renderRaisingStats() {
   const floor = currentRaisingFloor();
   let active = 0;
   let waiting = 0;
+  let paused = 0;
   let due = 0;
   const now = Date.now();
   for (const item of state.raisingPigs) {
@@ -1038,11 +1098,16 @@ function renderRaisingStats() {
       continue;
     }
     active++;
+    if (item.pausedAt) {
+      paused++;
+      continue;
+    }
     const pig = getPigByPNo(item.pNo);
     if (pig && getRaisingDueMs(item, pig) <= now) due++;
   }
   const head = waiting > 0 ? `· 等待进货中 ${waiting} ` : "";
-  const tail = `· 养成中 ${active} 只 · ${floor.label} · 待喂 ${due}`;
+  const pausedText = paused > 0 ? `· 晚安药 ${paused} ` : "";
+  const tail = `· 养成中 ${active} 只 ${pausedText}· ${floor.label} · 待喂 ${due}`;
   stats.textContent = (head + tail).trim();
 }
 
@@ -1077,8 +1142,8 @@ function renderRaisingBody() {
   active.sort((a, b) => {
     const ap = getPigByPNo(a.pNo);
     const bp = getPigByPNo(b.pNo);
-    const ad = ap ? getRaisingDueMs(a, ap) : Number.MAX_SAFE_INTEGER;
-    const bd = bp ? getRaisingDueMs(b, bp) : Number.MAX_SAFE_INTEGER;
+    const ad = ap ? getRaisingRemainingMs(a, ap) : Number.MAX_SAFE_INTEGER;
+    const bd = bp ? getRaisingRemainingMs(b, bp) : Number.MAX_SAFE_INTEGER;
     return ad - bd;
   });
   waiting.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0));
@@ -1106,19 +1171,22 @@ function updateRaisingCountdownNodes() {
     const dueMs = Number(node.getAttribute("data-due-ms")) || 0;
     const lastFedMs = Number(node.getAttribute("data-last-fed-ms")) || 0;
     const intervalMs = Number(node.getAttribute("data-interval-ms")) || 1;
-    const diff = dueMs - now;
-    const cls = raisingStatusClass(dueMs);
+    const pausedAt = Number(node.getAttribute("data-paused-at")) || 0;
+    const clockNow = pausedAt > 0 ? pausedAt : now;
+    const diff = dueMs - clockNow;
+    const cls = pausedAt > 0 ? "paused" : raisingStatusClass(dueMs);
     node.textContent = formatDuration(diff);
-    node.classList.remove("due", "soon");
+    node.classList.remove("due", "soon", "paused");
     if (cls) node.classList.add(cls);
     const card = node.closest(".raising-card");
     if (card) {
       card.classList.toggle("is-due", cls === "due");
       card.classList.toggle("is-soon", cls === "soon");
+      card.classList.toggle("is-paused", cls === "paused");
     }
     const fill = document.querySelector(`[data-raising-progress="${node.dataset.raisingCountdown}"]`);
     if (fill) {
-      const pct = Math.max(0, Math.min(100, ((now - lastFedMs) / intervalMs) * 100));
+      const pct = Math.max(0, Math.min(100, ((clockNow - lastFedMs) / intervalMs) * 100));
       fill.style.width = `${pct.toFixed(1)}%`;
     }
   });
@@ -1274,8 +1342,8 @@ async function requestRaisingNotificationPermission() {
     const now = Date.now();
     let changed = false;
     for (const item of state.raisingPigs) {
-      // 等待进货中不需要重置提醒标记
-      if (item.status === "waiting") continue;
+      // 等待进货或晚安药生效中都不需要重置提醒标记。
+      if (item.status === "waiting" || item.pausedAt) continue;
       const pig = getPigByPNo(item.pNo);
       if (pig && getRaisingDueMs(item, pig) <= now) {
         item.notifiedAt = 0;
@@ -1292,8 +1360,8 @@ function checkRaisingReminders() {
   const now = Date.now();
   let changed = false;
   for (const item of state.raisingPigs) {
-    // 等待进货中的猪不参与提醒
-    if (item.status === "waiting") continue;
+    // 等待进货和使用晚安药的猪不参与提醒。
+    if (item.status === "waiting" || item.pausedAt) continue;
     const pig = getPigByPNo(item.pNo);
     if (!pig) continue;
     const dueMs = getRaisingDueMs(item, pig);
@@ -3008,10 +3076,11 @@ $("#batchClearBtn").addEventListener("click", () => {
 // v2: owned186Pigs / owned186Triplets 装的是 "已拥有" 列表 (positive),
 //     语义跟 ownedEventPigs / smallBadges / bigBadges 一致。
 // v3: 额外包含 raisingPigs / raisingFloor。
+// v4: 养成记录增加 pausedAt，用于恢复晚安药的暂停状态。
 //
 // 导入时按 version 字段或具体字段存在性自动判定语义,详见 parseImportText。
 const EXPORT_TYPE = "pigfarm-helper-backup";
-const EXPORT_VERSION = 3;
+const EXPORT_VERSION = 4;
 
 function buildExportPayload() {
   // 主图鉴按 book/page/slot 排序后只输出 pNo 列表 (owned186Triplets 已废弃,
@@ -3038,6 +3107,7 @@ function buildExportPayload() {
       lastFedAt: item.lastFedAt,
       notifiedAt: item.notifiedAt || 0,
       feedCount: Math.max(0, Number.parseInt(item.feedCount || 0, 10) || 0),
+      pausedAt: item.status === "waiting" ? 0 : (Number(item.pausedAt) || 0),
       status: item.status === "waiting" ? "waiting" : "active",
     })),
     raisingFloor: state.raisingFloor,
@@ -3245,6 +3315,9 @@ function parseImportText(raw) {
         const feedCount = Math.max(0, Number.parseInt(raw.feedCount || 0, 10) || 0);
         // status 仅区分 active / waiting,旧版本备份没有该字段视为 active
         const status = raw.status === "waiting" ? "waiting" : "active";
+        const pausedAt = status === "active"
+          ? Math.max(0, Number.parseInt(raw.pausedAt || 0, 10) || 0)
+          : 0;
         raisingPigs.push({
           id: String(raw.id || makeRaisingId()),
           pNo,
@@ -3252,6 +3325,7 @@ function parseImportText(raw) {
           lastFedAt: Number.isFinite(lastFedAt) ? lastFedAt : now,
           notifiedAt,
           feedCount,
+          pausedAt,
           status,
         });
       }
@@ -3451,7 +3525,7 @@ async function runImport(replace) {
   const tags = [];
   if (parsed.source === "triplets") tags.push("三元组裸文本");
   else if (parsed.formatVersion === 1) tags.push("v1 老版 · 已自动反转 collection");
-  else if (parsed.formatVersion >= 3) tags.push("v3 新版");
+  else if (parsed.formatVersion >= 3) tags.push(`v${parsed.formatVersion} 新版`);
   else tags.push("v2 新版");
   if (r.unlocked) tags.push("隐藏图鉴已解锁");
   const suffix = ` <span style="color:var(--muted)">· ${tags.join(" · ")}</span>`;

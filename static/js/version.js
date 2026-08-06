@@ -73,7 +73,8 @@ export async function checkAndShowUpdateNotice() {
 async function showUpdateNotice(version) {
   const updateContent = `
 🐷 本次更新：
-• 新增活动猪 4 头：猪红鹤、狄俄墨得斯的食人猪、棉花糖猪、苹果糖猪
+• 养成中新增「晚安药」，可以暂停并继续喂食倒计时
+• 暂停期间不会发送本地或后台喂食提醒
   `.trim();
 
   await customAlert(updateContent, '更新提示');

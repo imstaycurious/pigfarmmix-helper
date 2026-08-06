@@ -955,6 +955,11 @@
       border-color: var(--warn);
     }
 
+    .raising-card.is-paused {
+      border-color: color-mix(in srgb, var(--muted) 65%, var(--border));
+      background: color-mix(in srgb, var(--chip-bg) 45%, var(--card));
+    }
+
     .raising-main {
       display: grid;
       grid-template-columns: 58px minmax(0, 1fr) auto;
@@ -1121,14 +1126,39 @@
     }
 
     .raising-time {
-      min-width: 78px;
-      text-align: right;
+      min-width: 92px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+
+    .raising-sleep-btn {
+      width: 100%;
+      min-width: 72px;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--chip-fg);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      appearance: none;
+    }
+
+    .raising-sleep-btn.is-active {
+      border-color: var(--border);
+      color: var(--accent);
+      background: #ffffff;
     }
 
     .raising-countdown {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      width: 100%;
       min-width: 72px;
       padding: 5px 8px;
       border-radius: 999px;
@@ -1150,6 +1180,11 @@
       color: var(--danger);
     }
 
+    .raising-countdown.paused {
+      background: color-mix(in srgb, var(--muted) 14%, var(--card));
+      color: var(--muted);
+    }
+
     .raising-actions {
       display: flex;
       gap: 6px;
@@ -1162,6 +1197,11 @@
       flex: 1;
       font-size: 12px;
       padding: 8px 10px;
+    }
+
+    .raising-actions .add-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
     }
 
     .raising-remove {
@@ -1224,6 +1264,14 @@
       margin-left: 6px;
       vertical-align: middle;
     }
+    .raising-paused-tag {
+      font-size: 0.7em;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--muted) 14%, var(--card));
+      color: var(--muted);
+      white-space: nowrap;
+    }
     .raising-countdown.waiting {
       color: rgba(0, 0, 0, 0.35);
     }
@@ -1235,9 +1283,10 @@
 
       .raising-time {
         grid-column: 1 / -1;
-        text-align: left;
+        align-items: stretch;
       }
 
+      .raising-sleep-btn,
       .raising-countdown {
         width: 100%;
       }

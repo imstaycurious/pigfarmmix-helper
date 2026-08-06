@@ -22,7 +22,7 @@ export const state = {
   ownedEventPigs: loadOwnedEventPigs(), // Set<pNo>, 仅针对活动猪
   smallBadges: loadBadgeSet(STORAGE_KEY_BADGE_SMALL), // Set<pNo>, 已拿过小章
   bigBadges: loadBadgeSet(STORAGE_KEY_BADGE_BIG),   // Set<pNo>, 已拿过大章
-  raisingPigs: loadRaisingPigs(),      // [{ id, pNo, startedAt, lastFedAt, notifiedAt, feedCount }]
+  raisingPigs: loadRaisingPigs(),      // [{ id, pNo, startedAt, lastFedAt, notifiedAt, feedCount, pausedAt, status }]
   raisingFloor: loadRaisingFloor(),    // woodchip | normal | straw
   hiddenUnlocked: loadHiddenUnlocked(),  // 集齐 186 触发的彩蛋图鉴是否已解锁
   hiddenPigsById: new Map(),              // 隐藏猪的完整数据 (4 只), 解锁后并入 pigsById
