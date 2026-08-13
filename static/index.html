@@ -51,7 +51,7 @@
   </header>
 
   <!-- ========== TAB: 186图鉴 ========== -->
-  <section class="tab-panel" id="tabAtlas" role="tabpanel" aria-labelledby="tabBtnAtlas">
+  <section class="tab-panel active" id="tabAtlas" role="tabpanel" aria-labelledby="tabBtnAtlas">
     <div class="filters">
       <input class="search" id="atlasSearch" type="search" placeholder="在186图鉴中搜索名称 / 描述…">
       <div class="filter-row" id="atlasColorFilter">
@@ -353,7 +353,7 @@
       <!-- 导出 / 导入 -->
       <div class="add-section">
         <h3>导出 / 导入配置</h3>
-        <div class="hint-line">配置包含：收藏列表、活动猪「已拥有」勾选、大小章、养成中记录和地板设置。可用于备份、换设备恢复或分享。</div>
+        <div class="hint-line">配置包含：收藏列表、活动猪「已拥有」勾选、大小章和地板设置。可用于备份、换设备恢复或分享。</div>
 
         <div class="subhead">导出</div>
         <textarea class="batch-ta" id="exportOut" readonly placeholder="点击「导出」后，这里会出现一段 JSON 备份文本"></textarea>
@@ -473,8 +473,8 @@
     </main>
   </section>
 
-  <!-- ========== TAB: 养成中 ========== -->
-  <section class="tab-panel active" id="tabRaising" role="tabpanel" aria-labelledby="tabBtnRaising">
+  <!-- ========== TAB: 养成中(已隐藏,代码保留) ========== -->
+  <section class="tab-panel" id="tabRaising" role="tabpanel" aria-labelledby="tabBtnRaising" hidden>
     <div class="filters">
       <input class="search" id="raisingSearch" type="search" placeholder="搜索所有的猪，点击加入正在养成...">
       <div class="name-results raising-results" id="raisingResults"></div>
@@ -504,8 +504,8 @@
     </main>
   </section>
 
-  <!-- ========== TAB: 拍卖场 ========== -->
-  <section class="tab-panel" id="tabAuction" role="tabpanel" aria-labelledby="tabBtnAuction">
+  <!-- ========== TAB: 拍卖场(已隐藏,代码保留) ========== -->
+  <section class="tab-panel" id="tabAuction" role="tabpanel" aria-labelledby="tabBtnAuction" hidden>
     <div class="filters">
       <div class="filter-row" id="auctionColorFilter" data-filter="color">
         <span class="label">🎨</span>
@@ -585,7 +585,7 @@
 
   <!-- ========== bottom tab bar ========== -->
   <nav class="tabbar" role="tablist">
-    <button type="button" class="tab" id="tabBtnAtlas" role="tab" aria-selected="false" aria-controls="tabAtlas"
+    <button type="button" class="tab active" id="tabBtnAtlas" role="tab" aria-selected="true" aria-controls="tabAtlas"
       data-tab="atlas">
       <span class="ico">📖</span>
       <span>186图鉴</span>
@@ -595,13 +595,13 @@
       <span class="ico">🎉</span>
       <span>Events图鉴</span>
     </button>
-    <button type="button" class="tab active" id="tabBtnRaising" role="tab" aria-selected="true" aria-controls="tabRaising"
-      data-tab="raising">
+    <button type="button" class="tab" id="tabBtnRaising" role="tab" aria-selected="false" aria-controls="tabRaising"
+      data-tab="raising" hidden>
       <span class="ico">⏱️</span>
       <span>养成中</span>
     </button>
     <button type="button" class="tab" id="tabBtnAuction" role="tab" aria-selected="false" aria-controls="tabAuction"
-      data-tab="auction">
+      data-tab="auction" hidden>
       <span class="ico">🏷️</span>
       <span>拍卖场</span>
     </button>

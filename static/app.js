@@ -1510,7 +1510,7 @@ function renderActiveTab() {
 function updateGlobalCounts() {
   renderMineMenuCounts();
   const mc = $("#manageCount");
-  if (mc) mc.textContent = `186 已拥有 ${state.collection.length} 只 · Events 已拥有 ${state.ownedEventPigs.size} 只 · 小章 ${state.smallBadges.size} · 大章 ${state.bigBadges.size} · 养成中 ${state.raisingPigs.length} 只`;
+  if (mc) mc.textContent = `186 已拥有 ${state.collection.length} 只 · Events 已拥有 ${state.ownedEventPigs.size} 只 · 小章 ${state.smallBadges.size} · 大章 ${state.bigBadges.size}`;
 }
 
 function render() {
@@ -2428,7 +2428,7 @@ const TABS = {
   mine: { panel: "#tabMine", btn: "#tabBtnMine" },
 };
 function activateTab(name) {
-  if (!TABS[name]) name = "raising";
+  if (!TABS[name]) name = "atlas";
   for (const [k, ids] of Object.entries(TABS)) {
     const active = k === name;
     $(ids.panel).classList.toggle("active", active);
@@ -3161,7 +3161,7 @@ function runExport(alsoCopy) {
     msg.innerHTML = `<span class="err">记录为空, 没什么可导出</span>`;
     return;
   }
-  const summary = `186 已拥有 ${nColl} · Events 已拥有 ${nOwned} · 小章 ${nSmall} · 大章 ${nBig} · 养成中 ${nRaising}`;
+  const summary = `186 已拥有 ${nColl} · Events 已拥有 ${nOwned} · 小章 ${nSmall} · 大章 ${nBig}`;
   if (alsoCopy) {
     copyText(txt).then(ok => {
       if (ok) {
@@ -3477,8 +3477,7 @@ async function runImport(replace) {
       `186 已拥有 ${state.collection.length} → 导入 ${nColl}\n` +
       `Events 已拥有 ${state.ownedEventPigs.size} → 导入 ${nOwned}\n` +
       `小章 ${state.smallBadges.size} → 导入 ${nSmall}\n` +
-      `大章 ${state.bigBadges.size} → 导入 ${nBig}\n` +
-      `养成中 ${state.raisingPigs.length} → 导入 ${nRaising}` + fmtHint;
+      `大章 ${state.bigBadges.size} → 导入 ${nBig}` + fmtHint;
     if (!(await customConfirm(confirmTitle, confirmDetails))) return;
   }
   const r = applyImport(parsed, { replace });
