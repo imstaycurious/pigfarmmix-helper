@@ -7,25 +7,26 @@ import type { AtlasFilter, EventFilter, MineFilter } from "./js/types.js";
 import { state } from "./js/state.js";
 import { $, $$, el, toast, escHtml, imgUrl } from "./js/utils.js";
 import { loadData, checkAndUnlockHidden, setPigOwned, setPigBadge } from "./js/data.js";
-import { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, saveHiddenUnlocked, saveRaisingPigs } from "./js/storage.js";
+import { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, saveHiddenUnlocked } from "./js/storage.js";
 import { customConfirm, customAlert } from "./js/modal.js";
 import { checkAndShowUpdateNotice, showUpdateManually } from "./js/version.js";
 import { initAccountUI } from "./js/account-ui.js";
-import { runtime } from "./js/runtime.js";
+import { emit, on } from "./js/events.js";
 import { THEME_KEY } from "./js/constants.js";
 import {
   renderAtlasBody, renderEventsBody, renderMineBody,
   renderAtlasStats, renderEventsStats, renderMineStats,
   renderMineMenuCounts, renderProgressPanel, refreshPigCards,
 } from "./render/atlas.js";
-import { showDetail, closeDrawer, getCurrentDetailPNo, setDrawerDeps, setupDrawer } from "./render/drawer.js";
-import { buildCard, setUpdateOwnedUI } from "./render/cards.js";
+import { showDetail, closeDrawer, getCurrentDetailPNo, setupDrawer } from "./render/drawer.js";
+import { buildCard } from "./render/cards.js";
 import {
-  addRaisingPig, renderRaisingBody, renderRaisingSearchResults,
-  updateRaisingCountdownNodes, checkRaisingReminders, saveRaisingState,
-  syncRaisingFloorSelect, startRaisingTicker, setupRaising, makeRaisingId,
+  renderRaisingBody, renderRaisingSearchResults,
+  updateRaisingCountdownNodes, setupRaising,
 } from "./render/raising.js";
 import { setupAuction, renderAuctionTabEntry } from "./render/auction.js";
+import { initRaisingPush } from "./js/raising-push.js";
+import { addRaisingPig, startRaisingTicker, saveRaisingState } from "./js/raising-logic.js";
 import { setupImportExport } from "./render/import-export.js";
 
 // ==================== Tab 定义 ====================
@@ -336,21 +337,13 @@ async function clearAllRecords(): Promise<void> {
 // ==================== Bootstrap ====================
 
 function init(): void {
-  // 注入运行时回调
-  runtime.showDetail = (pNo) => showDetail(pNo);
-  runtime.addRaisingPig = (pNo, status) => addRaisingPig(pNo, status);
-  runtime.render = () => render();
-  runtime.renderRaisingBody = () => renderRaisingBody();
-  runtime.renderRaisingSearchResults = () => renderRaisingSearchResults();
-  runtime.updateRaisingCountdownNodes = () => updateRaisingCountdownNodes();
-  runtime.checkRaisingReminders = () => checkRaisingReminders();
-  runtime.saveRaisingState = () => saveRaisingState();
-  runtime.syncRaisingFloorSelect = () => syncRaisingFloorSelect();
-  runtime.makeRaisingId = () => makeRaisingId();
-
-  setUpdateOwnedUI((pNo) => updateOwnedUI(pNo));
-  setDrawerDeps({ toast, updateOwnedUI: (pNo) => updateOwnedUI(pNo) });
+  // 事件总线接线 (替代 runtime 注入)
+  on("show-detail", (pNo) => showDetail(pNo));
+  on("add-raising", ({ pNo, status }) => addRaisingPig(pNo, status));
+  on("ui-refresh", () => render());
+  on("owned-changed", (pNo) => updateOwnedUI(pNo));
   setupDrawer();
+  initRaisingPush();
 
   // 筛选接线
   const updateAtlasMethodSub = makeMethodSubUpdater("atlas", state.atlasFilter as unknown as Record<string, string | undefined>);

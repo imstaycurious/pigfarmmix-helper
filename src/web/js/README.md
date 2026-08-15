@@ -17,7 +17,9 @@ src/
 │   │   ├── modal.ts              # 通用模态框
 │   │   ├── auth.ts / sync.ts / account-ui.ts   # 账号与云同步
 │   │   ├── version.ts            # 版本更新检查
-│   │   └── runtime.ts            # 跨模块回调注册表 (避免循环依赖)
+│   │   ├── events.ts             # 类型安全事件总线 (模块解耦)
+│   │   ├── raising-logic.ts      # 养成业务逻辑 (CRUD/倒计时/提醒)
+│   │   └── raising-push.ts       # 推送通知 + 云端同步
 │   └── render/
 │       ├── cards.ts              # 猪卡片构建
 │       ├── atlas.ts              # 图鉴列表渲染 (atlas/events/mine/进度)
@@ -75,10 +77,10 @@ npm run deploy       # 部署 dist/ 到 Cloudflare Pages
 app.ts (装配)
   ├── render/cards.ts      → state, utils, data, runtime
   ├── render/atlas.ts      → state, filters, cards
-  ├── render/drawer.ts     → state, data, runtime
-  ├── render/raising.ts    → state, utils, runtime
-  ├── render/auction.ts    → state, auth
-  └── render/import-export.ts → state, data, runtime
+  ├── render/drawer.ts     → state, data, events
+  ├── render/raising.ts    → state, events, raising-logic, raising-push
+  ├── render/auction.ts    → state, auth, events
+  └── render/import-export.ts → state, data, events, raising-logic
 
 js/data.ts (数据核心)
   ├── constants.ts / state.ts / storage.ts / utils.ts

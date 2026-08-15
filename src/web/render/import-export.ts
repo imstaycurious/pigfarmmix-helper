@@ -9,7 +9,8 @@ import { customConfirm } from "../js/modal.js";
 import { RAISING_FLOORS, EXPORT_TYPE, EXPORT_VERSION } from "../js/constants.js";
 import { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, saveHiddenUnlocked, saveRaisingFloor } from "../js/storage.js";
 import { mergeHiddenIntoMain, buildBreedingIndex } from "../js/data.js";
-import { runtime } from "../js/runtime.js";
+import { emit } from "../js/events.js";
+import { saveRaisingState, checkRaisingReminders } from "../js/raising-logic.js";
 
 // ---- 按名字添加 ----
 const nameState = { q: "", results: [] as Pig[] };
@@ -47,7 +48,7 @@ function renderNameResults(): void {
       : (p.book === 7 ? "活动图鉴" : "");
     const row = el("div", {
       class: "row",
-      onclick: () => { const res = addByPNo(p.pNo); if (res.err) { toast(res.err); return; } toast(res.msg || "已添加"); runtime.render(); },
+      onclick: () => { const res = addByPNo(p.pNo); if (res.err) { toast(res.err); return; } toast(res.msg || "已添加"); emit("ui-refresh", undefined); },
     }, [
       el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name }),
       el("div", { class: "meta" }, [
@@ -426,14 +427,14 @@ function applyImport(parsed: ParsedImport, { replace }: { replace: boolean }): I
   if (parsed.raisingFloor && RAISING_FLOORS[parsed.raisingFloor]) {
     state.raisingFloor = parsed.raisingFloor;
     saveRaisingFloor(state.raisingFloor);
-    runtime.syncRaisingFloorSelect();
+    emit("raising-updated", undefined);
   }
 
   saveCollection(state.collection);
   saveOwnedEventPigs(state.ownedEventPigs);
   saveSmallBadges(state.smallBadges);
   saveBigBadges(state.bigBadges);
-  runtime.saveRaisingState();
+  saveRaisingState();
   let unlocked = false;
   if (parsed.hiddenUnlocked === true && !state.hiddenUnlocked) {
     state.hiddenUnlocked = true;
@@ -481,9 +482,9 @@ async function runImport(replace: boolean): Promise<void> {
     if (!(await customConfirm(confirmTitle, confirmDetails))) return;
   }
   const r = applyImport(parsed, { replace });
-  runtime.render();
-  runtime.renderRaisingSearchResults();
-  runtime.checkRaisingReminders();
+  emit("ui-refresh", undefined);
+  emit("raising-updated", undefined);
+  checkRaisingReminders();
   const parts: string[] = [];
   if (r.addedColl) parts.push(`186新增 ${r.addedColl}`);
   if (r.removedColl) parts.push(`186移除 ${r.removedColl}`);
@@ -551,7 +552,7 @@ export function setupImportExport(): void {
     if (msg) msg.innerHTML = res.ok ? `<span class="ok">${res.msg || ""}</span>` : `<span class="err">${res.msg || ""}</span>`;
     if (res.ok) {
       toast(res.msg || "已添加");
-      runtime.render();
+      emit("ui-refresh", undefined);
       const bookIn = $("#bookIn") as HTMLInputElement | null;
       const pageIn = $("#pageIn") as HTMLInputElement | null;
       const slotIn = $("#slotIn") as HTMLInputElement | null;
@@ -635,7 +636,7 @@ export function setupImportExport(): void {
     report?.appendChild(frag);
     if (okCount > 0) {
       toast(`已添加 ${okCount} 只` + (dupCount ? ` · 重复 ${dupCount}` : "") + (errCount ? ` · 失败 ${errCount}` : ""));
-      runtime.render();
+      emit("ui-refresh", undefined);
     } else if (dupCount > 0 && errCount === 0) {
       toast(`全部 ${dupCount} 只已在收藏中`);
     }

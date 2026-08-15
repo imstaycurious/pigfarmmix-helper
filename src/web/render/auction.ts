@@ -7,7 +7,7 @@ import { state } from "../js/state.js";
 import { $, el, imgUrl, fmtKg, badgeWeights } from "../js/utils.js";
 import { isLoggedIn, getCurrentUser } from "../js/auth.js";
 import { AUCTION_PAGE_SIZE, LIMITDATE_OFFSET_HOURS, WEIGHT_OFFSET_KG, ADULT_OFFSET_KG, COLOR_TO_P, FOOD_LABELS, SEX_LABELS, SEX_CLS } from "../js/constants.js";
-import { runtime } from "../js/runtime.js";
+import { emit } from "../js/events.js";
 
 const auctionState: AuctionState = {
   loading: false,
@@ -210,7 +210,7 @@ function buildAuctionRow(rec: AuctionRecord): HTMLElement {
   return el("div", {
     class: "auction-list-row",
     onclick: () => {
-      if (lookupPig(rec.bType)) runtime.showDetail(rec.bType);
+      if (lookupPig(rec.bType)) emit("show-detail", rec.bType);
     },
   }, [thumb, info, priceCol]);
 }

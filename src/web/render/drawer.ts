@@ -4,11 +4,11 @@
 
 import type { Pig } from "../js/types.js";
 import { state } from "../js/state.js";
-import { $, escHtml, imgUrl, stars, badgeMetaHTML, feedIntervalText, pigPicky } from "../js/utils.js";
+import { $, escHtml, imgUrl, stars, badgeMetaHTML, feedIntervalText, pigPicky, toast } from "../js/utils.js";
 import { deriveAcquisitions, setPigOwned, setPigBadge } from "../js/data.js";
 import { customConfirm } from "../js/modal.js";
 import { BLEED_TYPE_TEXT, METHOD_LABELS } from "../js/constants.js";
-import { runtime } from "../js/runtime.js";
+import { emit } from "../js/events.js";
 
 let currentDetailPNo: number | null = null;
 
@@ -246,14 +246,14 @@ export function showDetail(pNo: number): void {
       const wasOwn = isOwn;
       if (!(await setPigOwnedAfterConfirm(p.pNo, !wasOwn))) return;
       toast(wasOwn ? `已取消: ${p.name}` : `已标记拥有: ${p.name}`);
-      updateOwnedUIImpl(p.pNo);
+      emit("owned-changed", p.pNo);
       showDetail(p.pNo);
     });
   }
   const rbtn = document.getElementById("drawerRaisingBtn");
-  if (rbtn) rbtn.addEventListener("click", () => runtime.addRaisingPig(p.pNo));
+  if (rbtn) rbtn.addEventListener("click", () => emit("add-raising", { pNo: p.pNo }));
   const wbtn = document.getElementById("drawerWaitingBtn");
-  if (wbtn) wbtn.addEventListener("click", () => runtime.addRaisingPig(p.pNo, "waiting"));
+  if (wbtn) wbtn.addEventListener("click", () => emit("add-raising", { pNo: p.pNo, status: "waiting" }));
 
   $("#drawer")?.classList.add("open");
   $("#drawerBg")?.classList.add("open");
@@ -273,13 +273,6 @@ export function getCurrentDetailPNo(): number | null {
   return currentDetailPNo;
 }
 
-let toast: (msg: string, ms?: number) => void = () => {};
-let updateOwnedUIImpl: (pNo: number) => void = () => {};
-
-export function setDrawerDeps(deps: { toast: typeof toast; updateOwnedUI: typeof updateOwnedUIImpl }): void {
-  toast = deps.toast;
-  updateOwnedUIImpl = deps.updateOwnedUI;
-}
 
 export function setupDrawer(): void {
   $("#drawerBg")?.addEventListener("click", closeDrawer);
@@ -360,7 +353,6 @@ export function setupDrawer(): void {
       if (!pNo || (kind !== "small" && kind !== "big")) return;
       const set = kind === "small" ? state.smallBadges : state.bigBadges;
       setPigBadge(pNo, kind as "small" | "big", !set.has(pNo));
-      updateOwnedUIImpl(pNo);
       if (currentDetailPNo) showDetail(currentDetailPNo);
       return;
     }
@@ -370,7 +362,6 @@ export function setupDrawer(): void {
       const pNo = parseInt(chk.getAttribute("data-owned-pno") || "", 10);
       if (!pNo) return;
       if (!(await setPigOwnedAfterConfirm(pNo, !state.ownedEventPigs.has(pNo)))) return;
-      updateOwnedUIImpl(pNo);
       if (currentDetailPNo) showDetail(currentDetailPNo);
       return;
     }

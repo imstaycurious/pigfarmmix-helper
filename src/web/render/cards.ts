@@ -7,7 +7,7 @@ import { state } from "../js/state.js";
 import { el, text, imgUrl, stars, fmtKg, badgeWeights, pigPicky } from "../js/utils.js";
 import { setPigOwned, setPigBadge } from "../js/data.js";
 import { customConfirm } from "../js/modal.js";
-import { runtime } from "../js/runtime.js";
+import { emit } from "../js/events.js";
 
 async function confirmCancelOwned(p: Pig): Promise<boolean> {
   const name = p && p.name ? `「${p.name}」` : "这只猪";
@@ -48,7 +48,7 @@ export function buildCard(p: Pig, opts: CardOptions = {}): HTMLElement {
       onclick: async (ev: Event) => {
         ev.stopPropagation();
         if (!(await setPigOwnedAfterConfirm(p.pNo, !isOwn))) return;
-        updateOwnedUI(p.pNo);
+        emit("owned-changed", p.pNo);
       },
     }, isOwn ? "✅ 已拥有" : "⬜ 未拥有"));
   }
@@ -84,7 +84,7 @@ export function buildCard(p: Pig, opts: CardOptions = {}): HTMLElement {
         ev.stopPropagation();
         const set = kind === "small" ? state.smallBadges : state.bigBadges;
         setPigBadge(p.pNo, kind, !set.has(p.pNo));
-        updateOwnedUI(p.pNo);
+        emit("owned-changed", p.pNo);
       };
     }
     const tag = showBadges ? "button" : "span";
@@ -115,17 +115,8 @@ export function buildCard(p: Pig, opts: CardOptions = {}): HTMLElement {
     "data-pno": String(p.pNo),
     "data-show-collected": showCollected ? "1" : "0",
     "data-show-badges": showBadges ? "1" : "0",
-    onclick: () => runtime.showDetail(p.pNo),
+    onclick: () => emit("show-detail", p.pNo),
   }, children);
-}
-
-// ---- 定点更新 (由 app.ts 注入) ----
-let updateOwnedUIImpl: (pNo: number) => void = () => {};
-export function setUpdateOwnedUI(fn: (pNo: number) => void): void {
-  updateOwnedUIImpl = fn;
-}
-function updateOwnedUI(pNo: number): void {
-  updateOwnedUIImpl(pNo);
 }
 
 export { setPigOwnedAfterConfirm };
