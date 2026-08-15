@@ -5,7 +5,7 @@
 ```
 src/
 ├── web/                          # 前端源码 (TypeScript)
-│   ├── app.ts                    # 主入口: 装配模块 + 筛选/tab/主题/PWA/bootstrap
+│   ├── app.ts                    # 主入口 (装配器): 事件总线/tab/渲染调度/bootstrap
 │   ├── js/
 │   │   ├── types/                # 领域类型定义 (按领域拆分)
 │   │   │   ├── index.ts          #   汇总导出
@@ -25,6 +25,7 @@ src/
 │   │   ├── auth.ts / sync.ts / account-ui.ts   # 账号与云同步
 │   │   ├── version.ts            # 版本更新检查
 │   │   ├── events.ts             # 类型安全事件总线 (模块解耦)
+│   │   ├── pwa.ts                # PWA 注册/安装提示 + 主题切换
 │   │   ├── raising-logic.ts      # 养成业务逻辑 (CRUD/倒计时/提醒)
 │   │   └── raising-push.ts       # 推送通知 + 云端同步
 │   └── render/
