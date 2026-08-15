@@ -5,17 +5,12 @@
 import { getCurrentUser, isLoggedIn, register, login, logout } from "./auth.js";
 import { syncWithCloud, pullFromCloud } from "./sync.js";
 import { state } from "./state.js";
-import { loadCollection, loadOwnedEventPigs, loadBadgeSet } from "./storage.js";
-import { STORAGE_KEY_BADGE_SMALL, STORAGE_KEY_BADGE_BIG } from "./constants.js";
+import { reloadCollectionState } from "./data.js";
 import { customAlert, customConfirm } from "./modal.js";
 
 /** 从 localStorage 重新加载 state */
 function reloadStateFromStorage(): void {
-  state.collection = loadCollection();
-  state.ownedSet = new Set(state.collection);
-  state.ownedEventPigs = loadOwnedEventPigs();
-  state.smallBadges = loadBadgeSet(STORAGE_KEY_BADGE_SMALL);
-  state.bigBadges = loadBadgeSet(STORAGE_KEY_BADGE_BIG);
+  reloadCollectionState();
 }
 
 export interface AccountUIDeps {

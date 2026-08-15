@@ -6,8 +6,8 @@
 import type { AtlasFilter, EventFilter, MineFilter } from "./js/types.js";
 import { state } from "./js/state.js";
 import { $, $$, el, toast, escHtml, imgUrl } from "./js/utils.js";
-import { loadData, checkAndUnlockHidden, setPigOwned, setPigBadge } from "./js/data.js";
-import { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, saveHiddenUnlocked } from "./js/storage.js";
+import { loadData, checkAndUnlockHidden, setPigOwned, setPigBadge, resetAllRecords } from "./js/data.js";
+import { saveHiddenUnlocked } from "./js/storage.js";
 import { customConfirm, customAlert } from "./js/modal.js";
 import { checkAndShowUpdateNotice, showUpdateManually } from "./js/version.js";
 import { initAccountUI } from "./js/account-ui.js";
@@ -305,15 +305,7 @@ async function clearAllRecords(): Promise<void> {
     return;
   }
   if (!(await customConfirm("确定要清空全部记录吗?"))) return;
-  state.collection = [];
-  state.ownedEventPigs = new Set();
-  state.smallBadges = new Set();
-  state.bigBadges = new Set();
-  state.raisingPigs = [];
-  saveCollection(state.collection);
-  saveOwnedEventPigs(state.ownedEventPigs);
-  saveSmallBadges(state.smallBadges);
-  saveBigBadges(state.bigBadges);
+  resetAllRecords();
   saveRaisingState();
   if (state.hiddenUnlocked) {
     state.hiddenUnlocked = false;

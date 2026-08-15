@@ -2,10 +2,10 @@
  * 数据加载和处理 — 支持 API (D1) + IndexedDB 缓存 + JSON 文件兜底
  */
 
-import type { Pig, PigDataBundle, BreedingRecord, BreedingEntry, BreedingResultKind } from "./types.js";
-import { DATA_URL_BY_LANG, HUNT_SITES, HUNT_REGION_CODES, HUNT_NORMAL_CODES, HUNT_RARE_CODES, BOOK_COLOR_TEXT, COLOR_TEXT } from "./constants.js";
+import type { Pig, PigDataBundle, BreedingRecord, BreedingEntry, BreedingResultKind, RaisingItem } from "./types.js";
+import { DATA_URL_BY_LANG, HUNT_SITES, HUNT_REGION_CODES, HUNT_NORMAL_CODES, HUNT_RARE_CODES, BOOK_COLOR_TEXT, COLOR_TEXT, STORAGE_KEY_BADGE_SMALL, STORAGE_KEY_BADGE_BIG } from "./constants.js";
 import { state } from "./state.js";
-import { currentLang, saveHiddenUnlocked, saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges } from "./storage.js";
+import { currentLang, saveHiddenUnlocked, saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, loadCollection, loadOwnedEventPigs, loadBadgeSet, saveRaisingPigs } from "./storage.js";
 import { showUnlockCelebration } from "./utils.js";
 
 // ---- IndexedDB 缓存 ----
@@ -414,4 +414,70 @@ export function setPigBadge(pNo: number, kind: "small" | "big", on: boolean): vo
       : state.ownedSet.has(pNo);
     if (!alreadyOwned) setPigOwned(pNo, true);
   }
+}
+
+// ---- 集中式状态操作 (P1-B) ----
+
+/**
+ * 从 localStorage 重载收藏相关状态 (云同步后调用)
+ */
+export function reloadCollectionState(): void {
+  state.collection = loadCollection();
+  state.ownedSet = new Set(state.collection);
+  state.ownedEventPigs = loadOwnedEventPigs();
+  state.smallBadges = loadBadgeSet(STORAGE_KEY_BADGE_SMALL);
+  state.bigBadges = loadBadgeSet(STORAGE_KEY_BADGE_BIG);
+}
+
+/**
+ * 整体替换收藏状态 (覆盖导入用)
+ */
+export function replaceCollectionState(list: number[]): void {
+  state.collection = list.slice();
+  state.ownedSet = new Set(list);
+  saveCollection(state.collection);
+}
+
+/**
+ * 整体替换事件猪拥有状态 (覆盖导入用)
+ */
+export function replaceOwnedEventPigs(pNos: Iterable<number>): void {
+  state.ownedEventPigs = new Set(pNos);
+  saveOwnedEventPigs(state.ownedEventPigs);
+}
+
+/**
+ * 整体替换徽章状态 (覆盖导入用)
+ */
+export function replaceBadges(small: Iterable<number>, big: Iterable<number>): void {
+  state.smallBadges = new Set(small);
+  state.bigBadges = new Set(big);
+  saveSmallBadges(state.smallBadges);
+  saveBigBadges(state.bigBadges);
+}
+
+/**
+ * 整体替换养成列表 (覆盖导入用)
+ */
+export function replaceRaisingPigs(items: RaisingItem[]): void {
+  state.raisingPigs = items.map(item => ({ ...item }));
+  saveRaisingPigs(state.raisingPigs);
+}
+
+/**
+ * 清空全部用户记录 (清空按钮用)
+ * 注意: 隐藏图鉴解锁状态的清理由调用方处理 (需要操作 pigsById)
+ */
+export function resetAllRecords(): void {
+  state.collection = [];
+  state.ownedSet = new Set();
+  state.ownedEventPigs = new Set();
+  state.smallBadges = new Set();
+  state.bigBadges = new Set();
+  state.raisingPigs = [];
+  saveCollection(state.collection);
+  saveOwnedEventPigs(state.ownedEventPigs);
+  saveSmallBadges(state.smallBadges);
+  saveBigBadges(state.bigBadges);
+  saveRaisingPigs(state.raisingPigs);
 }
