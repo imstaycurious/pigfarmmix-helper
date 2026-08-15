@@ -8,8 +8,9 @@
     "build": "npm run build:web && npm run build:sw",
     "build:web": "tsc -p tsconfig.json",
     "build:sw": "tsc -p tsconfig.sw.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sw.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sw.json --noEmit && tsc -p tsconfig.functions.json && tsc -p workers/push-cron/tsconfig.json",
     "seed:d1": "node scripts/seed-d1.mjs --help",
+    "deploy:db": "wrangler d1 execute pigfarmmix --file=functions/db/schema.sql --remote && wrangler d1 execute pigfarmmix --file=functions/db/seed.sql --remote",
     "dev": "npm run build && npx wrangler pages dev static"
   },
   "devDependencies": {

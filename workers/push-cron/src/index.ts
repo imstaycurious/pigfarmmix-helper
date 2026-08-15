@@ -1,8 +1,17 @@
+interface Env {
+  DB?: D1Database;
+  VAPID_PUBLIC_KEY?: string;
+  VAPID_PRIVATE_KEY?: string;
+  VAPID_SUBJECT?: string;
+  CRON_LIMIT?: string;
+  CRON_TEST_TOKEN?: string;
+}
+
 const DEFAULT_LIMIT = 100;
 const DEFAULT_TTL_SECONDS = 3600;
 const PAYLOAD_PADDING_BYTES = 0;
 
-function jsonResponse(data, status = 200) {
+function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -12,26 +21,26 @@ function jsonResponse(data, status = 200) {
   });
 }
 
-function base64UrlToBytes(value) {
+function base64UrlToBytes(value: string): Uint8Array {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
   const raw = atob(padded);
   const out = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
+  return out as Uint8Array<ArrayBuffer>;
 }
 
-function bytesToBase64Url(bytes) {
+function bytesToBase64Url(bytes: Uint8Array): string {
   let raw = "";
   for (const byte of bytes) raw += String.fromCharCode(byte);
   return btoa(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
-function textToBase64Url(value) {
+function textToBase64Url(value: string): string {
   return bytesToBase64Url(new TextEncoder().encode(value));
 }
 
-function concatBytes(...chunks) {
+function concatBytes(...chunks: Uint8Array[]): Uint8Array<ArrayBuffer> {
   const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
   const out = new Uint8Array(total);
   let offset = 0;
@@ -39,38 +48,38 @@ function concatBytes(...chunks) {
     out.set(chunk, offset);
     offset += chunk.length;
   }
-  return out;
+  return out as Uint8Array<ArrayBuffer>;
 }
 
-async function hmacSha256(keyBytes, dataBytes) {
-  const key = await crypto.subtle.importKey(
+async function hmacSha256(keyBytes: Uint8Array, dataBytes: Uint8Array): Promise<Uint8Array> {
+  const key = await (crypto.subtle as any).importKey(
     "raw",
     keyBytes,
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
   );
-  return new Uint8Array(await crypto.subtle.sign("HMAC", key, dataBytes));
+  return new Uint8Array(await (crypto.subtle as any).sign("HMAC", key, dataBytes)) as Uint8Array;
 }
 
-async function hkdf(ikm, salt, info, length) {
+async function hkdf(ikm: Uint8Array, salt: Uint8Array, info: Uint8Array, length: number): Promise<Uint8Array> {
   const prk = await hmacSha256(salt, ikm);
   const blocks = [];
-  let previous = new Uint8Array(0);
+  let previous: Uint8Array<ArrayBuffer> = new Uint8Array(0);
   let blockIndex = 1;
   let generated = 0;
 
   while (generated < length) {
-    previous = await hmacSha256(prk, concatBytes(previous, info, new Uint8Array([blockIndex])));
+    previous = (await hmacSha256(prk, concatBytes(previous, info, new Uint8Array([blockIndex])))) as Uint8Array<ArrayBuffer>;
     blocks.push(previous);
     generated += previous.length;
     blockIndex++;
   }
 
-  return concatBytes(...blocks).slice(0, length);
+  return concatBytes(...blocks).slice(0, length) as Uint8Array;
 }
 
-async function importP256dh(publicKeyBytes) {
+async function importP256dh(publicKeyBytes: Uint8Array): Promise<CryptoKey> {
   if (publicKeyBytes.length !== 65 || publicKeyBytes[0] !== 4) {
     throw new Error("Invalid push subscription p256dh");
   }
@@ -89,20 +98,20 @@ async function importP256dh(publicKeyBytes) {
   );
 }
 
-async function encryptPushPayload(subscription, payload) {
+async function encryptPushPayload(subscription: { p256dh: string; auth: string }, payload: unknown): Promise<Uint8Array> {
   const userPublicKey = base64UrlToBytes(subscription.p256dh);
   const authSecret = base64UrlToBytes(subscription.auth);
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const localKeys = await crypto.subtle.generateKey(
+  const localKeys = await (crypto.subtle as any).generateKey(
     { name: "ECDH", namedCurve: "P-256" },
     true,
     ["deriveBits"],
   );
-  const localPublicRaw = new Uint8Array(await crypto.subtle.exportKey("raw", localKeys.publicKey));
+  const localPublicRaw = new Uint8Array(await (crypto.subtle as any).exportKey("raw", (localKeys as any).publicKey));
   const remotePublicKey = await importP256dh(userPublicKey);
-  const sharedSecret = new Uint8Array(await crypto.subtle.deriveBits(
+  const sharedSecret = new Uint8Array(await (crypto.subtle as any).deriveBits(
     { name: "ECDH", public: remotePublicKey },
-    localKeys.privateKey,
+    (localKeys as any).privateKey,
     256,
   ));
 
@@ -119,8 +128,8 @@ async function encryptPushPayload(subscription, payload) {
     new Uint8Array(PAYLOAD_PADDING_BYTES),
     new Uint8Array([2]),
   );
-  const key = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
-  const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+  const key = await (crypto.subtle as any).importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
+  const ciphertext = new Uint8Array(await (crypto.subtle as any).encrypt(
     { name: "AES-GCM", iv: nonce, tagLength: 128 },
     key,
     plaintext,
@@ -131,7 +140,7 @@ async function encryptPushPayload(subscription, payload) {
   return concatBytes(salt, recordSize, keyIdLength, localPublicRaw, ciphertext);
 }
 
-function publicKeyToJwk(publicKey, privateKey) {
+function publicKeyToJwk(publicKey: string, privateKey: string): JsonWebKey {
   const bytes = base64UrlToBytes(publicKey);
   if (bytes.length !== 65 || bytes[0] !== 4) {
     throw new Error("Invalid VAPID_PUBLIC_KEY");
@@ -146,7 +155,7 @@ function publicKeyToJwk(publicKey, privateKey) {
   };
 }
 
-async function signVapidJwt(endpoint, env) {
+async function signVapidJwt(endpoint: string, env: { VAPID_PUBLIC_KEY?: string; VAPID_PRIVATE_KEY?: string; VAPID_SUBJECT?: string }): Promise<string> {
   const publicKey = env.VAPID_PUBLIC_KEY;
   const privateKey = env.VAPID_PRIVATE_KEY;
   if (!publicKey || !privateKey) {
@@ -160,14 +169,14 @@ async function signVapidJwt(endpoint, env) {
   const payload = { aud: audience, exp, sub: subject };
   const unsigned = `${textToBase64Url(JSON.stringify(header))}.${textToBase64Url(JSON.stringify(payload))}`;
 
-  const key = await crypto.subtle.importKey(
+  const key = await (crypto.subtle as any).importKey(
     "jwk",
     publicKeyToJwk(publicKey, privateKey),
     { name: "ECDSA", namedCurve: "P-256" },
     false,
     ["sign"],
   );
-  const signature = new Uint8Array(await crypto.subtle.sign(
+  const signature = new Uint8Array(await (crypto.subtle as any).sign(
     { name: "ECDSA", hash: "SHA-256" },
     key,
     new TextEncoder().encode(unsigned),
@@ -175,7 +184,7 @@ async function signVapidJwt(endpoint, env) {
   return `vapid t=${unsigned}.${bytesToBase64Url(signature)}, k=${publicKey}`;
 }
 
-async function sendPush(subscription, env, payload) {
+async function sendPush(subscription: { endpoint: string; p256dh: string; auth: string }, env: { VAPID_PUBLIC_KEY?: string; VAPID_PRIVATE_KEY?: string; VAPID_SUBJECT?: string }, payload: unknown): Promise<Response> {
   const authorization = await signVapidJwt(subscription.endpoint, env);
   const encryptedPayload = await encryptPushPayload(subscription, payload);
   return fetch(subscription.endpoint, {
@@ -191,15 +200,15 @@ async function sendPush(subscription, env, payload) {
   });
 }
 
-async function loadDueRecords(env) {
+async function loadDueRecords(env: { DB?: D1Database; CRON_LIMIT?: string }): Promise<{ results: Record<string, unknown>[] }> {
   const limit = Math.max(1, Math.min(
-    Number.parseInt(env.CRON_LIMIT || DEFAULT_LIMIT, 10) || DEFAULT_LIMIT,
+    Number.parseInt(String(env.CRON_LIMIT || DEFAULT_LIMIT), 10) || DEFAULT_LIMIT,
     500,
   ));
-  const tableInfo = await env.DB.prepare("PRAGMA table_info(raising_records)").all();
-  const hasPigName = (tableInfo.results || []).some(row => row.name === "pig_name");
+  const tableInfo = await (env.DB!.prepare("PRAGMA table_info(raising_records)") as any).all();
+  const hasPigName = ((tableInfo.results || []) as Record<string, unknown>[]).some(row => row.name === "pig_name");
   const pigNameSelect = hasPigName ? "r.pig_name" : "NULL AS pig_name";
-  return env.DB.prepare(`
+  return (env.DB!.prepare(`
     SELECT
       r.id,
       r.device_id,
@@ -215,10 +224,10 @@ async function loadDueRecords(env) {
       AND (r.notified_next_feed_at IS NULL OR r.notified_next_feed_at != r.next_feed_at)
     ORDER BY r.next_feed_at ASC
     LIMIT ?
-  `).bind(Date.now(), limit).all();
+  `) as any).bind(Date.now(), limit).all();
 }
 
-function groupByEndpoint(rows) {
+function groupByEndpoint(rows: Record<string, unknown>[]): Map<string, Record<string, unknown>[]> {
   const groups = new Map();
   for (const row of rows) {
     if (!row.endpoint) continue;
@@ -228,7 +237,7 @@ function groupByEndpoint(rows) {
   return groups;
 }
 
-function buildNotificationPayload(rows) {
+function buildNotificationPayload(rows: Record<string, unknown>[]): Record<string, unknown> {
   const names = rows.map(row => row.pig_name || `#${row.p_no}`).filter(Boolean);
   const uniqueNames = Array.from(new Set(names));
   const visibleNames = uniqueNames.slice(0, 3);
@@ -249,10 +258,10 @@ function buildNotificationPayload(rows) {
   };
 }
 
-async function markRowsNotified(env, rows) {
+async function markRowsNotified(env: { DB?: D1Database }, rows: Record<string, unknown>[]): Promise<void> {
   const now = Date.now();
-  await env.DB.batch(rows.map(row =>
-    env.DB.prepare(`
+  await env.DB!.batch(rows.map(row =>
+    env.DB!.prepare(`
       UPDATE raising_records
       SET notified_next_feed_at = next_feed_at,
           updated_at = ?
@@ -261,15 +270,16 @@ async function markRowsNotified(env, rows) {
   ));
 }
 
-async function deleteSubscription(env, endpoint) {
-  await env.DB.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").bind(endpoint).run();
+async function deleteSubscription(env: { DB?: D1Database }, endpoint: string): Promise<void> {
+  await env.DB!.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").bind(endpoint).run();
 }
 
-async function runReminderCron(env) {
+async function runReminderCron(env: { DB?: D1Database; VAPID_PUBLIC_KEY?: string; VAPID_PRIVATE_KEY?: string; VAPID_SUBJECT?: string; CRON_LIMIT?: string }): Promise<Record<string, number>> {
   if (!env.DB) throw new Error("D1 binding DB is missing");
+  const db: D1Database = env.DB;
 
   const result = await loadDueRecords(env);
-  const rows = result.results || [];
+  const rows: Record<string, unknown>[] = (result.results || []) as Record<string, unknown>[];
   const groups = groupByEndpoint(rows);
   const summary = {
     dueRows: rows.length,
@@ -285,8 +295,8 @@ async function runReminderCron(env) {
       const first = endpointRows[0];
       const subscription = {
         endpoint,
-        p256dh: first.p256dh,
-        auth: first.auth,
+        p256dh: String(first.p256dh),
+        auth: String(first.auth),
       };
       const res = await sendPush(subscription, env, buildNotificationPayload(endpointRows));
       if (res.status === 404 || res.status === 410) {
@@ -312,11 +322,11 @@ async function runReminderCron(env) {
 }
 
 export default {
-  async scheduled(_event, env, ctx) {
+  async scheduled(_event: unknown, env: Env, ctx: ExecutionContext) {
     ctx.waitUntil(runReminderCron(env));
   },
 
-  async fetch(request, env) {
+  async fetch(request: Request, env: Env) {
     const url = new URL(request.url);
     if (url.pathname === "/run") {
       const token = env.CRON_TEST_TOKEN || "";
