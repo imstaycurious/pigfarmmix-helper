@@ -30,6 +30,7 @@ import { addRaisingPig, startRaisingTicker, saveRaisingState } from "./js/raisin
 import { setupImportExport } from "./render/import-export.js";
 import { setupFilters } from "./render/filters-wiring.js";
 import { setupTheme, setupPwa, onServiceWorkerMessage } from "./js/pwa.js";
+import { showGlobalError, installGlobalErrorHandler } from "./js/error-handler.js";
 
 // ==================== Tab 定义 ====================
 const TABS: Record<string, { panel: string; btn: string }> = {
@@ -217,6 +218,9 @@ async function clearAllRecords(): Promise<void> {
 // ==================== Bootstrap ====================
 
 function init(): void {
+  // 全局错误处理 (未捕获 rejection / 运行时错误)
+  installGlobalErrorHandler();
+
   // 事件总线接线
   on("show-detail", (pNo) => showDetail(pNo));
   on("add-raising", ({ pNo, status }) => addRaisingPig(pNo, status));
@@ -292,6 +296,7 @@ function init(): void {
           <div class="hint">${escHtml(err instanceof Error ? err.message : String(err))}</div>
         </div>`;
       }
+      showGlobalError("图鉴数据加载失败,请检查网络后刷新页面重试");
     });
 }
 

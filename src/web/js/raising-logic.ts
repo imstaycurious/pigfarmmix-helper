@@ -11,6 +11,7 @@ import { toast } from "./utils.js";
 import { RAISING_FLOORS } from "./constants.js";
 import { saveRaisingPigs, saveRaisingFloor } from "./storage.js";
 import { emit } from "./events.js";
+import { formatDuration, formatIntervalMs, formatDateTime } from "./format.js";
 
 const MS_MIN = 60 * 1000;
 const MS_HOUR = 60 * MS_MIN;
@@ -41,36 +42,6 @@ export function baseFeedIntervalMs(pig: Pig): number {
 
 export function adjustedFeedIntervalMs(pig: Pig): number {
   return Math.max(1, Math.round(baseFeedIntervalMs(pig) * currentRaisingFloor().multiplier));
-}
-
-export function formatDuration(ms: number): string {
-  if (ms <= 0) return "可喂食";
-  const totalSec = Math.ceil(ms / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
-}
-
-export function formatIntervalMs(ms: number): string {
-  const mins = Math.round(ms / MS_MIN);
-  const h = Math.floor(mins / 60);
-  const m = mins % 60;
-  if (h > 0 && m > 0) return `${h} 小时 ${m} 分钟`;
-  if (h > 0) return `${h} 小时`;
-  return `${m} 分钟`;
-}
-
-export function formatDateTime(ms: number): string {
-  if (!ms) return "—";
-  return new Date(ms).toLocaleString([], {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 // ---------- 倒计时计算 ----------

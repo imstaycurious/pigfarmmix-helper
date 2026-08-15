@@ -8,6 +8,7 @@ import { $, el, imgUrl, fmtKg, badgeWeights } from "../js/utils.js";
 import { isLoggedIn, getCurrentUser } from "../js/auth.js";
 import { AUCTION_PAGE_SIZE, LIMITDATE_OFFSET_HOURS, WEIGHT_OFFSET_KG, ADULT_OFFSET_KG, COLOR_TO_P, FOOD_LABELS, SEX_LABELS, SEX_CLS } from "../js/constants.js";
 import { emit } from "../js/events.js";
+import { formatCountdown } from "../js/format.js";
 
 const auctionState: AuctionState = {
   loading: false,
@@ -67,22 +68,6 @@ function parseLimitdate(s: string): Date | null {
   const d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
   d.setHours(d.getHours() + LIMITDATE_OFFSET_HOURS);
   return d;
-}
-
-function formatCountdown(targetMs: number): { text: string; cls: string } {
-  const now = Date.now();
-  const diff = targetMs - now;
-  if (diff <= 0) return { text: "已结束", cls: "urgent" };
-  const sec = Math.floor(diff / 1000);
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  let cls = "";
-  if (sec < 600) cls = "urgent";
-  else if (sec < 3600) cls = "soon";
-  if (h > 0) return { text: `${h}h ${m}m`, cls };
-  if (m > 0) return { text: `${m}m ${s}s`, cls };
-  return { text: `${s}s`, cls };
 }
 
 function rareStars(n: number): string {

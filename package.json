@@ -14,10 +14,13 @@
     "dev": "npm run build && npx wrangler pages dev dist",
     "clean": "rm -rf dist",
     "build:copy": "node scripts/build-copy.mjs",
-    "deploy": "npx wrangler pages deploy dist"
+    "deploy": "npx wrangler pages deploy dist",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250520.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^4.1.10"
   }
 }

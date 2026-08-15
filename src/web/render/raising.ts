@@ -12,12 +12,12 @@ import { RAISING_FLOORS } from "../js/constants.js";
 import { emit, on } from "../js/events.js";
 import {
   getPigByPNo, currentRaisingFloor, adjustedFeedIntervalMs,
-  formatDuration, formatIntervalMs, formatDateTime,
   getRaisingDueMs, getRaisingClockNow, getRaisingRemainingMs, raisingStatusClass,
   addRaisingPig, markRaisingFed, adjustRaisingFeedCount, toggleRaisingPause,
   moveRaisingPig, removeRaisingPig, clearRaisingPigs,
   searchRaisingPigs, setRaisingFloor, checkRaisingReminders,
 } from "../js/raising-logic.js";
+import { formatDuration, formatIntervalMs, formatDateTime } from "../js/format.js";
 import { getRaisingPushEnabled, requestRaisingNotificationPermission } from "../js/raising-push.js";
 
 // ---------- 状态 ----------
