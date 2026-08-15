@@ -2,7 +2,7 @@
  * 工具函数和 DOM 辅助函数
  */
 
-import type { Pig, PickyLevel } from "./types.js";
+import type { Pig, PickyLevel } from "./types/index.js";
 import { IMG_BASE, FEED_LABELS } from "./constants.js";
 import { state } from "./state.js";
 

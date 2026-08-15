@@ -5,7 +5,7 @@
  * UI 渲染在 render/import-export.ts
  */
 
-import type { Pig, ParsedImport, ImportApplyResult, ExportPayload, RaisingItem, RaisingFloor } from "./types.js";
+import type { Pig, ParsedImport, ImportApplyResult, ExportPayload, RaisingItem, RaisingFloor } from "./types/index.js";
 import { state } from "./state.js";
 import { RAISING_FLOORS, EXPORT_TYPE, EXPORT_VERSION } from "./constants.js";
 import { saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, saveHiddenUnlocked, saveRaisingFloor } from "./storage.js";

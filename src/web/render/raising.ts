@@ -5,7 +5,7 @@
  * 推送在 js/raising-push.ts。通过 events.ts 与其他模块解耦。
  */
 
-import type { Pig, RaisingItem, RaisingFloor } from "../js/types.js";
+import type { Pig, RaisingItem, RaisingFloor } from "../js/types/index.js";
 import { state } from "../js/state.js";
 import { $, $$, el, toast, imgUrl, stars, fmtKg, badgeWeights } from "../js/utils.js";
 import { RAISING_FLOORS } from "../js/constants.js";

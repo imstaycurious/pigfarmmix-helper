@@ -2,7 +2,7 @@
  * localStorage 操作
  */
 
-import type { RaisingItem, RaisingFloor } from "./types.js";
+import type { RaisingItem, RaisingFloor } from "./types/index.js";
 import {
   STORAGE_KEY,
   STORAGE_KEY_OWNED_EVENT,

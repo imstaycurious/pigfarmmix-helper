@@ -5,7 +5,7 @@
  * 渲染由 events.ts 的 "raising-updated" 事件驱动。
  */
 
-import type { Pig, RaisingItem } from "./types.js";
+import type { Pig, RaisingItem } from "./types/index.js";
 import { state } from "./state.js";
 import { toast } from "./utils.js";
 import { RAISING_FLOORS } from "./constants.js";

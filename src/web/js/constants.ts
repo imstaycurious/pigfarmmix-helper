@@ -2,7 +2,7 @@
  * 常量定义
  */
 
-import type { RaisingFloor, AcquireMethod } from "./types.js";
+import type { RaisingFloor, AcquireMethod } from "./types/index.js";
 
 // ---- Storage Keys ----
 export const STORAGE_KEY = "pig_collection_v1";

@@ -3,7 +3,7 @@
  * 负责: 模块装配、筛选接线、tab 切换、主题、PWA、bootstrap
  */
 
-import type { AtlasFilter, EventFilter, MineFilter } from "./js/types.js";
+import type { AtlasFilter, EventFilter, MineFilter } from "./js/types/index.js";
 import { state } from "./js/state.js";
 import { $, $$, el, toast, escHtml, imgUrl } from "./js/utils.js";
 import { loadData, checkAndUnlockHidden, setPigOwned, setPigBadge, resetAllRecords } from "./js/data.js";

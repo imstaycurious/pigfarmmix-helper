@@ -2,7 +2,7 @@
  * 抽屉详情 (Detail Panel)
  */
 
-import type { Pig } from "../js/types.js";
+import type { Pig } from "../js/types/index.js";
 import { state } from "../js/state.js";
 import { $, escHtml, imgUrl, stars, badgeMetaHTML, feedIntervalText, pigPicky, toast } from "../js/utils.js";
 import { deriveAcquisitions, setPigOwned, setPigBadge } from "../js/data.js";

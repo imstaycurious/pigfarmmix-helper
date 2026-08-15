@@ -7,7 +7,14 @@ src/
 ├── web/                          # 前端源码 (TypeScript)
 │   ├── app.ts                    # 主入口: 装配模块 + 筛选/tab/主题/PWA/bootstrap
 │   ├── js/
-│   │   ├── types.ts              # 领域类型定义 (Pig/Breeding/State/Sync 等)
+│   │   ├── types/                # 领域类型定义 (按领域拆分)
+│   │   │   ├── index.ts          #   汇总导出
+│   │   │   ├── pig.ts            #   猪基础信息 (Pig/AtlasPosition/Weights)
+│   │   │   ├── breeding.ts       #   配种 (BreedingRecord/Entry)
+│   │   │   ├── state.ts          #   全局状态 (AppState/Filters)
+│   │   │   ├── auction.ts        #   拍卖场 (AuctionRecord/State)
+│   │   │   ├── auth.ts           #   账号 (User/SyncResult)
+│   │   │   └── import-export.ts  #   导入导出 (ExportPayload/ParsedImport)
 │   │   ├── constants.ts          # 常量 (存储键/标签/映射)
 │   │   ├── storage.ts            # localStorage 操作
 │   │   ├── state.ts              # 全局状态

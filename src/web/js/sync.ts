@@ -2,7 +2,7 @@
  * 云端数据同步模块
  */
 
-import type { SyncResult, CloudCollectionData } from "./types.js";
+import type { SyncResult, CloudCollectionData } from "./types/index.js";
 import {
   loadCollection,
   saveCollection,

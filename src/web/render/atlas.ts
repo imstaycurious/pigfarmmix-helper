@@ -2,7 +2,7 @@
  * 图鉴列表渲染 — atlas / events / mine
  */
 
-import type { Pig } from "../js/types.js";
+import type { Pig } from "../js/types/index.js";
 import { state } from "../js/state.js";
 import { el, $, escHtml, stars, fmtKg, badgeWeights } from "../js/utils.js";
 import { currentAtlasPigs, currentEventPigs, currentMinePigs } from "../js/filters.js";

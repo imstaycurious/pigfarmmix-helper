@@ -2,7 +2,7 @@
  * 筛选和搜索逻辑
  */
 
-import type { Pig, AtlasFilter, EventFilter } from "./types.js";
+import type { Pig, AtlasFilter, EventFilter } from "./types/index.js";
 import { state } from "./state.js";
 import { pigPicky, pigIsOwned } from "./utils.js";
 import { pigHasMethod, pigMatchesShopRank, pigMatchesHunt } from "./data.js";

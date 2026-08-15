@@ -2,7 +2,7 @@
  * 猪卡片构建 — 列表 / 我的 共用
  */
 
-import type { Pig } from "../js/types.js";
+import type { Pig } from "../js/types/index.js";
 import { state } from "../js/state.js";
 import { el, text, imgUrl, stars, fmtKg, badgeWeights, pigPicky } from "../js/utils.js";
 import { setPigOwned, setPigBadge } from "../js/data.js";

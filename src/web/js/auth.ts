@@ -2,7 +2,7 @@
  * 用户认证模块
  */
 
-import type { User, SyncResult } from "./types.js";
+import type { User, SyncResult } from "./types/index.js";
 import { API_BASE } from "./constants.js";
 
 const STORAGE_KEY_USER = "pigfarm_user";

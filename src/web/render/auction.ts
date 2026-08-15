@@ -2,7 +2,7 @@
  * 拍卖场 (Auction) — 模块化
  */
 
-import type { AuctionRecord, AuctionFilter, AuctionState, Pig } from "../js/types.js";
+import type { AuctionRecord, AuctionFilter, AuctionState, Pig } from "../js/types/index.js";
 import { state } from "../js/state.js";
 import { $, el, imgUrl, fmtKg, badgeWeights } from "../js/utils.js";
 import { isLoggedIn, getCurrentUser } from "../js/auth.js";

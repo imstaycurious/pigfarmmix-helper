@@ -5,7 +5,7 @@
  * 本文件只负责 DOM 渲染 + 事件绑定。
  */
 
-import type { Pig } from "../js/types.js";
+import type { Pig } from "../js/types/index.js";
 import { state } from "../js/state.js";
 import { $, el, toast, escHtml, imgUrl } from "../js/utils.js";
 import { customConfirm } from "../js/modal.js";

@@ -2,7 +2,7 @@
  * 数据加载和处理 — 支持 API (D1) + IndexedDB 缓存 + JSON 文件兜底
  */
 
-import type { Pig, PigDataBundle, BreedingRecord, BreedingEntry, BreedingResultKind, RaisingItem } from "./types.js";
+import type { Pig, PigDataBundle, BreedingRecord, BreedingEntry, BreedingResultKind, RaisingItem } from "./types/index.js";
 import { DATA_URL_BY_LANG, HUNT_SITES, HUNT_REGION_CODES, HUNT_NORMAL_CODES, HUNT_RARE_CODES, BOOK_COLOR_TEXT, COLOR_TEXT, STORAGE_KEY_BADGE_SMALL, STORAGE_KEY_BADGE_BIG } from "./constants.js";
 import { state } from "./state.js";
 import { currentLang, saveHiddenUnlocked, saveCollection, saveOwnedEventPigs, saveSmallBadges, saveBigBadges, loadCollection, loadOwnedEventPigs, loadBadgeSet, saveRaisingPigs } from "./storage.js";

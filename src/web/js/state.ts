@@ -2,7 +2,7 @@
  * 全局状态管理
  */
 
-import type { AppState, AtlasFilter, EventFilter, MineFilter } from "./types.js";
+import type { AppState, AtlasFilter, EventFilter, MineFilter } from "./types/index.js";
 import {
   loadCollection,
   loadOwnedEventPigs,
