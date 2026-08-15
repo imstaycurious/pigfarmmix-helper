@@ -2769,14 +2769,3 @@
       color: var(--ink);
     }
 
-    /* === 隐藏「养成中」和「拍卖场」功能(代码保留,仅做隐藏) ================ */
-    /* 恢复:删除本段即可重新启用 tab / 抽屉入口 */
-    #tabBtnRaising,
-    #tabBtnAuction,
-    #tabRaising,
-    #tabAuction,
-    #drawerRaisingBtn,
-    #drawerWaitingBtn {
-      display: none !important;
-    }
-    /* === END 隐藏段 ============================================== */
