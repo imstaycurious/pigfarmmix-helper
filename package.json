@@ -13,7 +13,7 @@
     "deploy:db": "wrangler d1 execute pigfarmmix --file=functions/db/schema.sql --remote && wrangler d1 execute pigfarmmix --file=functions/db/seed.sql --remote",
     "dev": "npm run build && npx wrangler pages dev dist",
     "clean": "rm -rf dist",
-    "build:copy": "mkdir -p dist && cp -R static/css static/data static/img dist/ && cp static/index.html static/manifest.webmanifest static/icon-192.png static/icon-512.png static/icon-maskable.png dist/",
+    "build:copy": "node scripts/build-copy.mjs",
     "deploy": "npx wrangler pages deploy dist"
   },
   "devDependencies": {
