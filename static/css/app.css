@@ -1,45 +1,63 @@
 :root {
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --ink: #0f172a;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --accent: #0f172a;
+      /* 背景: 柔和渐变 */
+      --bg: #f4f5f9;
+      --bg-gradient: radial-gradient(120% 80% at 50% 0%, #f0f4fb 0%, #eef0f6 55%, #f4f5f9 100%);
+      /* 卡片: 毛玻璃白 */
+      --card: rgba(255, 255, 255, 0.78);
+      --card-solid: #ffffff;
+      --glass-blur: 20px;
+      --ink: #1c2333;
+      --muted: #8a93a6;
+      --border: rgba(28, 35, 51, 0.08);
+      --accent: #3b82f6;
       --accent-fg: #ffffff;
-      --accent-muted: #475569;
-      --chip-bg: #e2e8f0;
-      --chip-fg: #475569;
-      --card-img-start: #f1f5f9;
-      --card-img-end: #e2e8f0;
-      --shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-      --shadow-hover: 0 6px 20px rgba(15, 23, 42, 0.16);
-      --star: #eab308;
+      --accent-muted: #93b4f5;
+      --chip-bg: rgba(28, 35, 51, 0.06);
+      --chip-fg: #5a6478;
+      --chip-active-bg: #3b82f6;
+      --card-img-start: #f6f8fc;
+      --card-img-end: #eceff5;
+      --shadow: 0 2px 10px rgba(28, 35, 51, 0.05);
+      --shadow-hover: 0 8px 28px rgba(28, 35, 51, 0.12);
+      --shadow-float: 0 4px 24px rgba(28, 35, 51, 0.08);
+      --star: #f5b301;
       --star-special: #a855f7;
-      --ok: #16a34a;
-      --warn: #ca8a04;
-      --danger: #dc2626;
+      --ok: #22a55a;
+      --warn: #d99a06;
+      --danger: #e5484d;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
     }
 
     [data-theme="dark"] {
-      --bg: #0b1220;
-      --card: #111827;
-      --ink: #e5e7eb;
-      --muted: #94a3b8;
-      --border: #1f2937;
-      --accent: #e5e7eb;
-      --accent-fg: #0f172a;
-      --accent-muted: #cbd5e1;
-      --chip-bg: #1f2937;
-      --chip-fg: #cbd5e1;
-      --card-img-start: #0f172a;
-      --card-img-end: #1e293b;
-      --shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-      --shadow-hover: 0 6px 22px rgba(0, 0, 0, 0.65);
-      --star: #facc15;
+      --bg: #0d1117;
+      --bg-gradient: radial-gradient(120% 80% at 50% 0%, #131a24 0%, #0d1117 60%, #0a0e14 100%);
+      --card: rgba(23, 29, 39, 0.72);
+      --card-solid: #171d27;
+      --glass-blur: 20px;
+      --ink: #e6eaf2;
+      --muted: #8b94a7;
+      --border: rgba(230, 234, 242, 0.1);
+      --accent: #5b9bff;
+      --accent-fg: #ffffff;
+      --accent-muted: #8ab0f5;
+      --chip-bg: rgba(230, 234, 242, 0.09);
+      --chip-fg: #a8b1c4;
+      --chip-active-bg: #5b9bff;
+      --card-img-start: #1a2130;
+      --card-img-end: #141b27;
+      --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+      --shadow-float: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --star: #f6c343;
       --star-special: #c084fc;
-      --ok: #4ade80;
-      --warn: #fbbf24;
-      --danger: #f87171;
+      --ok: #43c26b;
+      --warn: #f0b429;
+      --danger: #f46a6e;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
     }
 
     * {
@@ -60,7 +78,8 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
         "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
+      background: var(--bg-gradient);
+      background-attachment: fixed;
       color: var(--ink);
       font-size: 15px;
       line-height: 1.45;
@@ -68,8 +87,8 @@
        so the URL bar appearing/disappearing on mobile doesn't clip content. */
       min-height: 100vh;
       min-height: 100dvh;
-      /* reserve space for the bottom tab bar (56px) + safe area */
-      padding-bottom: calc(56px + env(safe-area-inset-bottom));
+      /* reserve space for the floating tab bar (58px + 10px gap) + safe area */
+      padding-bottom: calc(78px + env(safe-area-inset-bottom));
     }
 
     header.top {
@@ -77,15 +96,18 @@
       top: 0;
       z-index: 10;
       background: var(--card);
+      -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur));
+      backdrop-filter: saturate(180%) blur(var(--glass-blur));
       color: var(--ink);
       border-bottom: 1px solid var(--border);
-      padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+      padding: max(10px, env(safe-area-inset-top)) 16px 10px;
     }
 
     header h1 {
       margin: 0;
-      font-size: 17px;
+      font-size: 18px;
       font-weight: 700;
+      letter-spacing: 0.02em;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -104,9 +126,9 @@
     }
 
     .theme-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
+      background: var(--chip-bg);
+      border: none;
+      color: var(--ink);
       width: 32px;
       height: 32px;
       border-radius: 50%;
@@ -117,6 +139,10 @@
       justify-content: center;
       padding: 0;
       margin-left: 6px;
+      transition: background .15s, transform .15s;
+    }
+    .theme-btn:active {
+      transform: scale(0.92);
     }
 
     .theme-btn:hover {
@@ -277,10 +303,10 @@
       z-index: 2;
       background: var(--bg);
       /* 右侧渐隐阴影,提示有更多 chip 可滑出 */
-      box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.12);
+      box-shadow: 8px 0 12px -8px rgba(28, 35, 51, 0.18);
     }
     [data-theme="dark"] .filter-row .label {
-      box-shadow: 6px 0 8px -6px rgba(0, 0, 0, 0.5);
+      box-shadow: 8px 0 12px -8px rgba(0, 0, 0, 0.6);
     }
     /* chip 显式参与堆叠 (默认 static 不响应 z-index, 给 sticky label 让位) */
     .filter-row .chip {
@@ -293,16 +319,26 @@
       background: var(--chip-bg);
       color: var(--chip-fg);
       border: 1px solid transparent;
-      border-radius: 16px;
-      padding: 5px 12px;
+      border-radius: 999px;
+      padding: 6px 14px;
       font-size: 13px;
       cursor: pointer;
       white-space: nowrap;
+      transition: background .15s, color .15s, transform .15s;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
     }
-
+    .chip:active {
+      transform: scale(0.95);
+    }
     .chip.active {
-      background: var(--accent);
-      color: var(--accent-fg);
+      background: var(--chip-active-bg);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    [data-theme="dark"] .chip.active {
+      color: #0d1117;
+      font-weight: 700;
     }
 
     .stats-bar {
@@ -315,14 +351,18 @@
     }
 
     .search {
-      width: calc(100% - 16px);
-      margin: 4px 8px;
-      padding: 8px 12px;
+      width: calc(100% - 24px);
+      margin: 4px 12px;
+      padding: 10px 16px;
       font-size: 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--card);
+      border: none;
+      border-radius: 999px;
+      background: var(--chip-bg);
       color: var(--ink);
+      transition: box-shadow .15s, background .15s;
+    }
+    .search::placeholder {
+      color: var(--muted);
     }
 
     .search:focus {
@@ -360,23 +400,27 @@
 
     .card {
       background: var(--card);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       overflow: hidden;
       display: flex;
       flex-direction: column;
       cursor: pointer;
       position: relative;
-      transition: transform .15s, box-shadow .15s, border-color .15s;
+      box-shadow: var(--shadow);
+      transition: transform .18s, box-shadow .18s, border-color .18s;
     }
 
     .card:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
     }
 
     .card:hover {
       box-shadow: var(--shadow-hover);
       border-color: var(--accent-muted);
+      transform: translateY(-2px);
     }
 
     .card .img {
@@ -393,7 +437,7 @@
     }
 
     .card .body {
-      padding: 10px 12px 12px;
+      padding: 10px 14px 14px;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -646,13 +690,15 @@
       gap: 8px;
       padding: 18px 18px 16px;
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       background: var(--card);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
       box-shadow: var(--shadow);
       color: var(--ink);
       text-align: left;
       cursor: pointer;
-      transition: transform 0.12s, box-shadow 0.12s, border-color 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
       min-height: 96px;
     }
     .mine-menu-card:hover {
@@ -682,8 +728,10 @@
     }
     .mp-section {
       background: var(--card);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
       overflow: hidden;
     }
@@ -940,9 +988,12 @@
     .raising-card {
       position: relative;
       background: var(--card);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 10px 12px;
+      box-shadow: var(--shadow);
       transition: border-color .15s, box-shadow .15s, background-color .15s;
     }
 
@@ -1354,9 +1405,12 @@
       align-items: center;
       gap: 12px;
       background: var(--card);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       padding: 8px 12px;
+      box-shadow: var(--shadow);
       cursor: pointer;
       transition: transform .15s, box-shadow .15s, border-color .15s;
     }
@@ -1618,10 +1672,12 @@
     .drawer-bg {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(15, 18, 28, 0.45);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
       opacity: 0;
       pointer-events: none;
-      transition: opacity .2s;
+      transition: opacity .25s;
       z-index: 20;
     }
 
@@ -2174,14 +2230,17 @@
      `position: fixed` visibly drifts when the URL bar animates. */
     .tabbar {
       position: fixed !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      width: 100%;
-      height: calc(56px + env(safe-area-inset-bottom));
-      padding-bottom: env(safe-area-inset-bottom);
+      left: 12px !important;
+      right: 12px !important;
+      bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+      width: auto !important;
+      height: 58px;
       background: var(--card);
-      border-top: 1px solid var(--border);
+      -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur));
+      backdrop-filter: saturate(180%) blur(var(--glass-blur));
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow-float);
       display: flex;
       align-items: stretch;
       z-index: 15;
@@ -2216,21 +2275,19 @@
     .tabbar .tab .ico {
       font-size: 20px;
       line-height: 1;
+      transition: transform .15s;
     }
 
     .tabbar .tab.active {
       color: var(--accent);
     }
 
-    .tabbar .tab.active::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 25%;
-      right: 25%;
-      height: 2px;
-      background: var(--accent);
-      border-radius: 0 0 2px 2px;
+    .tabbar .tab.active {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .tabbar .tab.active .ico {
+      transform: translateY(-1px);
     }
 
     [data-theme="dark"] .tabbar .tab.active {

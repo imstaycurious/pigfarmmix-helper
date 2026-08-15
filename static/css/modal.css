@@ -32,10 +32,13 @@
 .custom-modal-content {
   position: relative;
   background: var(--card);
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur, 20px));
+  backdrop-filter: saturate(180%) blur(var(--glass-blur, 20px));
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(15, 18, 28, 0.28);
   max-width: 400px;
-  width: 90%;
+  width: 88%;
   max-height: 80vh;
   overflow: auto;
   transform: scale(0.9);
@@ -80,7 +83,7 @@
 .custom-modal-btn {
   padding: 10px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
