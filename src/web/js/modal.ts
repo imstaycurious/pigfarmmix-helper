@@ -1,0 +1,96 @@
+/**
+ * 通用模态框组件
+ */
+
+export interface ModalOptions {
+  title?: string;
+  message?: string;
+  type?: "alert" | "confirm";
+  confirmText?: string;
+  cancelText?: string;
+}
+
+function escapeHtml(text: string): string {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * 显示通用模态框
+ * @returns confirm 返回 true/false, alert 返回 true
+ */
+export function showModal({
+  title = "提示",
+  message = "",
+  type = "alert",
+  confirmText = "确定",
+  cancelText = "取消",
+}: ModalOptions = {}): Promise<boolean> {
+  return new Promise((resolve) => {
+    const modal = document.createElement("div");
+    modal.className = "custom-modal";
+    modal.innerHTML = `
+      <div class="custom-modal-backdrop"></div>
+      <div class="custom-modal-content">
+        <div class="custom-modal-header">
+          <h3>${escapeHtml(title)}</h3>
+        </div>
+        <div class="custom-modal-body">
+          <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
+        </div>
+        <div class="custom-modal-footer">
+          ${type === "confirm" ? `<button class="custom-modal-btn secondary" data-action="cancel">${escapeHtml(cancelText)}</button>` : ""}
+          <button class="custom-modal-btn primary" data-action="confirm">${escapeHtml(confirmText)}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // 动画进入
+    requestAnimationFrame(() => {
+      modal.classList.add("show");
+    });
+
+    // 处理按钮点击
+    const handleAction = (result: boolean) => {
+      modal.classList.remove("show");
+      setTimeout(() => {
+        modal.remove();
+        resolve(result);
+      }, 200);
+    };
+
+    const confirmBtn = modal.querySelector<HTMLButtonElement>('[data-action="confirm"]');
+    confirmBtn?.addEventListener("click", () => handleAction(true));
+
+    if (type === "confirm") {
+      modal.querySelector<HTMLButtonElement>('[data-action="cancel"]')?.addEventListener("click", () => handleAction(false));
+    }
+
+    // 点击背景关闭(仅 alert)
+    if (type === "alert") {
+      modal.querySelector<HTMLElement>(".custom-modal-backdrop")?.addEventListener("click", () => handleAction(true));
+    }
+
+    // ESC 键关闭
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        document.removeEventListener("keydown", handleEsc);
+        handleAction(type === "confirm" ? false : true);
+      }
+    };
+    document.addEventListener("keydown", handleEsc);
+  });
+}
+
+/** 简化的 alert */
+export function customAlert(message: string, title = "提示"): Promise<boolean> {
+  return showModal({ title, message, type: "alert" });
+}
+
+/** 简化的 confirm */
+export function customConfirm(message: string, title = "确认"): Promise<boolean> {
+  return showModal({ title, message, type: "confirm" });
+}

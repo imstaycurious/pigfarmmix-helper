@@ -1,239 +1,160 @@
 /**
  * 云端数据同步模块
  */
-
-import {
-  loadCollection,
-  saveCollection,
-  loadOwnedEventPigs,
-  saveOwnedEventPigs,
-  loadBadgeSet,
-  saveBadgeSet,
-  getDataModifiedTime,
-  setDataModifiedTime,
-} from './storage.js';
-import {
-  STORAGE_KEY_BADGE_SMALL,
-  STORAGE_KEY_BADGE_BIG,
-} from './constants.js';
-import { getCurrentUser } from './auth.js';
-
-const API_BASE = ""; // 使用相对路径
-
-/**
- * 同步状态枚举
- */
+import { loadCollection, saveCollection, loadOwnedEventPigs, saveOwnedEventPigs, loadBadgeSet, saveBadgeSet, getDataModifiedTime, setDataModifiedTime, } from "./storage.js";
+import { STORAGE_KEY_BADGE_SMALL, STORAGE_KEY_BADGE_BIG, API_BASE } from "./constants.js";
+import { getCurrentUser, saveCurrentUser } from "./auth.js";
+/** 同步状态枚举 */
 export const SyncStatus = {
-  IDLE: "idle",           // 空闲
-  SYNCING: "syncing",     // 同步中
-  SUCCESS: "success",     // 同步成功
-  ERROR: "error",         // 同步失败
-  OFFLINE: "offline",     // 离线模式
+    IDLE: "idle",
+    SYNCING: "syncing",
+    SUCCESS: "success",
+    ERROR: "error",
+    OFFLINE: "offline",
 };
-
 // 同步状态回调函数列表
 const syncStatusCallbacks = [];
-
-/**
- * 注册同步状态变化回调
- */
+/** 注册同步状态变化回调 */
 export function onSyncStatusChange(callback) {
-  syncStatusCallbacks.push(callback);
+    syncStatusCallbacks.push(callback);
 }
-
-/**
- * 触发同步状态变化
- */
+/** 触发同步状态变化 */
 function notifySyncStatus(status, message = "") {
-  for (const callback of syncStatusCallbacks) {
-    try {
-      callback(status, message);
-    } catch (err) {
-      console.error("Sync status callback error:", err);
+    for (const callback of syncStatusCallbacks) {
+        try {
+            callback(status, message);
+        }
+        catch (err) {
+            console.error("Sync status callback error:", err);
+        }
     }
-  }
 }
-
-/**
- * 从云端拉取数据（仅下载）
- * @param {object} options - 可选配置
- * @param {function} options.onDataUpdated - 数据更新后的回调函数（用于重新加载 state）
- */
+/** 从云端拉取数据 (仅下载) */
 export async function pullFromCloud(options = {}) {
-  const { onDataUpdated } = options;
-  const user = getCurrentUser();
-  if (!user) {
-    return { ok: false, error: "未登录" };
-  }
-
-  try {
-    notifySyncStatus(SyncStatus.SYNCING, "正在从云端拉取数据...");
-
-    const response = await fetch(`${API_BASE}/api/sync/collection?userId=${encodeURIComponent(user.id)}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const result = await response.json();
-
-    if (!result.ok) {
-      notifySyncStatus(SyncStatus.ERROR, result.error || "拉取失败");
-      return result;
+    const { onDataUpdated } = options;
+    const user = getCurrentUser();
+    if (!user) {
+        return { ok: false, error: "未登录" };
     }
-
-    // 合并云端数据到本地（取并集）
-    const cloudData = result.data || {};
-
-    const localCollection = loadCollection();
-    const mergedCollection = Array.from(new Set([...localCollection, ...(cloudData.collection || [])]));
-    saveCollection(mergedCollection);
-
-    const localEventPigs = loadOwnedEventPigs();
-    const mergedEventPigs = new Set([...localEventPigs, ...(cloudData.eventPigs || [])]);
-    saveOwnedEventPigs(mergedEventPigs);
-
-    const localSmallBadges = loadBadgeSet(STORAGE_KEY_BADGE_SMALL);
-    const mergedSmallBadges = new Set([...localSmallBadges, ...(cloudData.smallBadges || [])]);
-    saveBadgeSet(STORAGE_KEY_BADGE_SMALL, mergedSmallBadges);
-
-    const localBigBadges = loadBadgeSet(STORAGE_KEY_BADGE_BIG);
-    const mergedBigBadges = new Set([...localBigBadges, ...(cloudData.bigBadges || [])]);
-    saveBadgeSet(STORAGE_KEY_BADGE_BIG, mergedBigBadges);
-
-    notifySyncStatus(SyncStatus.SUCCESS, "数据已同步");
-
-    // 通知数据已更新（触发 state 重新加载）
-    if (onDataUpdated && typeof onDataUpdated === 'function') {
-      onDataUpdated();
+    try {
+        notifySyncStatus(SyncStatus.SYNCING, "正在从云端拉取数据...");
+        const response = await fetch(`${API_BASE}/api/sync/collection?userId=${encodeURIComponent(user.id)}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+        const result = await response.json();
+        if (!result.ok) {
+            notifySyncStatus(SyncStatus.ERROR, result.error || "拉取失败");
+            return result;
+        }
+        // 合并云端数据到本地 (取并集)
+        const cloudData = result.data || {};
+        const localCollection = loadCollection();
+        const mergedCollection = Array.from(new Set([...localCollection, ...(cloudData.collection || [])]));
+        saveCollection(mergedCollection);
+        const localEventPigs = loadOwnedEventPigs();
+        const mergedEventPigs = new Set([...localEventPigs, ...(cloudData.eventPigs || [])]);
+        saveOwnedEventPigs(mergedEventPigs);
+        const localSmallBadges = loadBadgeSet(STORAGE_KEY_BADGE_SMALL);
+        const mergedSmallBadges = new Set([...localSmallBadges, ...(cloudData.smallBadges || [])]);
+        saveBadgeSet(STORAGE_KEY_BADGE_SMALL, mergedSmallBadges);
+        const localBigBadges = loadBadgeSet(STORAGE_KEY_BADGE_BIG);
+        const mergedBigBadges = new Set([...localBigBadges, ...(cloudData.bigBadges || [])]);
+        saveBadgeSet(STORAGE_KEY_BADGE_BIG, mergedBigBadges);
+        notifySyncStatus(SyncStatus.SUCCESS, "数据已同步");
+        if (onDataUpdated && typeof onDataUpdated === "function") {
+            onDataUpdated();
+        }
+        return {
+            ok: true,
+            merged: {
+                collection: mergedCollection.length,
+                eventPigs: mergedEventPigs.size,
+                smallBadges: mergedSmallBadges.size,
+                bigBadges: mergedBigBadges.size,
+            },
+        };
     }
-
-    return {
-      ok: true,
-      merged: {
-        collection: mergedCollection.length,
-        eventPigs: mergedEventPigs.size,
-        smallBadges: mergedSmallBadges.size,
-        bigBadges: mergedBigBadges.size,
-      },
-    };
-  } catch (error) {
-    console.error("Pull from cloud error:", error);
-    notifySyncStatus(SyncStatus.OFFLINE, "网络错误");
-    return { ok: false, error: "网络错误，请检查连接" };
-  }
+    catch {
+        console.error("Pull from cloud error");
+        notifySyncStatus(SyncStatus.OFFLINE, "网络错误");
+        return { ok: false, error: "网络错误,请检查连接" };
+    }
 }
-
-/**
- * 上传本地数据到云端并获取合并结果
- * @param {object} options - 可选配置
- * @param {function} options.onDataUpdated - 数据更新后的回调函数（用于重新加载 state）
- */
+/** 上传本地数据到云端并获取合并结果 */
 export async function syncWithCloud(options = {}) {
-  const { onDataUpdated } = options;
-  const user = getCurrentUser();
-  if (!user) {
-    return { ok: false, error: "未登录" };
-  }
-
-  try {
-    notifySyncStatus(SyncStatus.SYNCING, "正在同步数据...");
-
-    // 收集本地数据
-    const localData = {
-      collection: loadCollection(),
-      eventPigs: Array.from(loadOwnedEventPigs()),
-      smallBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_SMALL)),
-      bigBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_BIG)),
-    };
-    let localModifiedAt = getDataModifiedTime();
-
-    // 🔧 修复：老用户首次同步保护
-    // 如果本地有数据但 localModifiedAt = 0，说明是老用户（字段是新加的）
-    // 强制设置一个时间戳，确保本地数据能上传到云端
-    const hasLocalData = localData.collection.length > 0 ||
-                         localData.eventPigs.length > 0 ||
-                         localData.smallBadges.length > 0 ||
-                         localData.bigBadges.length > 0;
-    if (hasLocalData && localModifiedAt === 0) {
-      localModifiedAt = Date.now();
-      setDataModifiedTime(localModifiedAt);
+    const { onDataUpdated } = options;
+    const user = getCurrentUser();
+    if (!user) {
+        return { ok: false, error: "未登录" };
     }
-
-    const response = await fetch(`${API_BASE}/api/sync/collection`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        userId: user.id,
-        localData,
-        localModifiedAt,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!result.ok) {
-      notifySyncStatus(SyncStatus.ERROR, result.error || "同步失败");
-      return result;
+    try {
+        notifySyncStatus(SyncStatus.SYNCING, "正在同步数据...");
+        // 收集本地数据
+        const localData = {
+            collection: loadCollection(),
+            eventPigs: Array.from(loadOwnedEventPigs()),
+            smallBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_SMALL)),
+            bigBadges: Array.from(loadBadgeSet(STORAGE_KEY_BADGE_BIG)),
+        };
+        let localModifiedAt = getDataModifiedTime();
+        // 老用户首次同步保护
+        const hasLocalData = localData.collection.length > 0 ||
+            localData.eventPigs.length > 0 ||
+            localData.smallBadges.length > 0 ||
+            localData.bigBadges.length > 0;
+        if (hasLocalData && localModifiedAt === 0) {
+            localModifiedAt = Date.now();
+            setDataModifiedTime(localModifiedAt);
+        }
+        const response = await fetch(`${API_BASE}/api/sync/collection`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id, localData, localModifiedAt }),
+        });
+        const result = await response.json();
+        if (!result.ok) {
+            notifySyncStatus(SyncStatus.ERROR, result.error || "同步失败");
+            return result;
+        }
+        // Last-Write-Wins: 服务器返回胜出方数据
+        const cloudData = result.cloudData || {};
+        if (result.winner === "cloud") {
+            saveCollection(cloudData.collection || []);
+            saveOwnedEventPigs(new Set(cloudData.eventPigs || []));
+            saveBadgeSet(STORAGE_KEY_BADGE_SMALL, new Set(cloudData.smallBadges || []));
+            saveBadgeSet(STORAGE_KEY_BADGE_BIG, new Set(cloudData.bigBadges || []));
+            if (result.dataModifiedAt) {
+                setDataModifiedTime(result.dataModifiedAt);
+            }
+        }
+        // 更新用户的最后同步时间
+        if (result.lastSyncAt) {
+            user.lastSyncAt = result.lastSyncAt;
+            saveCurrentUser(user);
+        }
+        notifySyncStatus(SyncStatus.SUCCESS, "同步完成");
+        if (result.winner === "cloud" && onDataUpdated && typeof onDataUpdated === "function") {
+            onDataUpdated();
+        }
+        return result;
     }
-
-    // 方案B（Last-Write-Wins）：服务器返回胜出方的数据
-    // 若云端更新 → winner=cloud，用云端数据覆盖本地
-    // 若本地更新 → winner=local，本地数据已是最新，无需改动
-    const cloudData = result.cloudData || {};
-    if (result.winner === "cloud") {
-      saveCollection(cloudData.collection || []);
-      saveOwnedEventPigs(new Set(cloudData.eventPigs || []));
-      saveBadgeSet(STORAGE_KEY_BADGE_SMALL, new Set(cloudData.smallBadges || []));
-      saveBadgeSet(STORAGE_KEY_BADGE_BIG, new Set(cloudData.bigBadges || []));
-      // 用云端时间戳，避免下次同步误判本地更新
-      if (result.dataModifiedAt) {
-        setDataModifiedTime(result.dataModifiedAt);
-      }
+    catch {
+        console.error("Sync with cloud error");
+        notifySyncStatus(SyncStatus.OFFLINE, "网络错误");
+        return { ok: false, error: "网络错误,请检查连接" };
     }
-
-    // 更新用户的最后同步时间
-    if (result.lastSyncAt) {
-      user.lastSyncAt = result.lastSyncAt;
-      const { saveCurrentUser } = await import('./auth.js');
-      saveCurrentUser(user);
-    }
-
-    notifySyncStatus(SyncStatus.SUCCESS, "同步完成");
-
-    // 通知数据已更新（触发 state 重新加载）
-    if (result.winner === "cloud" && onDataUpdated && typeof onDataUpdated === 'function') {
-      onDataUpdated();
-    }
-
-    return result;
-  } catch (error) {
-    console.error("Sync with cloud error:", error);
-    notifySyncStatus(SyncStatus.OFFLINE, "网络错误");
-    return { ok: false, error: "网络错误，请检查连接" };
-  }
 }
-
-/**
- * 自动同步（登录后调用）
- */
+/** 自动同步 (登录后调用) */
 export async function autoSync() {
-  const user = getCurrentUser();
-  if (!user) return;
-
-  // 检查是否需要同步（距离上次同步超过 5 分钟）
-  const now = Date.now();
-  const lastSyncAt = user.lastSyncAt || 0;
-  const fiveMinutes = 5 * 60 * 1000;
-
-  if (now - lastSyncAt < fiveMinutes) {
-    console.log("Skip auto sync: synced recently");
-    return;
-  }
-
-  console.log("Auto syncing...");
-  await syncWithCloud();
+    const user = getCurrentUser();
+    if (!user)
+        return;
+    const now = Date.now();
+    const lastSyncAt = user.lastSyncAt || 0;
+    const fiveMinutes = 5 * 60 * 1000;
+    if (now - lastSyncAt < fiveMinutes) {
+        return;
+    }
+    await syncWithCloud();
 }

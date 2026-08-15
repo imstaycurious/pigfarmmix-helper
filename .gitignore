@@ -37,3 +37,8 @@ static/data/*.full.json
 static/data/*.pretty.json# 数据备份文件
 static/data/*.backup
 static/data/*_v2_old.json
+
+# TS 编译相关 (保留 static 下的编译产物以支持直接部署)
+
+# Dependencies
+node_modules/

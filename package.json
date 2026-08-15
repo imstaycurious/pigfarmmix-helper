@@ -1,0 +1,19 @@
+{
+  "name": "pigfarmmix-helper",
+  "version": "5.0.0",
+  "private": true,
+  "description": "养猪场mix图鉴助手 — TypeScript 重构版",
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:web && npm run build:sw",
+    "build:web": "tsc -p tsconfig.json",
+    "build:sw": "tsc -p tsconfig.sw.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sw.json --noEmit",
+    "seed:d1": "node scripts/seed-d1.mjs --help",
+    "dev": "npm run build && npx wrangler pages dev static"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250520.0",
+    "typescript": "^5.5.4"
+  }
+}
