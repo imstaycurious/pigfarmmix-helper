@@ -1,58 +1,73 @@
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
-  });
+/**
+ * Cloudflare Pages Function: 养成记录同步
+ * POST /api/raising-sync
+ */
+
+import { jsonResponse, badRequest, readJson } from "./_utils.ts";
+
+interface Env {
+  DB: D1Database;
 }
 
-function badRequest(message) {
-  return jsonResponse({ ok: false, error: message }, 400);
+interface RawRecord {
+  id?: unknown;
+  pNo?: unknown;
+  pigName?: unknown;
+  floor?: unknown;
+  startedAt?: unknown;
+  lastFedAt?: unknown;
+  feedCount?: unknown;
+  nextFeedAt?: unknown;
+  notifiedNextFeedAt?: unknown;
 }
 
-async function readJson(request) {
-  try {
-    return await request.json();
-  } catch {
-    return null;
-  }
+interface CleanRecord {
+  id: string;
+  deviceId: string;
+  pNo: number;
+  pigName: string;
+  floor: "woodchip" | "normal" | "straw";
+  startedAt: number;
+  lastFedAt: number;
+  feedCount: number;
+  nextFeedAt: number;
+  notifiedNextFeedAt: number | null;
 }
 
-function toInt(value, fallback = 0) {
-  const n = Number.parseInt(value, 10);
+function toInt(value: unknown, fallback = 0): number {
+  const n = Number.parseInt(String(value), 10);
   return Number.isFinite(n) ? n : fallback;
 }
 
-function cleanFloor(value) {
+function cleanFloor(value: unknown): "woodchip" | "normal" | "straw" {
   return value === "woodchip" || value === "straw" || value === "normal" ? value : "normal";
 }
 
-function cleanPigName(value) {
+function cleanPigName(value: unknown): string {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, 80);
 }
 
-function cleanRecord(raw, deviceId, fallbackFloor) {
+function cleanRecord(raw: unknown, deviceId: string, fallbackFloor: "woodchip" | "normal" | "straw"): CleanRecord | null {
   if (!raw || typeof raw !== "object") return null;
-  const localId = typeof raw.id === "string" ? raw.id.trim() : "";
-  const pNo = toInt(raw.pNo);
+  const r = raw as RawRecord;
+  const localId = typeof r.id === "string" ? r.id.trim() : "";
+  const pNo = toInt(r.pNo);
   if (!localId || localId.length > 120 || !Number.isInteger(pNo) || pNo <= 0) return null;
 
   const now = Date.now();
-  const startedAt = Math.max(0, toInt(raw.startedAt, now));
-  const lastFedAt = Math.max(0, toInt(raw.lastFedAt, now));
-  const feedCount = Math.max(0, toInt(raw.feedCount, 0));
-  const nextFeedAt = Math.max(0, toInt(raw.nextFeedAt, lastFedAt));
-  const notifiedNextFeedAt = raw.notifiedNextFeedAt ? Math.max(0, toInt(raw.notifiedNextFeedAt, 0)) : null;
+  const startedAt = Math.max(0, toInt(r.startedAt, now));
+  const lastFedAt = Math.max(0, toInt(r.lastFedAt, now));
+  const feedCount = Math.max(0, toInt(r.feedCount, 0));
+  const nextFeedAt = Math.max(0, toInt(r.nextFeedAt, lastFedAt));
+  const notifiedNextFeedAt = r.notifiedNextFeedAt ? Math.max(0, toInt(r.notifiedNextFeedAt, 0)) : null;
 
   return {
     id: `${deviceId}:${localId}`,
     deviceId,
     pNo,
-    pigName: cleanPigName(raw.pigName),
-    floor: cleanFloor(raw.floor || fallbackFloor),
+    pigName: cleanPigName(r.pigName),
+    floor: cleanFloor(r.floor || fallbackFloor),
     startedAt,
     lastFedAt,
     feedCount,
@@ -61,17 +76,17 @@ function cleanRecord(raw, deviceId, fallbackFloor) {
   };
 }
 
-async function hasPigNameColumn(db) {
-  const result = await db.prepare("PRAGMA table_info(raising_records)").all();
+async function hasPigNameColumn(db: D1Database): Promise<boolean> {
+  const result = await db.prepare("PRAGMA table_info(raising_records)").all<{ name: string }>();
   return (result.results || []).some(row => row.name === "pig_name");
 }
 
-export async function onRequestPost(context) {
+export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
   const db = context.env.DB;
   if (!db) return jsonResponse({ ok: false, error: "D1 binding DB is missing" }, 500);
 
   const body = await readJson(context.request);
-  if (!body || typeof body !== "object") return badRequest("Invalid JSON body");
+  if (!body) return badRequest("Invalid JSON body");
 
   const deviceId = typeof body.deviceId === "string" ? body.deviceId.trim() : "";
   if (!deviceId || deviceId.length > 120) return badRequest("Invalid deviceId");
@@ -80,8 +95,8 @@ export async function onRequestPost(context) {
   const inputRecords = Array.isArray(body.records) ? body.records : [];
   if (inputRecords.length > 200) return badRequest("Too many raising records");
 
-  const records = [];
-  const seen = new Set();
+  const records: CleanRecord[] = [];
+  const seen = new Set<string>();
   for (const raw of inputRecords) {
     const record = cleanRecord(raw, deviceId, floor);
     if (!record || seen.has(record.id)) continue;
@@ -91,7 +106,7 @@ export async function onRequestPost(context) {
 
   const now = Date.now();
   const canStorePigName = await hasPigNameColumn(db);
-  const statements = [
+  const statements: D1PreparedStatement[] = [
     db.prepare(`
       INSERT INTO devices (id, created_at, updated_at)
       VALUES (?, ?, ?)

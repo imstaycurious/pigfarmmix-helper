@@ -1,45 +1,46 @@
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
-  });
+/**
+ * Cloudflare Pages Function: 推送订阅
+ * POST /api/push-subscribe — 保存设备的 push subscription
+ */
+
+import { jsonResponse, badRequest, readJson } from "./_utils.ts";
+
+interface Env {
+  DB: D1Database;
 }
 
-function badRequest(message) {
-  return jsonResponse({ ok: false, error: message }, 400);
+interface PushSubscriptionRaw {
+  endpoint?: unknown;
+  keys?: { p256dh?: unknown; auth?: unknown };
 }
 
-async function readJson(request) {
-  try {
-    return await request.json();
-  } catch {
-    return null;
-  }
+interface NormalizedSubscription {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
 }
 
-function normalizeSubscription(raw) {
+function normalizeSubscription(raw: unknown): NormalizedSubscription | null {
   if (!raw || typeof raw !== "object") return null;
-  const endpoint = typeof raw.endpoint === "string" ? raw.endpoint : "";
-  const keys = raw.keys && typeof raw.keys === "object" ? raw.keys : {};
+  const sub = raw as PushSubscriptionRaw;
+  const endpoint = typeof sub.endpoint === "string" ? sub.endpoint : "";
+  const keys = sub.keys && typeof sub.keys === "object" ? sub.keys : {};
   const p256dh = typeof keys.p256dh === "string" ? keys.p256dh : "";
   const auth = typeof keys.auth === "string" ? keys.auth : "";
   if (!endpoint || !p256dh || !auth) return null;
   return { endpoint, p256dh, auth };
 }
 
-function makeSubscriptionId(deviceId, endpoint) {
+function makeSubscriptionId(deviceId: string, endpoint: string): string {
   return `${deviceId}:${endpoint}`;
 }
 
-export async function onRequestPost(context) {
+export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
   const db = context.env.DB;
   if (!db) return jsonResponse({ ok: false, error: "D1 binding DB is missing" }, 500);
 
   const body = await readJson(context.request);
-  if (!body || typeof body !== "object") return badRequest("Invalid JSON body");
+  if (!body) return badRequest("Invalid JSON body");
 
   const deviceId = typeof body.deviceId === "string" ? body.deviceId.trim() : "";
   if (!deviceId || deviceId.length > 120) return badRequest("Invalid deviceId");

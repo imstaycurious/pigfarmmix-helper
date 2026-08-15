@@ -1,19 +1,22 @@
 /**
- * Cloudflare Pages Function：拍卖场接口代理
+ * Cloudflare Pages Function: 拍卖场接口代理
  *
- * 浏览器直接调上游 http://pig2cnt.j-o-e.jp/auctionSearch_new.php 不通：
- *   - 站点跑在 HTTPS（CF Pages），明文 HTTP 触发 mixed-content
- *   - 上游不发 Access-Control-Allow-Origin，CORS 直接挡
- * Worker 跑在 CF 边缘，**不受**浏览器这两条限制，可以放心 fetch 上游。
+ * 浏览器直接调上游 http://pig2cnt.j-o-e.jp/auctionSearch_new.php 不通:
+ *   - 站点跑在 HTTPS(CF Pages),明文 HTTP 触发 mixed-content
+ *   - 上游不发 Access-Control-Allow-Origin,CORS 直接挡
+ * Worker 跑在 CF 边缘,**不受**浏览器这两条限制,可以放心 fetch 上游。
  *
- * 部署：把这个文件放在仓库根的 functions/api/auction-search.js
- * 路由：POST /api/auction-search?<query params>
- *
- * 跟 server.py 等价，便于本地用 python server.py 调试 / 生产用本 Function。
+ * 路由:POST /api/auction-search?<query params>
  */
 
-// 上游有两套：台服 (pig2cnt) 默认；日服 (pig2) 由 ?server=jp 切换
-const AUCTION_ENDPOINTS = {
+import { jsonResponse, validateUserId, corsOptionsResponse } from "./_utils.ts";
+
+interface Env {
+  DB: D1Database;
+}
+
+// 上游有两套:台服 (pig2cnt) 默认;日服 (pig2) 由 ?server=jp 切换
+const AUCTION_ENDPOINTS: Record<string, string> = {
   tw: "http://pig2cnt.j-o-e.jp/auctionSearch_new.php",
   jp: "http://pig2.j-o-e.jp/auctionSearch_new.php",
 };
@@ -21,25 +24,52 @@ const DEFAULT_SERVER = "tw";
 const DEFAULT_USER_AGENT =
   "Dalvik/2.1.0 (Linux; U; Android 12; sdk_gphone64_arm64 Build/SE1A.220203.002.A1)";
 
-// 完整 bType 白名单：1-1199 覆盖普通 / 事件 / 配种衍生 / 双特殊 全部段
+// 完整 bType 白名单:1-1199 覆盖普通 / 事件 / 配种衍生 / 双特殊 全部段
 const ALL_BTYPES = Array.from({ length: 1199 }, (_, i) => i + 1);
 
-// 响应中每条记录的 15 个逗号分隔字段
+// 响应中每条记录的字段名称
 const RECORD_FIELDS = [
   "pigNo", "nowPrice", "weight", "limitdate", "owner",
   "rare", "isExer", "foodtype", "pNo", "pigletOrSex",
   "ownername", "bidownername", "bidowner", "bidcount", "bType",
-];
+] as const;
 
+interface AuctionRecord {
+  pigNo: number;
+  nowPrice: number;
+  weight: number;
+  limitdate: string;
+  owner: number;
+  rare: number;
+  isExer: number;
+  foodtype: number;
+  pNo: number;
+  pigletOrSex: number;
+  ownername: string;
+  bidownername: string;
+  bidowner: number | null;
+  bidcount: number;
+  bType: number;
+}
 
-/** e/f 字段必须带尾随逗号才被上游识别为筛选（实测）。空 = 不限。 */
-function csvFilter(v) {
+interface FetchOpts {
+  count: number;
+  rare: string;
+  isExer: string;
+  foodtype: string;
+  sex: string;
+  sort: string;
+  color: string;
+  server: string;
+}
+
+/** e/f 字段必须带尾随逗号才被上游识别为筛选(实测)。空 = 不限。 */
+function csvFilter(v: string): string {
   return v ? `${v},` : "";
 }
 
-
-function buildAuctionBody({ count, rare, isExer, foodtype, sex, sort, color }) {
-  const fields = [
+function buildAuctionBody({ count, rare, isExer, foodtype, sex, sort, color }: FetchOpts): string {
+  const fields: [string, string][] = [
     ["p", color || "0"],
     ["r", rare || "0"],
     ["e", csvFilter(isExer)],
@@ -52,19 +82,16 @@ function buildAuctionBody({ count, rare, isExer, foodtype, sex, sort, color }) {
     ["list", ALL_BTYPES.join(",")],
     ["cash", String(Math.floor(Math.random() * 100))],
   ];
-  // URLSearchParams 会把逗号 encode 成 %2C，但 list 和 e/f 都需要原始逗号 →
-  // 用 encodeURIComponent 然后手动 unescape 逗号回去
   return fields
     .map(([k, v]) => `${k}=${encodeURIComponent(v).replace(/%2C/g, ",")}`)
     .join("&");
 }
 
-
-function parseResponse(body) {
-  const cleaned = body.replace(/^﻿/, "").trim();
+function parseResponse(body: string): AuctionRecord[] {
+  const cleaned = body.replace(/^/, "").trim();
   if (!cleaned || cleaned === "-1") return [];
   const parts = cleaned.split("&");
-  const records = [];
+  const records: AuctionRecord[] = [];
   for (const raw of parts.slice(1)) {
     const cols = raw.split(",");
     if (cols.length !== RECORD_FIELDS.length) continue;
@@ -91,44 +118,69 @@ function parseResponse(body) {
   return records;
 }
 
-
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
-}
-
-
-function unauthorizedResponse() {
+function unauthorizedResponse(): Response {
   return jsonResponse(
     { status: "error", error: "请先登录才能使用拍卖场功能" },
     401,
   );
 }
 
-
 /** 验证用户是否存在 */
-async function verifyUser(db, userId) {
-  if (!userId || typeof userId !== "string") return false;
-  // UUID v4 格式验证
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)) {
-    return false;
-  }
+async function verifyUser(db: D1Database, userId: string | null): Promise<boolean> {
+  if (!validateUserId(userId)) return false;
   const user = await db
     .prepare("SELECT id FROM users WHERE id = ? LIMIT 1")
     .bind(userId)
-    .first();
+    .first<{ id: string }>();
   return !!user;
 }
 
+/** 上游单次最多 30 条;按色组 fan-out 才能拿全。 */
+const COLOR_CODES = ["700", "704", "708", "712", "716", "720"];
 
-/** 记录拍卖场搜索行为（用于统计） */
-async function logAuctionSearch(db, userId, searchParams, resultCount) {
+async function fetchOnce(opts: FetchOpts): Promise<AuctionRecord[]> {
+  const body = buildAuctionBody(opts);
+  const endpoint = AUCTION_ENDPOINTS[opts.server] || AUCTION_ENDPOINTS[DEFAULT_SERVER];
+  const r = await fetch(endpoint, {
+    method: "POST",
+    body,
+    headers: {
+      "User-Agent": DEFAULT_USER_AGENT,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Accept": "*/*",
+    },
+  });
+  if (!r.ok) throw new Error(`upstream HTTP ${r.status}`);
+  return parseResponse(await r.text());
+}
+
+async function scrapeAllColors(opts: FetchOpts): Promise<AuctionRecord[]> {
+  const results = await Promise.allSettled(
+    COLOR_CODES.map(code => fetchOnce({ ...opts, color: code })),
+  );
+  const seen = new Map<string, AuctionRecord>();
+  for (const r of results) {
+    if (r.status !== "fulfilled") continue;
+    for (const rec of r.value) {
+      seen.set(`${rec.pigNo}-${rec.owner}`, rec);
+    }
+  }
+  const merged = Array.from(seen.values());
+  const asc = opts.sort === "0";
+  merged.sort((a, b) =>
+    asc ? a.limitdate.localeCompare(b.limitdate)
+        : b.limitdate.localeCompare(a.limitdate),
+  );
+  return merged;
+}
+
+/** 记录拍卖场搜索行为(用于统计) */
+async function logAuctionSearch(
+  db: D1Database,
+  userId: string,
+  searchParams: FetchOpts,
+  resultCount: number
+): Promise<void> {
   try {
     const searchId = crypto.randomUUID();
     const now = Date.now();
@@ -155,76 +207,25 @@ async function logAuctionSearch(db, userId, searchParams, resultCount) {
       )
       .run();
   } catch (err) {
-    // 记录失败不影响主功能
     console.error("[auction-search] Failed to log search:", err);
   }
 }
 
-
-/** 上游单次最多 30 条；按色组 fan-out 才能拿全。 */
-const COLOR_CODES = ["700", "704", "708", "712", "716", "720"];
-
-
-async function fetchOnce(opts) {
-  const body = buildAuctionBody(opts);
-  const endpoint = AUCTION_ENDPOINTS[opts.server] || AUCTION_ENDPOINTS[DEFAULT_SERVER];
-  const r = await fetch(endpoint, {
-    method: "POST",
-    body,
-    headers: {
-      "User-Agent": DEFAULT_USER_AGENT,
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Accept": "*/*",
-    },
-  });
-  if (!r.ok) throw new Error(`upstream HTTP ${r.status}`);
-  return parseResponse(await r.text());
-}
-
-
-async function scrapeAllColors(opts) {
-  // 6 个色组并行；任一子请求失败不影响其它色组的结果
-  const results = await Promise.allSettled(
-    COLOR_CODES.map(code => fetchOnce({ ...opts, color: code })),
-  );
-  // 用 (pigNo, owner) 当唯一键去重（理论上色组之间无重叠，留个保险）
-  const seen = new Map();
-  for (const r of results) {
-    if (r.status !== "fulfilled") continue;
-    for (const rec of r.value) {
-      seen.set(`${rec.pigNo}-${rec.owner}`, rec);
-    }
-  }
-  const merged = Array.from(seen.values());
-  // 按 limitdate 排序，跟 sort 方向对齐（无限滚动要稳定顺序）
-  const asc = opts.sort === "0";
-  merged.sort((a, b) =>
-    asc ? a.limitdate.localeCompare(b.limitdate)
-        : b.limitdate.localeCompare(a.limitdate),
-  );
-  return merged;
-}
-
-
-export async function onRequestPost(context) {
+export async function onRequestPost(context: { request: Request; env: Env; waitUntil: (p: Promise<unknown>) => void }): Promise<Response> {
   const db = context.env.DB;
 
-  // 从请求中获取 userId（支持 query 参数或 body）
+  // 从请求中获取 userId(支持 query 参数或 body)
   const url = new URL(context.request.url);
-  let userId = url.searchParams.get("userId");
+  let userId: string | null = url.searchParams.get("userId") || null;
 
-  // 如果 query 中没有，尝试从 body 中读取
   if (!userId) {
     try {
       const contentType = context.request.headers.get("content-type") || "";
       if (contentType.includes("application/json")) {
-        const body = await context.request.json();
-        userId = body.userId;
-        // 注意：读取 body 后需要重新构造 request（但这里不需要原始 body）
+        const body = await context.request.json() as { userId?: string };
+        userId = body.userId || null;
       }
-    } catch {
-      // JSON 解析失败，忽略
-    }
+    } catch { /* ignore */ }
   }
 
   // 验证用户登录状态
@@ -233,7 +234,7 @@ export async function onRequestPost(context) {
   }
 
   const sp = url.searchParams;
-  const get = (k, def = "") => sp.get(k) ?? def;
+  const get = (k: string, def = ""): string => sp.get(k) ?? def;
 
   let count = parseInt(get("count", "30"), 10);
   if (Number.isNaN(count)) count = 30;
@@ -242,7 +243,7 @@ export async function onRequestPost(context) {
   const serverParam = get("server", DEFAULT_SERVER);
   const server = AUCTION_ENDPOINTS[serverParam] ? serverParam : DEFAULT_SERVER;
 
-  const opts = {
+  const opts: FetchOpts = {
     count,
     rare: get("rare"),
     isExer: get("is_exer"),
@@ -254,17 +255,15 @@ export async function onRequestPost(context) {
   };
 
   try {
-    let records;
+    let records: AuctionRecord[];
     if (opts.color) {
-      // 选了具体色组 → 单次请求就够
       records = await fetchOnce(opts);
     } else {
-      // 色组=全部 → 并行扫 6 个色组合并去重
       records = await scrapeAllColors(opts);
     }
 
-    // 记录搜索行为（异步，不阻塞响应）
-    context.waitUntil(logAuctionSearch(db, userId, opts, records.length));
+    // 记录搜索行为(异步,不阻塞响应)
+    context.waitUntil(logAuctionSearch(db, userId!, opts, records.length));
 
     return jsonResponse({
       status: "ok",
@@ -276,28 +275,19 @@ export async function onRequestPost(context) {
   } catch (err) {
     return jsonResponse({
       status: "error",
-      error: `${err.name}: ${err.message}`,
+      error: `${(err as Error).name}: ${(err as Error).message}`,
     });
   }
 }
 
-
-/** 防止有人误用 GET，给一个明确的提示。 */
-export function onRequestGet() {
+/** 防止有人误用 GET,给一个明确的提示。 */
+export function onRequestGet(): Response {
   return jsonResponse(
     { status: "error", error: "method not allowed; use POST" },
     405,
   );
 }
 
-
-export async function onRequestOptions() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
+export function onRequestOptions(): Response {
+  return corsOptionsResponse("POST, OPTIONS");
 }
