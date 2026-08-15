@@ -63,7 +63,7 @@ npx wrangler deploy
 部署后可以先等 2 分钟让 Cron 自动跑。也可以临时手动访问 Worker 地址：
 
 ```text
-https://pigfarmmix-push-cron.<你的 workers.dev 子域>/run
+https://zhu-push-cron.<你的 workers.dev 子域>/run
 ```
 
 如果要保护 `/run`，配置：

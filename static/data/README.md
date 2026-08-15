@@ -12,7 +12,7 @@
 ```json
 {
   "version": 3,
-  "source": "https://pigfarmmix.net/",
+  "source": "pigfarmmix.net",
   "generatedAt": "2026-05-31T02:08:45.123Z",
   "count": 646,
   "pigs": [...],

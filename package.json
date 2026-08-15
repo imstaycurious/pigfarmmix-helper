@@ -2,7 +2,7 @@
   "name": "pigfarmmix-helper",
   "version": "5.0.0",
   "private": true,
-  "description": "养猪场mix图鉴助手 — TypeScript 重构版",
+  "description": "猪猪图鉴 — 收藏收集与配种查询工具",
   "type": "module",
   "scripts": {
     "build": "npm run clean && npm run build:copy && npm run build:web && npm run build:sw",

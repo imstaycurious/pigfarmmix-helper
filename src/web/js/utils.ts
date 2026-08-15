@@ -155,7 +155,7 @@ export function showUnlockCelebration(): void {
       <div class="celebration-confetti">🎉 ✨ 🎊 ✨ 🎉</div>
       <div class="celebration-crown">👑</div>
       <h2 id="celebrationTitle">恭喜你 · 大成就解锁!</h2>
-      <p class="celebration-line">你已集齐 <b>主图鉴 186 只</b>,养猪场名册圆满 ✨</p>
+      <p class="celebration-line">你已集齐 <b>主图鉴 186 只</b>,猪猪名册圆满 ✨</p>
       <p class="celebration-sub">作为奖赏,隐藏图鉴「皇室成员」向你开放:</p>
       <ul class="celebration-list">
         ${names.map(n => `<li>👑 ${escHtml(n)}</li>`).join("")}

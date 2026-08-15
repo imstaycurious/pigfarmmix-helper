@@ -1,5 +1,5 @@
 /**
- * 养猪场mix图鉴助手 service worker — 纯静态缓存 (TS 编译版)
+ * 猪猪图鉴 service worker — 纯静态缓存
  *
  * 注意: 本文件在 Service Worker 全局作用域运行。TS 编译时用最小化的
  * 类型断言 (ServiceWorkerGlobalScope 不可用), 运行时行为与手写 JS 一致。

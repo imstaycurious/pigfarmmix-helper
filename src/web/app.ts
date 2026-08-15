@@ -1,5 +1,5 @@
 /**
- * 养猪场mix图鉴助手 — TypeScript 主入口 (装配器)
+ * 猪猪图鉴 — 主入口 (装配器)
  *
  * 职责: 模块装配 + 事件总线接线 + 渲染调度 + tab 切换 + bootstrap
  * 筛选接线 → render/filters-wiring.ts
