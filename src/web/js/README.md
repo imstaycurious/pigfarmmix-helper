@@ -38,15 +38,22 @@ functions/
 scripts/
 └── seed-d1.mjs                   # JSON → D1 SQL 迁移脚本
 
-static/                           # 构建产物 (由 tsc 从 src/web + src/sw 编译)
+dist/                             # 完整可部署目录 (npm run build 生成)
+  ├── app.js / js/ / render/       #   ← tsc 从 src/web 编译
+  ├── sw.js                        #   ← tsc 从 src/sw 编译
+  └── css/ img/ data/ index.html  #   ← 从 static/ 复制
+
+static/                           # 手写静态资源 (HTML/CSS/图片/数据 JSON)
 ```
 
 ## 构建
 
 ```bash
 npm install          # 安装 typescript
-npm run build        # tsc 编译 web + sw → static/
+npm run build        # 生成完整 dist/ (复制静态资源 + tsc 编译)
 npm run typecheck    # 只做类型检查
+npm run dev          # 构建后本地预览 (wrangler pages dev dist)
+npm run deploy       # 部署 dist/ 到 Cloudflare Pages
 ```
 
 ## 数据层: JSON → D1
@@ -80,7 +87,7 @@ js/data.ts (数据核心)
 
 ## 与原版 (JS) 的差异
 
-- 全部前端逻辑改为 TypeScript, `src/` 下编写, `tsc` 编译到 `static/`
+- 全部前端逻辑改为 TypeScript, `src/` 下编写, `tsc` 编译到 `dist/`
 - 3596 行 `app.js` 拆分为 6 个渲染模块 + 主入口
 - 简繁切换已移除 (仅保留简体中文, 数据源统一 `pigs_full_zhs.json`)
 - 图鉴数据由静态 JSON 改为 D1 数据库 + IndexedDB 缓存, 离线仍可用

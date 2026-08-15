@@ -42,3 +42,11 @@ static/data/*_v2_old.json
 
 # Dependencies
 node_modules/
+
+# 编译产物 (dist/ 由 CI 构建, 不提交)
+dist/
+# static 下的旧编译产物 (已迁移到 dist/, 不再跟踪)
+static/app.js
+static/sw.js
+static/js/
+static/render/
