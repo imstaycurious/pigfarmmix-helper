@@ -10,7 +10,7 @@
     "build:sw": "tsc -p tsconfig.sw.json",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.sw.json --noEmit && tsc -p tsconfig.functions.json && tsc -p workers/push-cron/tsconfig.json",
     "seed:d1": "node scripts/seed-d1.mjs --help",
-    "deploy:db": "wrangler d1 execute pigfarmmix --file=functions/db/schema.sql --remote && wrangler d1 execute pigfarmmix --file=functions/db/seed.sql --remote",
+    "deploy:db": "wrangler d1 execute pigfarmmix-helper-prod --file=functions/db/schema.sql --remote && wrangler d1 execute pigfarmmix-helper-prod --file=functions/db/seed.sql --remote",
     "dev": "npm run build && npx wrangler pages dev dist",
     "clean": "rm -rf dist",
     "build:copy": "node scripts/build-copy.mjs",
