@@ -53,11 +53,6 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 
   await db.batch([
     db.prepare(`
-      INSERT INTO devices (id, created_at, updated_at)
-      VALUES (?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET updated_at = excluded.updated_at
-    `).bind(deviceId, now, now),
-    db.prepare(`
       INSERT INTO push_subscriptions (id, device_id, endpoint, p256dh, auth, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(endpoint) DO UPDATE SET

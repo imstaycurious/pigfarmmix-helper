@@ -106,13 +106,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 
   const now = Date.now();
   const canStorePigName = await hasPigNameColumn(db);
-  const statements: D1PreparedStatement[] = [
-    db.prepare(`
-      INSERT INTO devices (id, created_at, updated_at)
-      VALUES (?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET updated_at = excluded.updated_at
-    `).bind(deviceId, now, now),
-  ];
+  const statements: D1PreparedStatement[] = [];
 
   if (records.length === 0) {
     statements.push(
