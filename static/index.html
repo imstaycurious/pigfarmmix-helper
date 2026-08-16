@@ -26,7 +26,7 @@
         var mode = saved || (prefersDark ? "dark" : "light");
         document.documentElement.dataset.theme = mode;
         var meta = document.getElementById("themeColorMeta");
-        if (meta) meta.setAttribute("content", mode === "dark" ? "#0b1220" : "#ffffff");
+        if (meta) meta.setAttribute("content", mode === "dark" ? "#0d1117" : "#f5f6f8");
       } catch (e) { }
     })();
   </script>
@@ -52,81 +52,25 @@
   <!-- ========== TAB: 186图鉴 ========== -->
   <section class="tab-panel active" id="tabAtlas" role="tabpanel" aria-labelledby="tabBtnAtlas">
     <div class="filters">
-      <input class="search" id="atlasSearch" type="search" placeholder="在186图鉴中搜索名称 / 描述…">
-      <div class="filter-row" id="atlasColorFilter">
-        <span class="label">🎨</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="肉色"><span style="color:#ffcba4; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          肉色</button>
-        <button class="chip" data-value="灰色"><span style="color:#9e9e9e; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          灰色</button>
-        <button class="chip" data-value="米色"><span style="color:#a0522d; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          米色</button>
-        <button class="chip" data-value="粉红"><span style="color:#ffb6c1; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          粉红</button>
-        <button class="chip" data-value="白色"><span style="color:#ffffff; text-shadow: 0 0 1px rgba(0,0,0,0.3);">●</span>
-          白色</button>
-        <button class="chip" data-value="其他"><span
-            style="color:#8b4513; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span> 其他</button>
+      <input class="search" id="atlasSearch" type="search" placeholder="在186图鉴中搜索名称 / 描述...">
+      <div class="filter-toolbar">
+        <button type="button" class="filter-btn" id="atlasFilterBtn" aria-haspopup="dialog" aria-controls="filterDrawer">
+          <span class="filter-btn-ico">🎛️</span>
+          <span>筛选</span>
+          <span class="filter-badge" id="atlasFilterBadge" hidden></span>
+        </button>
+        <span class="stats-bar" id="atlasStatsBar"></span>
       </div>
-      <div class="filter-row" id="atlasRareFilter">
-        <span class="label">⭐</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
-        <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
-        <button class="chip" data-value="3"><span style="color:var(--star)">★★★</span></button>
-        <button class="chip" data-value="4"><span style="color:var(--star)">★★★★</span></button>
-        <button class="chip" data-value="5"><span style="color:var(--star)">★★★★★</span></button>
+      <!-- 我的收藏: 常驻, 无需打开抽屉 -->
+      <div class="mine-filter-row" id="atlasMineFilterRow">
+        <span class="label">我的</span>
+        <button type="button" class="chip" data-value="yes">已拥有</button>
+        <button type="button" class="chip" data-value="no">未拥有</button>
+        <button type="button" class="chip" data-value="no_small">缺小章</button>
+        <button type="button" class="chip" data-value="no_big">缺大章</button>
       </div>
-      <div class="filter-row" id="atlasGrazeFilter">
-        <span class="label">🌿</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="yes">🌿 放牧</button>
-        <button class="chip" data-value="no">🏠 不放牧</button>
-      </div>
-      <div class="filter-row" id="atlasPickyFilter">
-        <span class="label">🍽️</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="none">😋 不挑食</button>
-        <button class="chip" data-value="some">😐 有点挑食</button>
-        <button class="chip" data-value="picky">😖 挑食</button>
-      </div>
-      <div class="filter-row" id="atlasMethodFilter">
-        <span class="label">📥</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="shop">🏪 商店进货</button>
-        <button class="chip" data-value="hunt">🏹 狩猎</button>
-        <button class="chip" data-value="breed">💖 配种</button>
-        <button class="chip" data-value="fail">💔 养成失败</button>
-      </div>
-      <div class="filter-row" id="atlasShopRankFilter" style="display:none">
-        <span class="label">🏅</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="A">🥇 A 级</button>
-        <button class="chip" data-value="B">🥈 B 级</button>
-        <button class="chip" data-value="C">🥉 C 级</button>
-      </div>
-      <div class="filter-row" id="atlasHuntRegionFilter" style="display:none">
-        <span class="label">🗺️</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="草原">🌾 草原</button>
-        <button class="chip" data-value="山林">🌲 山林</button>
-        <button class="chip" data-value="日本">🗾 日本</button>
-        <button class="chip" data-value="亚洲">🏮 亚洲</button>
-        <button class="chip" data-value="欧洲">🏰 欧洲</button>
-        <button class="chip" data-value="美洲">🗽 美洲</button>
-        <button class="chip" data-value="大洋洲">🦘 大洋洲</button>
-      </div>
-      <div class="filter-row" id="atlasHuntTicketFilter" style="display:none">
-        <span class="label">🎫</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="normal">🎫 普通券</button>
-        <button class="chip" data-value="rare">🎟️ 稀有券</button>
-      </div>
-      <div class="stats-bar" id="atlasStatsBar"></div>
     </div>
-
-    <main>
+<main>
       <div id="atlasBody">
         <div class="loading">
           <div class="spinner"></div>
@@ -145,11 +89,38 @@
     </div>
 
     <!-- 一级菜单 (默认) -->
+        <!-- 一级菜单 (默认) -->
     <div class="mine-menu" id="mineMenu">
+      <!-- ===== 未登录: 登录引导面板 (登录成功后隐藏) ===== -->
+      <div class="mine-login-view" id="mineLoginView" style="display:none">
+        <div class="login-card">
+          <img class="login-ico" src="/icon-192.png" alt="猪猪图鉴">
+          <h2 class="login-title">登录</h2>
+          <p class="login-sub">登录后可在多设备间同步收藏、进度与养成数据</p>
+          <div class="login-form">
+            <div class="login-field">
+              <label for="loginNicknameInline">昵称</label>
+              <input type="text" id="loginNicknameInline" placeholder="你的昵称" autocomplete="username">
+            </div>
+            <div class="login-field">
+              <label for="loginDeviceCodeInline">设备码</label>
+              <input type="text" id="loginDeviceCodeInline" placeholder="6 位设备码,如 ABC123" maxlength="6" autocomplete="off">
+            </div>
+            <button type="button" class="add-btn login-submit" id="loginBtnInline">登 录</button>
+            <div class="login-foot">
+              <span>还没有账号?</span>
+              <button type="button" class="login-link" id="showRegisterInlineBtn">注册新账号</button>
+            </div>
+            <p class="account-form-hint" id="loginInlineMsg"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 已登录后的内容 ===== -->
+      <div id="mineMenuItems" style="display:none">
       <!-- 登录/账号管理区域 (置顶) -->
       <div class="mine-account-section" id="mineAccountSection">
-        <!-- 未登录视图 -->
-        <div id="accountLoggedOut" class="account-card">
+        <div id="accountLoggedOut" class="account-card" style="display:none">
           <div class="account-card-row">
             <span class="mine-menu-ico">👤</span>
             <button type="button" class="account-btn-small primary" id="showLoginFormBtn">登录</button>
@@ -161,7 +132,6 @@
           <span class="mine-menu-sub">登录后可以在多设备同步收藏数据</span>
         </div>
 
-        <!-- 已登录视图 -->
         <div id="accountLoggedIn" class="account-card" style="display:none">
           <div class="account-card-row">
             <span class="mine-menu-ico">👤</span>
@@ -177,51 +147,8 @@
           </div>
         </div>
 
-        <!-- 登录表单弹窗 -->
-        <div id="loginFormModal" class="account-modal" style="display:none">
-          <div class="account-modal-content">
-            <div class="account-modal-header">
-              <h3>登录</h3>
-              <button type="button" class="account-modal-close" id="closeLoginFormBtn">✕</button>
-            </div>
-            <div class="account-modal-body">
-              <div class="account-form-group">
-                <label for="loginNickname">昵称</label>
-                <input type="text" id="loginNickname" placeholder="输入你的昵称" autocomplete="username">
-              </div>
-              <div class="account-form-group">
-                <label for="loginDeviceCode">设备码（6位）</label>
-                <input type="text" id="loginDeviceCode" placeholder="如: ABC123" maxlength="6" autocomplete="off">
-              </div>
-              <div class="account-form-actions">
-                <button type="button" class="account-btn secondary" id="cancelLoginBtn">取消</button>
-                <button type="button" class="account-btn primary" id="loginBtn">登录</button>
-              </div>
-              <p class="account-form-hint" id="loginFormMsg"></p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 注册表单弹窗 -->
-        <div id="registerFormModal" class="account-modal" style="display:none">
-          <div class="account-modal-content">
-            <div class="account-modal-header">
-              <h3>注册</h3>
-              <button type="button" class="account-modal-close" id="closeRegisterFormBtn">✕</button>
-            </div>
-            <div class="account-modal-body">
-              <div class="account-form-group">
-                <label for="registerNickname">昵称（1-30字符）</label>
-                <input type="text" id="registerNickname" placeholder="输入你的昵称" maxlength="30" autocomplete="username">
-              </div>
-              <div class="account-form-actions">
-                <button type="button" class="account-btn secondary" id="cancelRegisterBtn">取消</button>
-                <button type="button" class="account-btn primary" id="registerBtn">注册</button>
-              </div>
-              <p class="account-form-hint" id="registerFormMsg"></p>
-            </div>
-          </div>
-        </div>
+        <!-- 登录表单弹窗 (兼容旧入口) -->
+        
       </div>
 
       <button type="button" class="mine-menu-card" data-mine-view="progress">
@@ -229,85 +156,22 @@
         <span class="mine-menu-title">进度总览</span>
         <span class="mine-menu-sub" id="mineMenuProgressSub">按图鉴 / 星级 / 颜色 分组进度</span>
       </button>
-      <button type="button" class="mine-menu-card" data-mine-view="main">
-        <span class="mine-menu-ico">📖</span>
-        <span class="mine-menu-title">186图鉴</span>
-        <span class="mine-menu-sub" id="mineMenuMainCount">—</span>
-      </button>
-      <button type="button" class="mine-menu-card" data-mine-view="event">
-        <span class="mine-menu-ico">🎉</span>
-        <span class="mine-menu-title">Events图鉴</span>
-        <span class="mine-menu-sub" id="mineMenuEventCount">—</span>
-      </button>
       <button type="button" class="mine-menu-card" data-mine-view="add">
         <span class="mine-menu-ico">➕</span>
         <span class="mine-menu-title">导入/导出</span>
         <span class="mine-menu-sub">三元组 / 按名字 / 批量 / 备份恢复</span>
       </button>
       <button type="button" class="mine-menu-card" data-mine-view="about">
-        <span class="mine-menu-ico">ℹ️</span>
+        <span class="mine-menu-ico">i️</span>
         <span class="mine-menu-title">关于项目</span>
         <span class="mine-menu-sub">感谢社区玩家的贡献</span>
       </button>
+      </div>
     </div>
 
     <!-- 子视图: 进度总览 (由 JS 渲染, 默认全部展开) -->
     <div class="mine-progress-view" id="mineProgressView" style="display:none">
       <div class="mine-progress" id="mineProgress"></div>
-    </div>
-
-    <!-- 子视图: 186图鉴 + Events图鉴 共享同一组 filters + grid -->
-    <div class="mine-list-view" id="mineListView" style="display:none">
-      <div class="filters">
-        <input class="search" id="mineSearch" type="search" placeholder="搜索名称 / 描述…">
-        <div class="filter-row" id="mineColorFilter">
-          <span class="label">🎨</span>
-          <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="肉色">肉色</button>
-          <button class="chip" data-value="灰色">灰色</button>
-          <button class="chip" data-value="米色">米色</button>
-          <button class="chip" data-value="粉红">粉红</button>
-          <button class="chip" data-value="白色">白色</button>
-          <button class="chip" data-value="其他">其他</button>
-        </div>
-        <div class="filter-row" id="mineRareFilter">
-          <span class="label">⭐</span>
-          <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
-          <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
-          <button class="chip" data-value="3"><span style="color:var(--star)">★★★</span></button>
-          <button class="chip" data-value="4"><span style="color:var(--star)">★★★★</span></button>
-          <button class="chip" data-value="5"><span style="color:var(--star)">★★★★★</span></button>
-          <button class="chip" data-value="6"><span style="color:var(--star-special)">★★★★★★</span></button>
-        </div>
-        <div class="filter-row" id="mineOwnedFilter">
-          <span class="label">🐽</span>
-          <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="yes">✅ 已拥有</button>
-          <button class="chip" data-value="no">⬜ 未拥有</button>
-        </div>
-        <div class="filter-row" id="mineSmallFilter">
-          <span class="label"><img src="/img/small.png" class="badge-icon-tiny" alt="小章"></span>
-          <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="yes">✅ 已拥有</button>
-          <button class="chip" data-value="no">⬜ 未拥有</button>
-        </div>
-        <div class="filter-row" id="mineBigFilter">
-          <span class="label"><img src="/img/big.png" class="badge-icon-tiny" alt="大章"></span>
-          <button class="chip active" data-value="">✨ 全部</button>
-          <button class="chip" data-value="yes">✅ 已拥有</button>
-          <button class="chip" data-value="no">⬜ 未拥有</button>
-        </div>
-        <div class="stats-bar" id="mineStatsBar"></div>
-      </div>
-      <main>
-        <div id="mineBody">
-          <div class="loading">
-            <div class="spinner"></div>
-            <div>正在加载图鉴数据…</div>
-          </div>
-        </div>
-      </main>
     </div>
 
     <!-- 子视图: 添加 / 备份 工具 -->
@@ -415,52 +279,75 @@
         </div>
       </div>
     </div>
+  
+
+    <div id="loginFormModal" class="account-modal" style="display:none">
+          <div class="account-modal-content">
+            <div class="account-modal-header">
+              <h3>登录</h3>
+              <button type="button" class="account-modal-close" id="closeLoginFormBtn">✕</button>
+            </div>
+            <div class="account-modal-body">
+              <div class="account-form-group">
+                <label for="loginNickname">昵称</label>
+                <input type="text" id="loginNickname" placeholder="输入你的昵称" autocomplete="username">
+              </div>
+              <div class="account-form-group">
+                <label for="loginDeviceCode">设备码(6位)</label>
+                <input type="text" id="loginDeviceCode" placeholder="如: ABC123" maxlength="6" autocomplete="off">
+              </div>
+              <div class="account-form-actions">
+                <button type="button" class="account-btn secondary" id="cancelLoginBtn">取消</button>
+                <button type="button" class="account-btn primary" id="loginBtn">登录</button>
+              </div>
+              <p class="account-form-hint" id="loginFormMsg"></p>
+            </div>
+          </div>
+        </div>
+
+    <div id="registerFormModal" class="account-modal" style="display:none">
+          <div class="account-modal-content">
+            <div class="account-modal-header">
+              <h3>注册</h3>
+              <button type="button" class="account-modal-close" id="closeRegisterFormBtn">✕</button>
+            </div>
+            <div class="account-modal-body">
+              <div class="account-form-group">
+                <label for="registerNickname">昵称(1-30字符)</label>
+                <input type="text" id="registerNickname" placeholder="输入你的昵称" maxlength="30" autocomplete="username">
+              </div>
+              <div class="account-form-actions">
+                <button type="button" class="account-btn secondary" id="cancelRegisterBtn">取消</button>
+                <button type="button" class="account-btn primary" id="registerBtn">注册</button>
+              </div>
+              <p class="account-form-hint" id="registerFormMsg"></p>
+            </div>
+          </div>
+        </div>
   </section>
 
-  <!-- ========== TAB: Events图鉴 ========== -->
+    <!-- ========== TAB: Events图鉴 ========== -->
   <section class="tab-panel" id="tabEvents" role="tabpanel" aria-labelledby="tabBtnEvents">
     <div class="filters">
-      <input class="search" id="eventSearch" type="search" placeholder="在Events图鉴中搜索名称 / 描述…">
-      <div class="filter-row" id="eventColorFilter">
-        <span class="label">🎨</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="肉色"><span style="color:#ffcba4; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          肉色</button>
-        <button class="chip" data-value="灰色"><span style="color:#9e9e9e; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          灰色</button>
-        <button class="chip" data-value="米色"><span style="color:#a0522d; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          米色</button>
-        <button class="chip" data-value="粉红"><span style="color:#ffb6c1; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          粉红</button>
-        <button class="chip" data-value="白色"><span style="color:#ffffff; text-shadow: 0 0 1px rgba(0,0,0,0.3);">●</span>
-          白色</button>
-        <button class="chip" data-value="其他"><span style="color:#a855f7; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          其他</button>
+      <input class="search" id="eventSearch" type="search" placeholder="在Events图鉴中搜索名称 / 描述...">
+      <div class="filter-toolbar">
+        <button type="button" class="filter-btn" id="eventFilterBtn" aria-haspopup="dialog" aria-controls="filterDrawer">
+          <span class="filter-btn-ico">🎛️</span>
+          <span>筛选</span>
+          <span class="filter-badge" id="eventFilterBadge" hidden></span>
+        </button>
+        <span class="stats-bar" id="eventStatsBar"></span>
       </div>
-      <div class="filter-row" id="eventRareFilter">
-        <span class="label">⭐</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="3"><span style="color:var(--star-special)">★★★</span></button>
-        <button class="chip" data-value="4"><span style="color:var(--star-special)">★★★★</span></button>
-        <button class="chip" data-value="5"><span style="color:var(--star-special)">★★★★★</span></button>
-        <button class="chip" data-value="6"><span style="color:var(--star-special)">★★★★★★</span></button>
+      <!-- 我的收藏: 常驻, 无需打开抽屉 -->
+      <div class="mine-filter-row" id="eventMineFilterRow">
+        <span class="label">我的</span>
+        <button type="button" class="chip" data-value="yes">已拥有</button>
+        <button type="button" class="chip" data-value="no">未拥有</button>
+        <button type="button" class="chip" data-value="no_small">缺小章</button>
+        <button type="button" class="chip" data-value="no_big">缺大章</button>
       </div>
-      <div class="filter-row" id="eventGrazeFilter">
-        <span class="label">🌿</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="yes">🌿 放牧</button>
-        <button class="chip" data-value="no">🏠 不放牧</button>
-      </div>
-      <div class="filter-row" id="eventPickyFilter">
-        <span class="label">🍽️</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="none">😋 不挑食</button>
-        <button class="chip" data-value="some">😐 有点挑食</button>
-        <button class="chip" data-value="picky">😖 挑食</button>
-      </div>
-      <div class="stats-bar" id="eventStatsBar"></div>
     </div>
-    <main>
+<main>
       <div id="eventBody">
         <div class="loading">
           <div class="spinner"></div>
@@ -501,77 +388,25 @@
     </main>
   </section>
 
-  <!-- ========== TAB: 拍卖场 ========== -->
+    <!-- ========== TAB: 拍卖场 ========== -->
   <section class="tab-panel" id="tabAuction" role="tabpanel" aria-labelledby="tabBtnAuction">
     <div class="filters">
-      <div class="filter-row" id="auctionColorFilter" data-filter="color">
-        <span class="label">🎨</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="肉色"><span style="color:#ffcba4; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          肉色</button>
-        <button class="chip" data-value="灰色"><span style="color:#9e9e9e; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          灰色</button>
-        <button class="chip" data-value="米色"><span style="color:#a0522d; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          米色</button>
-        <button class="chip" data-value="粉色"><span style="color:#ffb6c1; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span>
-          粉色</button>
-        <button class="chip" data-value="白色"><span style="color:#ffffff; text-shadow: 0 0 1px rgba(0,0,0,0.3);">●</span>
-          白色</button>
-        <button class="chip" data-value="其他"><span
-            style="color:#8b4513; text-shadow: 0 0 1px rgba(0,0,0,0.2);">●</span> 其他</button>
-      </div>
-      <div class="filter-row" id="auctionRareFilter" data-filter="rare">
-        <span class="label">⭐</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="1"><span style="color:var(--star)">★</span></button>
-        <button class="chip" data-value="2"><span style="color:var(--star)">★★</span></button>
-        <button class="chip" data-value="3"><span style="color:var(--star)">★★★</span></button>
-        <button class="chip" data-value="4"><span style="color:var(--star)">★★★★</span></button>
-        <button class="chip" data-value="5"><span style="color:var(--star)">★★★★★</span></button>
-      </div>
-      <div class="filter-row" id="auctionGrazeFilter" data-filter="isExer">
-        <span class="label">🌿</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="1">🌿 放牧</button>
-        <button class="chip" data-value="0">🏠 不放牧</button>
-      </div>
-      <div class="filter-row" id="auctionFoodFilter" data-filter="foodtype">
-        <span class="label">🍽️</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="1">😋 不挑食</button>
-        <button class="chip" data-value="2">😐 有点挑食</button>
-        <button class="chip" data-value="3">😖 挑食</button>
-      </div>
-      <div class="filter-row" id="auctionSexFilter" data-filter="sex">
-        <span class="label">🚻</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="0">🚹 雄</button>
-        <button class="chip" data-value="1">🚺 雌</button>
-      </div>
-      <div class="filter-row" id="auctionSortFilter" data-filter="sort">
-        <span class="label">⌛</span>
-        <button class="chip active" data-value="1">⬇ 最新上架</button>
-        <button class="chip" data-value="0">⬆ 即将结束</button>
-      </div>
-      <div class="filter-row" id="auctionOwnFilter" data-filter="own">
-        <span class="label">🐽</span>
-        <button class="chip active" data-value="">✨ 全部</button>
-        <button class="chip" data-value="no">⬜ 未拥有</button>
-        <button class="chip" data-value="yes">✅ 已拥有</button>
-        <button class="chip" data-value="no_small"><img src="/img/small.png" class="badge-icon-tiny" alt="小章"> 缺小章</button>
-        <button class="chip" data-value="no_big"><img src="/img/big.png" class="badge-icon-tiny" alt="大章"> 缺大章</button>
-      </div>
-      <div class="auction-toolbar">
+      <div class="filter-toolbar">
+        <button type="button" class="filter-btn" id="auctionFilterBtn" aria-haspopup="dialog" aria-controls="filterDrawer">
+          <span class="filter-btn-ico">🎛️</span>
+          <span>筛选</span>
+          <span class="filter-badge" id="auctionFilterBadge" hidden></span>
+        </button>
         <span class="stats-bar" id="auctionStatsBar">未加载</span>
         <div class="auction-toolbar-actions">
-          <button type="button" class="add-btn" id="auctionSearchBtnTw"
+          <button type="button" class="auction-search-btn" id="auctionSearchBtnTw"
             data-server="tw" title="查询台服拍卖场">🔍 台服</button>
-          <button type="button" class="add-btn" id="auctionSearchBtnJp"
+          <button type="button" class="auction-search-btn" id="auctionSearchBtnJp"
             data-server="jp" title="查询日服拍卖场">🔍 日服</button>
         </div>
       </div>
     </div>
-    <main>
+<main>
       <div id="auctionBody">
         <div class="loading" id="auctionInitialHint">
           <div>选好筛选条件后点 🔍 查询</div>
@@ -613,6 +448,20 @@
   <div class="drawer" id="drawer">
     <div class="handle"></div>
     <div id="drawerContent"></div>
+  </div>
+
+  <!-- ========== 筛选抽屉 (186 / Events / 拍卖场 共用) ========== -->
+  <div class="filter-drawer-bg" id="filterDrawerBg"></div>
+  <div class="filter-drawer" id="filterDrawer" role="dialog" aria-modal="true" aria-label="筛选条件">
+    <div class="filter-drawer-handle"></div>
+    <div class="filter-drawer-head">
+      <span class="filter-drawer-title" id="filterDrawerTitle">筛选</span>
+      <button type="button" class="filter-drawer-reset" id="filterDrawerReset">重置</button>
+    </div>
+    <div class="filter-drawer-body" id="filterDrawerBody"></div>
+    <div class="filter-drawer-foot">
+      <button type="button" class="add-btn filter-drawer-done" id="filterDrawerDone">完成</button>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>

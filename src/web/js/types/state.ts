@@ -35,6 +35,8 @@ export interface AtlasFilter {
   shopRank: string;
   graze: string;
   picky: string;
+  /** 我的收藏: yes / no / no_small / no_big */
+  own: string;
 }
 
 /** 全局筛选状态 (Events tab) */
@@ -44,20 +46,12 @@ export interface EventFilter {
   q: string;
   graze: string;
   picky: string;
-}
-
-/** 我的 tab 筛选 */
-export interface MineFilter {
-  owned: string;
-  small: string;
-  big: string;
-  q: string;
-  color: string;
-  rare: string;
+  /** 我的收藏: yes / no / no_small / no_big */
+  own: string;
 }
 
 /** 我的 tab 子视图 */
-export type MineView = "menu" | "main" | "event" | "add" | "about" | "progress";
+export type MineView = "menu" | "add" | "about" | "progress";
 
 /** 全局状态 */
 export interface AppState {
@@ -88,7 +82,6 @@ export interface AppState {
   atlasFilter: AtlasFilter;
   eventFilter: EventFilter;
   mineView: MineView;
-  mineFilter: MineFilter;
   /** 反向配种索引: pNo -> 以它为父母的配种记录 */
   breedByParent: Map<number, BreedingEntry[]>;
   /** 原始配种表 */

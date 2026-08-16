@@ -9,9 +9,20 @@ import { pigHasMethod, pigMatchesShopRank, pigMatchesHunt } from "./data.js";
 
 type FilterLike = Record<string, string | undefined>;
 
+// 收藏状态筛选 (own: yes / no / no_small / no_big)
+function passOwnedFilter(p: Pig, own: string | undefined): boolean {
+  if (!own) return true;
+  const isOwn = pigIsOwned(p);
+  if (own === "yes") return isOwn;
+  if (own === "no") return !isOwn;
+  if (own === "no_small") return isOwn && !state.smallBadges.has(p.pNo);
+  if (own === "no_big") return isOwn && !state.bigBadges.has(p.pNo);
+  return true;
+}
+
 // 筛选猪列表
 export function filterPigs(pigs: Pig[], filter: FilterLike): Pig[] {
-  const { color, rare, method, q, huntRegion, huntTicket, shopRank, graze, picky } = filter;
+  const { color, rare, method, q, huntRegion, huntTicket, shopRank, graze, picky, own } = filter;
   const ql = (q || "").toLowerCase();
   return pigs.filter(p => {
     if (color && p.color_text !== color) return false;
@@ -22,6 +33,7 @@ export function filterPigs(pigs: Pig[], filter: FilterLike): Pig[] {
     if (graze === "yes" && !p.isExer) return false;
     if (graze === "no" && p.isExer) return false;
     if (picky && pigPicky(p).level !== picky) return false;
+    if (!passOwnedFilter(p, own)) return false;
     if (ql) {
       const hay = ((p.name || "") + " " + (p.description || "") + " " + (p.pNo ?? "")).toLowerCase();
       if (!hay.includes(ql)) return false;
@@ -39,7 +51,7 @@ export function sortPigs(pigs: Pig[]): Pig[] {
 
 // 活动猪筛选
 export function filterEventPigs(pigs: Pig[], filter: FilterLike): Pig[] {
-  const { color, rare, q, graze, picky } = filter;
+  const { color, rare, q, graze, picky, own } = filter;
   const ql = (q || "").toLowerCase();
   return pigs.filter(p => {
     if (color && p.color_text !== color) return false;
@@ -47,6 +59,7 @@ export function filterEventPigs(pigs: Pig[], filter: FilterLike): Pig[] {
     if (graze === "yes" && !p.isExer) return false;
     if (graze === "no" && p.isExer) return false;
     if (picky && pigPicky(p).level !== picky) return false;
+    if (!passOwnedFilter(p, own)) return false;
     if (ql) {
       const hay = ((p.name || "") + " " + (p.description || "") + " " + (p.pNo ?? "")).toLowerCase();
       if (!hay.includes(ql)) return false;
@@ -63,43 +76,4 @@ export function currentAtlasPigs(): Pig[] {
 export function currentEventPigs(): Pig[] {
   const pigs = filterEventPigs([...state.eventPigsById.values()], state.eventFilter as unknown as FilterLike);
   return pigs.sort((a, b) => (a.pNo - b.pNo));
-}
-
-export function currentMinePigs(): Pig[] {
-  const { owned, small, big, q, color, rare } = state.mineFilter;
-  const ql = (q || "").toLowerCase();
-  const out: Pig[] = [];
-  const sources: IterableIterator<Pig>[] = [];
-  if (state.mineView === "main") sources.push(state.pigsById.values());
-  else if (state.mineView === "event") sources.push(state.eventPigsById.values());
-  for (const iter of sources) {
-    for (const p of iter) {
-      if (color && p.color_text !== color) continue;
-      if (rare && String(p.rare) !== rare) continue;
-      const isOwn = pigIsOwned(p);
-      if (owned === "yes" && !isOwn) continue;
-      if (owned === "no" && isOwn) continue;
-      const hasSmall = state.smallBadges.has(p.pNo);
-      const hasBig = state.bigBadges.has(p.pNo);
-      if (small === "yes" && !hasSmall) continue;
-      if (small === "no" && hasSmall) continue;
-      if (big === "yes" && !hasBig) continue;
-      if (big === "no" && hasBig) continue;
-      if (ql) {
-        const hay = ((p.name || "") + " " + (p.description || "") + " " + (p.pNo ?? "")).toLowerCase();
-        if (!hay.includes(ql)) continue;
-      }
-      out.push(p);
-    }
-  }
-  out.sort((a, b) => {
-    const aMain = a.book && a.book <= 6 ? 0 : 1;
-    const bMain = b.book && b.book <= 6 ? 0 : 1;
-    if (aMain !== bMain) return aMain - bMain;
-    if (aMain === 0) {
-      return (a.book! - b.book!) || (a.page! - b.page!) || (a.slot! - b.slot!) || (a.pNo - b.pNo);
-    }
-    return a.pNo - b.pNo;
-  });
-  return out;
 }

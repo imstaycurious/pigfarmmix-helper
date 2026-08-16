@@ -1,10 +1,10 @@
 /**
- * 猪卡片构建 — 列表 / 我的 共用
+ * 猪卡片 / 列表行构建 — 列表(186/Events) / 我的 共用
  */
 
 import type { Pig } from "../js/types/index.js";
 import { state } from "../js/state.js";
-import { el, text, imgUrl, stars, fmtKg, badgeWeights, pigPicky } from "../js/utils.js";
+import { el, imgUrl, stars, fmtKg, badgeWeights, pigPicky } from "../js/utils.js";
 import { setPigOwned, setPigBadge } from "../js/data.js";
 import { customConfirm } from "../js/modal.js";
 import { emit } from "../js/events.js";
@@ -29,34 +29,86 @@ export interface CardOptions {
   showBadges?: boolean;
 }
 
-export function buildCard(p: Pig, opts: CardOptions = {}): HTMLElement {
-  const { showCollected = true, showBadges = false } = opts;
+interface BadgeChipSpec {
+  kind: "small" | "big";
+  has: boolean;
+  weight: number;
+  op: string;
+  iconSrc: string;
+  label: string;
+}
+
+function badgeSpecsFor(p: Pig, showBadges: boolean): BadgeChipSpec[] {
+  const w = badgeWeights(p);
+  if (!w) return [];
+  return [
+    {
+      kind: "small",
+      has: showBadges && state.smallBadges.has(p.pNo),
+      weight: w.small,
+      op: "≤",
+      iconSrc: "/img/small.png",
+      label: "小章",
+    },
+    {
+      kind: "big",
+      has: showBadges && state.bigBadges.has(p.pNo),
+      weight: w.big,
+      op: "≥",
+      iconSrc: "/img/big.png",
+      label: "大章",
+    },
+  ];
+}
+
+function makeBadgeChip(p: Pig, spec: BadgeChipSpec, interactive: boolean): HTMLElement {
+  const cls = `card-badge-chip ${spec.kind}${spec.has ? " is-on" : ""}`;
+  const attrs: Record<string, unknown> = {
+    class: cls,
+    title: `${spec.label}: ${spec.op} ${fmtKg(spec.weight)}kg${spec.has ? " · 已拥有" : ""}`,
+  };
+  if (interactive) {
+    attrs.onclick = (ev: Event) => {
+      ev.stopPropagation();
+      const set = spec.kind === "small" ? state.smallBadges : state.bigBadges;
+      setPigBadge(p.pNo, spec.kind, !set.has(p.pNo));
+      emit("owned-changed", p.pNo);
+    };
+  }
+  const tag = interactive ? "button" : "span";
+  return el(tag as "button", attrs, [
+    el("img", { class: "card-badge-img", src: spec.iconSrc, alt: spec.label }),
+    el("span", { class: "card-badge-w" }, `${spec.op}${fmtKg(spec.weight)}`),
+  ]);
+}
+
+function ownedToggle(p: Pig, isOwn: boolean): HTMLElement {
+  return el("button", {
+    class: "card-owned-toggle" + (isOwn ? " is-on" : ""),
+    "aria-pressed": String(isOwn),
+    title: isOwn ? "已拥有 — 点击取消" : "标记为已拥有",
+    onclick: async (ev: Event) => {
+      ev.stopPropagation();
+      if (!(await setPigOwnedAfterConfirm(p.pNo, !isOwn))) return;
+      emit("owned-changed", p.pNo);
+    },
+  }, isOwn ? "✅ 已拥有" : "⬜ 未拥有");
+}
+
+function isEventPig(p: Pig): boolean {
+  return p.book === 7 || !state.pigsById.has(p.pNo);
+}
+
+function isPigOwned(p: Pig): boolean {
+  return isEventPig(p)
+    ? state.ownedEventPigs.has(p.pNo)
+    : state.ownedSet.has(p.pNo);
+}
+
+function pigMetaParts(p: Pig): (HTMLElement | null)[] {
   const posText = p.book && p.book <= 6
     ? `图鉴${p.book} 页${p.page} #${p.slot}`
     : (p.book === 7 ? "Events图鉴" : "");
-  const isEvent = p.book === 7 || !state.pigsById.has(p.pNo);
-  const isOwn = isEvent
-    ? state.ownedEventPigs.has(p.pNo)
-    : state.ownedSet.has(p.pNo);
-  const children: (HTMLElement | Text | string)[] = [];
-
-  if (showCollected) {
-    children.push(el("button", {
-      class: "card-owned-toggle" + (isOwn ? " is-on" : ""),
-      "aria-pressed": String(isOwn),
-      title: isOwn ? "已拥有 — 点击取消" : "标记为已拥有",
-      onclick: async (ev: Event) => {
-        ev.stopPropagation();
-        if (!(await setPigOwnedAfterConfirm(p.pNo, !isOwn))) return;
-        emit("owned-changed", p.pNo);
-      },
-    }, isOwn ? "✅ 已拥有" : "⬜ 未拥有"));
-  }
-
-  children.push(el("div", { class: "img" },
-    el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name })
-  ));
-
   const grazeBadge = p.isExer
     ? el("span", { class: "graze yes", title: "放牧" }, "🌿 放牧")
     : el("span", { class: "graze no", title: "不放牧" }, "🏠 不放牧");
@@ -67,51 +119,55 @@ export function buildCard(p: Pig, opts: CardOptions = {}): HTMLElement {
   const pickyLabel = picky.level === "none" ? "🍽️ 不挑食" : `🍽️ ${picky.label}`;
   const pickyEl = el("span", { class: "picky " + picky.level, title: pickyTitle }, pickyLabel);
   const feedN = (p.feeding && p.feeding.times) || 0;
-  const feedBadge = el("span", { class: "feed", title: `最少喂食 ${feedN} 次` }, `🍚 ${feedN}`);
+  return [
+    p.color_text ? el("span", { class: "color" }, p.color_text) : null,
+    posText ? el("span", { class: "pos" }, posText) : null,
+    el("span", { class: "feed", title: `最少喂食 ${feedN} 次` }, `🍚 ${feedN}`),
+    grazeBadge,
+    pickyEl,
+  ];
+}
 
-  // 小章 / 大章 chip
-  const w = badgeWeights(p);
-  const hasSm = showBadges && state.smallBadges.has(p.pNo);
-  const hasBg = showBadges && state.bigBadges.has(p.pNo);
-  const makeBadgeChip = (kind: "small" | "big", has: boolean, weight: number, op: string, iconSrc: string, label: string): HTMLElement => {
-    const cls = `card-badge-chip ${kind}${has ? " is-on" : ""}`;
-    const attrs: Record<string, unknown> = {
-      class: cls,
-      title: `${label}: ${op} ${fmtKg(weight)}kg${has ? " · 已拥有" : ""}`,
-    };
-    if (showBadges) {
-      attrs.onclick = (ev: Event) => {
-        ev.stopPropagation();
-        const set = kind === "small" ? state.smallBadges : state.bigBadges;
-        setPigBadge(p.pNo, kind, !set.has(p.pNo));
-        emit("owned-changed", p.pNo);
-      };
-    }
-    const tag = showBadges ? "button" : "span";
-    return el(tag as "button", attrs, [
-      el("img", { class: "card-badge-img", src: iconSrc, alt: label }),
-      el("span", { class: "card-badge-w" }, `${op}${fmtKg(weight)}`),
-    ]);
-  };
-  const badgeRow = w
-    ? el("div", { class: "card-badge-row" + (showBadges ? " interactive" : "") }, [
-      makeBadgeChip("small", hasSm, w.small, "≤", "/img/small.png", "小章"),
-      makeBadgeChip("big", hasBg, w.big, "≥", "/img/big.png", "大章"),
-    ])
-    : null;
+function starEl(p: Pig): HTMLElement {
+  return el("span", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special));
+}
 
-  children.push(el("div", { class: "body" }, [
-    el("div", { class: "name" }, p.name),
-    el("div", { class: "stars-row" + (p.special ? " special" : "") }, [
-      el("span", { class: "stars" + (p.special ? " special" : "") }, stars(p.rare, p.special)),
+// ==================== 列表行(186 / Events tab 用) ====================
+
+export function buildListRow(p: Pig, opts: CardOptions = {}): HTMLElement {
+  const { showCollected = true, showBadges = false } = opts;
+  const isOwn = isPigOwned(p);
+  const children: (HTMLElement | Text | string)[] = [];
+
+  // 缩略图
+  children.push(el("div", { class: "thumb" },
+    el("img", { src: imgUrl(p.pNo), loading: "lazy", alt: p.name })
+  ));
+
+  // 信息区: 名称+星级 一行, 属性 meta 一行, 章 chip 一行(可选)
+  const infoChildren: (HTMLElement | null)[] = [
+    el("div", { class: "name-line" }, [
+      el("span", { class: "name" }, p.name),
+      starEl(p),
     ]),
-    el("div", { class: "sub" }, `${p.color_text || ""}${posText ? " · " + posText : ""}`),
-    el("div", { class: "chip-row" }, [feedBadge, grazeBadge, pickyEl].filter(Boolean)),
-    badgeRow,
-  ]));
+    el("div", { class: "meta" }, pigMetaParts(p).filter(Boolean)),
+  ];
+  const badgeRow = badgeSpecsFor(p, showBadges);
+  if (badgeRow.length) {
+    infoChildren.push(
+      el("div", { class: "badge-row" + (showBadges ? " interactive" : "") },
+        badgeRow.map(s => makeBadgeChip(p, s, showBadges)))
+    );
+  }
+  children.push(el("div", { class: "info" }, infoChildren));
+
+  // 右侧: 已拥有切换(仅「我的」场景)
+  if (showCollected) {
+    children.push(ownedToggle(p, isOwn));
+  }
 
   return el("div", {
-    class: "card" + (showCollected && isOwn ? " collected" : ""),
+    class: "list-row" + (showCollected && isOwn ? " collected" : ""),
     "data-pno": String(p.pNo),
     "data-show-collected": showCollected ? "1" : "0",
     "data-show-badges": showBadges ? "1" : "0",

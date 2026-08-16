@@ -5,8 +5,8 @@
 import type { Pig } from "../js/types/index.js";
 import { state } from "../js/state.js";
 import { el, $, escHtml, stars, fmtKg, badgeWeights } from "../js/utils.js";
-import { currentAtlasPigs, currentEventPigs, currentMinePigs } from "../js/filters.js";
-import { buildCard } from "./cards.js";
+import { currentAtlasPigs, currentEventPigs } from "../js/filters.js";
+import { buildListRow } from "./cards.js";
 
 // ----- 进度面板 (我的 tab → menu view) -----
 
@@ -76,15 +76,7 @@ function bucketsToRows(map: Map<string, Bucket>, keyOrder: (string | number)[], 
 }
 
 export function renderMineMenuCounts(): void {
-  const m = $("#mineMenuMainCount");
-  const e = $("#mineMenuEventCount");
   const pg = $("#mineMenuProgressSub");
-  if (m) m.textContent = state.dataLoaded
-    ? `已拥有 ${state.collection.length} / ${state.pigsById.size} 只`
-    : "加载中...";
-  if (e) e.textContent = state.dataLoaded
-    ? `已拥有 ${state.ownedEventPigs.size} / ${state.eventPigsById.size} 只`
-    : "加载中...";
   if (pg) {
     if (!state.dataLoaded) {
       pg.textContent = "加载中...";
@@ -202,9 +194,10 @@ export function renderAtlasBody(): void {
     return;
   }
 
-  const grid = el("div", { class: "grid" });
-  for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: false, showBadges: false }));
-  box.appendChild(grid);
+  // 186图鉴: 列表视图 (可直接标记已拥有 + 小章/大章)
+  const list = el("div", { class: "pig-list" });
+  for (const p of pigs) list.appendChild(buildListRow(p, { showCollected: true, showBadges: true }));
+  box.appendChild(list);
 }
 
 export function renderEventsBody(): void {
@@ -220,37 +213,15 @@ export function renderEventsBody(): void {
     return;
   }
 
-  const grid = el("div", { class: "grid" });
-  for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: false, showBadges: false }));
-  box.appendChild(grid);
+  // Events图鉴: 列表视图 (可直接标记已拥有 + 小章/大章)
+  const list = el("div", { class: "pig-list" });
+  for (const p of pigs) list.appendChild(buildListRow(p, { showCollected: true, showBadges: true }));
+  box.appendChild(list);
 }
 
 export function renderMineBody(): void {
   renderMineMenuCounts();
   renderProgressPanel();
-  if (state.mineView !== "main" && state.mineView !== "event") return;
-  const box = $("#mineBody");
-  if (!box) return;
-  box.innerHTML = "";
-
-  if (!state.dataLoaded) { renderLoading(box); return; }
-
-  const pigs = currentMinePigs();
-  if (pigs.length === 0) {
-    const f = state.mineFilter;
-    const hasFilter = f.q || f.owned || f.small || f.big;
-    const tabName = state.mineView === "event" ? "Events图鉴" : "186图鉴";
-    if (!hasFilter) {
-      renderEmpty(box, `${tabName} 还没有数据`, `到 ${tabName} tab 点开一头猪,角上点「⬜ 未拥有」就能加进来`);
-    } else {
-      renderEmpty(box, "没有符合筛选条件的猪", "调一下上面的「拥有 / 小章 / 大章」或清空搜索词");
-    }
-    return;
-  }
-
-  const grid = el("div", { class: "grid" });
-  for (const p of pigs) grid.appendChild(buildCard(p, { showCollected: true, showBadges: true }));
-  box.appendChild(grid);
 }
 
 // ----- 统计条 -----
@@ -281,34 +252,14 @@ export function renderEventsStats(): void {
   }
 }
 
-export function renderMineStats(): void {
-  const msb = $("#mineStatsBar");
-  if (!msb) return;
-  if (!state.dataLoaded || (state.mineView !== "main" && state.mineView !== "event")) {
-    msb.textContent = "";
-  } else {
-    const shown = currentMinePigs().length;
-    const isMain = state.mineView === "main";
-    const total = isMain ? state.pigsById.size : state.eventPigsById.size;
-    const own = isMain ? state.collection.length : state.ownedEventPigs.size;
-    const inScope = isMain
-      ? (pNo: number) => state.pigsById.has(pNo)
-      : (pNo: number) => state.eventPigsById.has(pNo);
-    let sm = 0, bg = 0;
-    for (const pNo of state.smallBadges) if (inScope(pNo)) sm++;
-    for (const pNo of state.bigBadges) if (inScope(pNo)) bg++;
-    msb.textContent = `显示 ${shown} 只 · 已拥有 ${own}/${total} · 小章 ${sm} · 大章 ${bg}`;
-  }
-}
-
-// 定点刷新卡片
+// 定点刷新列表行
 export function refreshPigCards(pNo: number): void {
   const p = state.pigsById.get(pNo) || state.eventPigsById.get(pNo) || state.hiddenPigsById.get(pNo);
   if (!p) return;
-  document.querySelectorAll(`.card[data-pno="${pNo}"]`).forEach(node => {
+  document.querySelectorAll(`.list-row[data-pno="${pNo}"]`).forEach(node => {
     const showCollected = node.getAttribute("data-show-collected") === "1";
     const showBadges = node.getAttribute("data-show-badges") === "1";
-    node.replaceWith(buildCard(p, { showCollected, showBadges }));
+    node.replaceWith(buildListRow(p, { showCollected, showBadges }));
   });
 }
 

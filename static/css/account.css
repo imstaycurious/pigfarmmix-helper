@@ -11,7 +11,7 @@
   -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur, 20px));
   backdrop-filter: saturate(180%) blur(var(--glass-blur, 20px));
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 20px);
+  border-radius: var(--radius-lg, 18px);
   padding: 18px;
   box-shadow: var(--shadow);
   min-height: 96px;
@@ -20,6 +20,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  transition: box-shadow var(--dur, 0.18s) ease, border-color var(--dur, 0.18s) ease;
+}
+
+.account-card:hover {
+  box-shadow: var(--shadow-hover);
+  border-color: var(--border-strong);
 }
 
 .account-card-row {
@@ -38,6 +44,7 @@
   font-size: 11px;
   color: var(--muted);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .account-actions-inline {
@@ -49,15 +56,20 @@
 
 .account-btn-small {
   min-width: 48px;
+  height: 28px;
   text-align: center;
-  padding: 4px 10px;
+  padding: 0 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .account-btn-small.primary {
@@ -66,17 +78,19 @@
 }
 
 .account-btn-small.primary:hover {
-  opacity: 0.9;
+  background: var(--accent-hover, var(--accent));
   transform: translateY(-1px);
 }
 
 .account-btn-small.secondary {
   background: var(--chip-bg);
   color: var(--chip-fg);
+  border: 1px solid transparent;
 }
 
 .account-btn-small.secondary:hover {
   background: var(--border);
+  border-color: var(--border-strong);
 }
 
 .account-header {
@@ -131,14 +145,20 @@
 .account-btn {
   flex: 1;
   min-width: 100px;
-  padding: 10px 16px;
+  height: 38px;
+  padding: 0 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 
 .account-btn.primary {
@@ -147,7 +167,7 @@
 }
 
 .account-btn.primary:hover {
-  opacity: 0.9;
+  background: var(--accent-hover, var(--accent));
   transform: translateY(-1px);
 }
 
@@ -218,6 +238,8 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
   z-index: 10000;
   display: flex;
   align-items: center;
@@ -237,11 +259,11 @@
 
 .account-modal-content {
   background: var(--card);
-  border-radius: 14px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(15, 18, 28, 0.28), inset 0 1px 0 var(--border-hi, rgba(255, 255, 255, 0.6));
   max-width: 400px;
   width: 100%;
-  animation: modalSlideUp 0.2s ease;
+  animation: modalSlideUp 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
 @keyframes modalSlideUp {
@@ -311,16 +333,17 @@
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
   font-size: 14px;
   background: var(--bg);
   color: var(--ink);
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .account-form-group input:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft, rgba(35, 42, 58, 0.06));
 }
 
 .account-form-actions {
@@ -357,4 +380,125 @@
   .account-modal {
     padding: 10px;
   }
+}
+
+/* ========================================
+   未登录引导面板 (我的 tab)
+   ======================================== */
+
+.mine-login-view {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px 60px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--card);
+  -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur, 20px));
+  backdrop-filter: saturate(180%) blur(var(--glass-blur, 20px));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 18px);
+  box-shadow: var(--shadow);
+  padding: 36px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.login-ico {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  object-fit: cover;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow, 0 1px 3px rgba(22, 28, 40, 0.05), 0 4px 14px rgba(22, 28, 40, 0.05));
+}
+
+.login-title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+.login-sub {
+  margin: 0 0 26px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-field {
+  text-align: left;
+}
+
+.login-field label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.login-field input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--ink);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.login-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft, rgba(59, 74, 99, 0.08));
+}
+
+.login-submit {
+  width: 100%;
+  height: 42px;
+  margin-top: 4px;
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+
+.login-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.login-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.login-link:hover {
+  opacity: 0.75;
 }

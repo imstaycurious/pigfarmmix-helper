@@ -9,6 +9,7 @@ import { isLoggedIn, getCurrentUser } from "../js/auth.js";
 import { AUCTION_PAGE_SIZE, LIMITDATE_OFFSET_HOURS, WEIGHT_OFFSET_KG, ADULT_OFFSET_KG, COLOR_TO_P, FOOD_LABELS, SEX_LABELS, SEX_CLS } from "../js/constants.js";
 import { emit } from "../js/events.js";
 import { formatCountdown } from "../js/format.js";
+import { refreshFilterBadges } from "./filter-drawer.js";
 
 const auctionState: AuctionState = {
   loading: false,
@@ -272,6 +273,7 @@ function renderAuctionTab(): void {
 
   setupAuctionLoadMore();
   startAuctionCountdown();
+  refreshFilterBadges();
 }
 
 function setupAuctionLoadMore(): void {
@@ -379,23 +381,36 @@ async function loadMoreAuctions(): Promise<void> {
 }
 
 export function setupAuction(): void {
-  // 筛选 chip 点击
-  document.querySelectorAll<HTMLElement>("#tabAuction .filter-row").forEach(row => {
-    const field = row.dataset.filter;
-    if (!field) return;
-    row.addEventListener("click", (e: Event) => {
-      const chip = (e.target as HTMLElement).closest(".chip") as HTMLElement | null;
-      if (!chip || !row.contains(chip)) return;
-      auctionFilter[field as keyof AuctionFilter] = chip.dataset.value || "";
-      row.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c === chip));
-      if (field === "own" && auctionState.records.length) {
-        renderAuctionTab();
-      }
-    });
-  });
+  // 拍卖场筛选现在由 filter-drawer 驱动 (chip 点击 → auctionFilter 更新 → 重渲染/查询)
 
   $("#auctionSearchBtnTw")?.addEventListener("click", () => fetchAuctions({ server: "tw" }));
   $("#auctionSearchBtnJp")?.addEventListener("click", () => fetchAuctions({ server: "jp" }));
+}
+
+/** 供 filter-drawer 读取当前拍卖场筛选值 */
+export function auctionActiveValues(): Record<string, string> {
+  return { ...auctionFilter } as unknown as Record<string, string>;
+}
+
+/** 供 filter-drawer 在「完成」时写回拍卖场筛选 */
+export function applyAuctionFromDrawer(values: Record<string, string>): void {
+  for (const k of Object.keys(auctionFilter)) {
+    (auctionFilter as unknown as Record<string, string>)[k] = values[k] ?? "";
+  }
+  // own 是本地过滤, 有结果时立即生效; sort/color 等服务端参数在下次查询时生效
+  if (auctionState.records.length) {
+    renderAuctionTab();
+  }
+  refreshFilterBadges();
+}
+
+/** 拍卖场筛选角标计数 (own 计入, sort 只计非默认值) */
+export function auctionFilterCount(): number {
+  const f = auctionFilter as unknown as Record<string, string>;
+  const keys: (keyof typeof auctionFilter)[] = ["color", "rare", "isExer", "foodtype", "sex", "own"];
+  let n = keys.filter(k => f[k as string]).length;
+  if (f.sort && f.sort !== "1") n++;
+  return n;
 }
 
 export function renderAuctionTabEntry(): void {

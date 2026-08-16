@@ -21,10 +21,15 @@ export interface AccountUIDeps {
 function updateAccountUI(): void {
   const loggedOut = document.getElementById("accountLoggedOut");
   const loggedIn = document.getElementById("accountLoggedIn");
+  const loginView = document.getElementById("mineLoginView");
+  const menuItems = document.getElementById("mineMenuItems");
   if (!loggedOut || !loggedIn) return;
   const user = getCurrentUser();
 
   if (user) {
+    // 已登录: 隐藏登录引导, 显示完整菜单
+    if (loginView) loginView.style.display = "none";
+    if (menuItems) menuItems.style.display = "";
     loggedOut.style.display = "none";
     loggedIn.style.display = "flex";
     const nick = document.getElementById("accountNickname");
@@ -33,7 +38,10 @@ function updateAccountUI(): void {
     if (device) device.textContent = `设备码: ${user.deviceCode}`;
     updateLastSyncTime();
   } else {
-    loggedOut.style.display = "flex";
+    // 未登录: 只显示登录引导面板
+    if (loginView) loginView.style.display = "flex";
+    if (menuItems) menuItems.style.display = "none";
+    loggedOut.style.display = "none";
     loggedIn.style.display = "none";
   }
 }
@@ -86,6 +94,68 @@ function clearFormMessage(elementId: string): void {
 
 /** 初始化账号管理 UI */
 export function initAccountUI({ toast, render }: AccountUIDeps): void {
+  // ===== 内联登录面板 (未登录时「我的」tab 主入口) =====
+  const inlineLoginBtn = document.getElementById("loginBtnInline");
+  if (inlineLoginBtn) {
+    inlineLoginBtn.addEventListener("click", async () => {
+      const nickEl = document.getElementById("loginNicknameInline") as HTMLInputElement | null;
+      const devEl = document.getElementById("loginDeviceCodeInline") as HTMLInputElement | null;
+      const nickname = nickEl ? nickEl.value.trim() : "";
+      const deviceCode = devEl ? devEl.value.trim().toUpperCase() : "";
+
+      if (!nickname || !deviceCode) {
+        setFormMessage("loginInlineMsg", "请输入昵称和设备码", true);
+        return;
+      }
+
+      const btn = inlineLoginBtn as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = "登录中...";
+      clearFormMessage("loginInlineMsg");
+
+      try {
+        const result = await login(nickname, deviceCode);
+        if (result.ok) {
+          toast("登录成功");
+          updateAccountUI();
+          render();
+
+          // 登录后必须「先合并再上传」
+          const onDataUpdated = () => { reloadStateFromStorage(); render(); };
+          const pulled = await pullFromCloud({ onDataUpdated });
+          if (pulled.ok) {
+            await syncWithCloud({ onDataUpdated });
+            updateLastSyncTime();
+          } else {
+            toast(`云端数据读取失败:${pulled.error || "未知错误"},本次未上传`);
+          }
+        } else {
+          setFormMessage("loginInlineMsg", result.error || "登录失败", true);
+        }
+      } catch {
+        setFormMessage("loginInlineMsg", "网络错误,请稍后重试", true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "登 录";
+      }
+    });
+
+    // 回车提交
+    const onEnter = (e: KeyboardEvent) => {
+      if (e.key === "Enter") (inlineLoginBtn as HTMLButtonElement).click();
+    };
+    document.getElementById("loginNicknameInline")?.addEventListener("keydown", onEnter);
+    document.getElementById("loginDeviceCodeInline")?.addEventListener("keydown", onEnter);
+  }
+
+  // 内联面板的「注册新账号」→ 打开注册弹窗
+  document.getElementById("showRegisterInlineBtn")?.addEventListener("click", () => {
+    showModal("registerFormModal");
+    const input = document.getElementById("registerNickname") as HTMLInputElement | null;
+    if (input) input.value = "";
+    clearFormMessage("registerFormMsg");
+  });
+
   // 注册流程
   document.getElementById("showRegisterFormBtn")?.addEventListener("click", () => {
     showModal("registerFormModal");

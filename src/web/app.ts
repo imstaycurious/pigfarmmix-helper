@@ -16,7 +16,7 @@ import { initAccountUI } from "./js/account-ui.js";
 import { on } from "./js/events.js";
 import {
   renderAtlasBody, renderEventsBody, renderMineBody,
-  renderAtlasStats, renderEventsStats, renderMineStats,
+  renderAtlasStats, renderEventsStats,
   renderMineMenuCounts, renderProgressPanel, refreshPigCards,
 } from "./render/atlas.js";
 import { showDetail, closeDrawer, setupDrawer } from "./render/drawer.js";
@@ -24,11 +24,12 @@ import {
   renderRaisingBody, renderRaisingSearchResults,
   updateRaisingCountdownNodes, setupRaising,
 } from "./render/raising.js";
-import { setupAuction, renderAuctionTabEntry } from "./render/auction.js";
+import { setupAuction, renderAuctionTabEntry, auctionActiveValues, applyAuctionFromDrawer, auctionFilterCount } from "./render/auction.js";
 import { initRaisingPush } from "./js/raising-push.js";
 import { addRaisingPig, startRaisingTicker, saveRaisingState } from "./js/raising-logic.js";
 import { setupImportExport } from "./render/import-export.js";
-import { setupFilters } from "./render/filters-wiring.js";
+import { setupFilters, atlasActiveValues, eventsActiveValues } from "./render/filters-wiring.js";
+import { setupFilterDrawer, refreshFilterBadges, setAuctionActiveCountFn } from "./render/filter-drawer.js";
 import { setupTheme, setupPwa, onServiceWorkerMessage } from "./js/pwa.js";
 import { showGlobalError, installGlobalErrorHandler } from "./js/error-handler.js";
 
@@ -44,8 +45,6 @@ const TABS: Record<string, { panel: string; btn: string }> = {
 // ==================== Mine 视图切换 ====================
 
 const MINE_VIEW_TITLES: Record<string, string> = {
-  main: "📖 186图鉴",
-  event: "🎉 Events图鉴",
   progress: "📊 进度总览",
   add: "➕ 导入/导出",
   about: "i️ 关于项目",
@@ -54,44 +53,17 @@ const MINE_VIEW_TITLES: Record<string, string> = {
 function setMineView(view: string): void {
   state.mineView = view as typeof state.mineView;
   const menu = $("#mineMenu");
-  const listView = $("#mineListView");
   const addView = $("#mineAddView");
   const aboutView = $("#mineAboutView");
   const progressView = $("#mineProgressView");
   const subhead = $("#mineSubHead");
   const subheadTitle = $("#mineSubHeadTitle");
   if (menu) menu.style.display = view === "menu" ? "" : "none";
-  if (listView) listView.style.display = (view === "main" || view === "event") ? "" : "none";
   if (addView) addView.style.display = view === "add" ? "" : "none";
   if (aboutView) aboutView.style.display = view === "about" ? "" : "none";
   if (progressView) progressView.style.display = view === "progress" ? "" : "none";
   if (subhead) subhead.style.display = view === "menu" ? "none" : "";
   if (subheadTitle) subheadTitle.textContent = MINE_VIEW_TITLES[view] || "";
-
-  // 星级筛选显示调整
-  const mineRareFilter = $("#mineRareFilter");
-  if (mineRareFilter && (view === "main" || view === "event")) {
-    mineRareFilter.querySelectorAll<HTMLElement>(".chip").forEach(chip => {
-      const value = chip.dataset.value;
-      if (view === "event") {
-        if (value === "1" || value === "2") {
-          chip.style.display = "none";
-        } else {
-          chip.style.display = "";
-          const star = chip.querySelector("span");
-          if (star && value) star.style.color = "var(--star-special)";
-        }
-      } else {
-        if (value === "6") {
-          chip.style.display = "none";
-        } else {
-          chip.style.display = "";
-          const star = chip.querySelector("span");
-          if (star && value) star.style.color = "var(--star)";
-        }
-      }
-    });
-  }
 
   render();
 }
@@ -117,7 +89,6 @@ function renderActiveTab(): void {
   } else if (active === "raising") {
     renderRaisingBody();
   } else if (active === "mine") {
-    renderMineStats();
     renderMineBody();
   }
 }
@@ -136,14 +107,19 @@ function render(): void {
   refreshOwnedSet();
   renderActiveTab();
   updateGlobalCounts();
+  refreshFilterBadges();
 }
 
 function updateOwnedUI(pNo: number): void {
   refreshOwnedSet();
   const active = activeTabName();
-  const f = state.mineFilter;
-  if (active === "mine" && (state.mineView === "main" || state.mineView === "event")
-    && (f.owned || f.small || f.big)) {
+  // 若当前 tab 开了「我的收藏」筛选, 直接重渲染整个列表,
+  // 避免「已拥有」的猪点了取消后还停留在「未拥有」筛选结果里。
+  if (active === "atlas" && state.atlasFilter.own) {
+    render();
+    return;
+  }
+  if (active === "events" && state.eventFilter.own) {
     render();
     return;
   }
@@ -151,7 +127,6 @@ function updateOwnedUI(pNo: number): void {
   if (active === "atlas") renderAtlasStats();
   else if (active === "events") renderEventsStats();
   else if (active === "mine") {
-    renderMineStats();
     renderProgressPanel();
   }
   updateGlobalCounts();
@@ -231,6 +206,19 @@ function init(): void {
 
   // 筛选接线 (变化时刷新当前 tab)
   setupFilters(() => render());
+
+  // 筛选抽屉 (186 / Events / 拍卖场)
+  setAuctionActiveCountFn(auctionFilterCount);
+  setupFilterDrawer({
+    atlasApply: () => render(),
+    eventsApply: () => render(),
+    auctionApply: (values) => {
+      if (values) applyAuctionFromDrawer(values);
+    },
+    auctionActiveValues,
+    atlasActiveValues,
+    eventsActiveValues,
+  });
 
   // 我的 tab 导航
   document.querySelectorAll<HTMLElement>("#mineMenu .mine-menu-card").forEach(btn => {

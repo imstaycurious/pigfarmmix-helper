@@ -2,7 +2,7 @@
  * 全局状态管理
  */
 
-import type { AppState, AtlasFilter, EventFilter, MineFilter } from "./types/index.js";
+import type { AppState, AtlasFilter, EventFilter } from "./types/index.js";
 import {
   loadCollection,
   loadOwnedEventPigs,
@@ -16,14 +16,12 @@ import { STORAGE_KEY_BADGE_SMALL, STORAGE_KEY_BADGE_BIG } from "./constants.js";
 const defaultAtlasFilter: AtlasFilter = {
   color: "", rare: "", method: "", q: "",
   huntRegion: "", huntTicket: "", shopRank: "", graze: "", picky: "",
+  own: "",
 };
 
 const defaultEventFilter: EventFilter = {
   color: "", rare: "", q: "", graze: "", picky: "",
-};
-
-const defaultMineFilter: MineFilter = {
-  owned: "", small: "", big: "", q: "", color: "", rare: "",
+  own: "",
 };
 
 export const state: AppState = {
@@ -43,7 +41,6 @@ export const state: AppState = {
   atlasFilter: { ...defaultAtlasFilter },
   eventFilter: { ...defaultEventFilter },
   mineView: "menu",
-  mineFilter: { ...defaultMineFilter },
   breedByParent: new Map(),
   breedingTable: [],
 };
