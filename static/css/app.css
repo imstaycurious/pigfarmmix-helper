@@ -3415,3 +3415,192 @@
       color: var(--ink);
     }
 
+
+    /* ===== 数据管理 (我的 → 数据管理) ===== */
+    .mine-data-view {
+      padding: 12px;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .de-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 8px 0 14px;
+      flex-wrap: wrap;
+    }
+    .de-tab {
+      padding: 7px 16px;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--dur) var(--ease), color var(--dur) var(--ease),
+        border-color var(--dur) var(--ease);
+    }
+    .de-tab.active {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-color: var(--accent);
+    }
+    .de-form {
+      background: var(--card);
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .de-section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .de-section-sub {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .de-grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 480px) {
+      .de-grid2 { grid-template-columns: 1fr; }
+    }
+    .de-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+    }
+    .de-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .de-field input,
+    .de-field select {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--ink);
+      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    .de-field textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--ink);
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .de-field input:focus,
+    .de-field select:focus,
+    .de-field textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .de-hint {
+      font-size: 10px;
+      color: var(--faint);
+    }
+    .de-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .de-actions .add-btn {
+      flex: 1;
+    }
+    .de-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .de-check input {
+      width: auto;
+      height: auto;
+    }
+    .de-textarea {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    /* 猪选择器 */
+    .de-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .de-picker .search {
+      margin: 0;
+      width: 100%;
+    }
+    .de-pig-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 480px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .de-pig-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--card);
+      color: var(--ink);
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+    }
+    .de-pig-item:hover {
+      border-color: var(--border-strong);
+      background: var(--accent-soft);
+    }
+    .de-pig-no {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-size: 12px;
+    }
+    .de-pig-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .de-pig-rare {
+      flex: 0 0 auto;
+      color: var(--star);
+      font-size: 11px;
+      letter-spacing: 1px;
+    }

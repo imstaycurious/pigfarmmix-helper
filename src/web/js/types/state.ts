@@ -51,7 +51,7 @@ export interface EventFilter {
 }
 
 /** 我的 tab 子视图 */
-export type MineView = "menu" | "add" | "about" | "progress";
+export type MineView = "menu" | "add" | "about" | "progress" | "data";
 
 /** 全局状态 */
 export interface AppState {

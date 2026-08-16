@@ -161,12 +161,22 @@
         <span class="mine-menu-title">导入/导出</span>
         <span class="mine-menu-sub">三元组 / 按名字 / 批量 / 备份恢复</span>
       </button>
+      <button type="button" class="mine-menu-card" data-mine-view="data">
+        <span class="mine-menu-ico">✏️</span>
+        <span class="mine-menu-title">数据管理</span>
+        <span class="mine-menu-sub">编辑猪 / 新增猪 / 新增配种</span>
+      </button>
       <button type="button" class="mine-menu-card" data-mine-view="about">
         <span class="mine-menu-ico">i️</span>
         <span class="mine-menu-title">关于项目</span>
         <span class="mine-menu-sub">感谢社区玩家的贡献</span>
       </button>
       </div>
+    </div>
+
+    <!-- 子视图: 数据管理 -->
+    <div class="mine-data-view" id="mineDataView" style="display:none">
+      <div id="mineDataBody"></div>
     </div>
 
     <!-- 子视图: 进度总览 (由 JS 渲染, 默认全部展开) -->

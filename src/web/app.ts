@@ -28,6 +28,7 @@ import { setupAuction, renderAuctionTabEntry, auctionActiveValues, applyAuctionF
 import { initRaisingPush } from "./js/raising-push.js";
 import { addRaisingPig, startRaisingTicker, saveRaisingState } from "./js/raising-logic.js";
 import { setupImportExport } from "./render/import-export.js";
+import { renderDataView } from "./render/data-editor.js";
 import { setupFilters, atlasActiveValues, eventsActiveValues } from "./render/filters-wiring.js";
 import { setupFilterDrawer, refreshFilterBadges, setAuctionActiveCountFn } from "./render/filter-drawer.js";
 import { setupTheme, setupPwa, onServiceWorkerMessage } from "./js/pwa.js";
@@ -48,6 +49,7 @@ const MINE_VIEW_TITLES: Record<string, string> = {
   progress: "📊 进度总览",
   add: "➕ 导入/导出",
   about: "i️ 关于项目",
+  data: "✏️ 数据管理",
 };
 
 function setMineView(view: string): void {
@@ -56,15 +58,18 @@ function setMineView(view: string): void {
   const addView = $("#mineAddView");
   const aboutView = $("#mineAboutView");
   const progressView = $("#mineProgressView");
+  const dataView = $("#mineDataView");
   const subhead = $("#mineSubHead");
   const subheadTitle = $("#mineSubHeadTitle");
   if (menu) menu.style.display = view === "menu" ? "" : "none";
   if (addView) addView.style.display = view === "add" ? "" : "none";
   if (aboutView) aboutView.style.display = view === "about" ? "" : "none";
   if (progressView) progressView.style.display = view === "progress" ? "" : "none";
+  if (dataView) dataView.style.display = view === "data" ? "" : "none";
   if (subhead) subhead.style.display = view === "menu" ? "none" : "";
   if (subheadTitle) subheadTitle.textContent = MINE_VIEW_TITLES[view] || "";
 
+  if (view === "data") renderDataView();
   render();
 }
 
