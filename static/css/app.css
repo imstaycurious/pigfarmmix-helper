@@ -3472,17 +3472,30 @@
     }
     .de-section-sub {
       font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      margin-top: 4px;
+      font-weight: 700;
+      color: var(--accent-muted);
+      margin: 10px 0 2px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      letter-spacing: 0.02em;
+    }
+    .de-section-sub:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
     }
     .de-grid2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
+    .de-grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
     @media (max-width: 480px) {
-      .de-grid2 { grid-template-columns: 1fr; }
+      .de-grid2, .de-grid3 { grid-template-columns: 1fr; }
     }
     .de-field {
       display: flex;
@@ -3608,4 +3621,37 @@
       color: var(--star);
       font-size: 11px;
       letter-spacing: 1px;
+    }
+
+    /* 数据编辑: 高级 JSON 折叠 */
+    .de-advanced {
+      margin-top: 4px;
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-md);
+      background: color-mix(in srgb, var(--chip-bg) 40%, transparent);
+    }
+    .de-advanced > summary {
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    .de-advanced > summary::-webkit-details-marker {
+      display: none;
+    }
+    .de-advanced > summary::after {
+      content: " ▾";
+      color: var(--faint);
+    }
+    .de-advanced[open] > summary::after {
+      content: " ▴";
+    }
+    .de-advanced-body {
+      padding: 4px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
