@@ -3655,3 +3655,67 @@
       flex-direction: column;
       gap: 10px;
     }
+
+    /* 配种产出动态行 */
+    .de-outcome-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .de-outcome-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .de-outcome-row select {
+      flex: 1;
+      min-width: 0;
+      height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .de-outcome-row input {
+      width: 90px;
+      flex-shrink: 0;
+      height: 38px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .de-outcome-row select:focus,
+    .de-outcome-row input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .de-outcome-del {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border: 1px solid transparent;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--danger);
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+    }
+    .de-outcome-del:hover {
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
+      border-color: var(--danger);
+    }
+    .de-add-row {
+      width: 100%;
+      height: 34px;
+      font-size: 12px;
+    }

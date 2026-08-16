@@ -194,21 +194,39 @@ function pigFormHTML(p: Pig | null): string {
 // ---------- 配种表单 ----------
 
 function breedingFormHTML(): string {
+  const options = pigOptionsHTML();
   return `
   <div class="de-form">
     <div class="de-section-title">新增配种</div>
     <div class="de-grid2">
       <div class="de-field">
-        <label for="dbParent1">父/母 1 (pNo) *</label>
-        <input type="number" id="dbParent1" placeholder="如 12" min="1">
+        <label for="dbParent1">父/母 1 *</label>
+        <select id="dbParent1">
+          <option value="">请选择...</option>
+          ${options}
+        </select>
       </div>
       <div class="de-field">
-        <label for="dbParent2">父/母 2 (pNo)</label>
-        <input type="text" id="dbParent2" placeholder="如 34, 或 * (任意)">
+        <label for="dbParent2">父/母 2</label>
+        <select id="dbParent2">
+          <option value="">请选择...</option>
+          <option value="*">* 任意</option>
+          ${options}
+        </select>
       </div>
     </div>
-    <div class="de-section-sub">产出 (每行: 猪pNo 概率%)</div>
-    <textarea id="dbOutcomes" class="de-textarea" rows="4" placeholder="每行一个产出, 格式: pNo 概率&#10;例如:&#10;55 30&#10;56 20"></textarea>
+    <div class="de-section-sub">产出 (选择猪 + 概率)</div>
+    <div class="de-outcome-rows" id="dbOutcomeRows">
+      <div class="de-outcome-row">
+        <select class="de-outcome-pig">
+          <option value="">请选择产出猪...</option>
+          ${options}
+        </select>
+        <input type="number" class="de-outcome-prob" placeholder="概率 %" min="0" step="any">
+        <button type="button" class="de-outcome-del" title="删除此行">✕</button>
+      </div>
+    </div>
+    <button type="button" class="add-btn secondary de-add-row" id="dbAddRowBtn">＋ 添加产出</button>
     <div class="de-field">
       <label class="de-check">
         <input type="checkbox" id="dbVisible" checked> 公开可见
@@ -361,33 +379,30 @@ async function savePigFromForm(isNew: boolean): Promise<void> {
 }
 
 async function saveBreedingFromForm(): Promise<void> {
-  const p1 = Number(($("#dbParent1") as HTMLInputElement | null)?.value || 0);
-  const p2raw = ($("#dbParent2") as HTMLInputElement | null)?.value.trim() || "";
+  const p1 = Number(($("#dbParent1") as HTMLSelectElement)?.value || 0);
+  const p2raw = ($("#dbParent2") as HTMLSelectElement)?.value || "";
   const p2 = p2raw === "*" ? "*" : Number(p2raw);
-  const outcomesText = ($("#dbOutcomes") as HTMLTextAreaElement | null)?.value || "";
-  const visible = ($("#dbVisible") as HTMLInputElement | null)?.checked ?? true;
 
   if (!p1 || p1 <= 0 || (!p2raw || (!(p2 === "*") && (!p2 || p2 <= 0)))) {
-    const m = $("#dbMsg"); if (m) { m.textContent = "请填写有效的父母 pNo"; m.className = "account-form-hint error"; }
+    const m = $("#dbMsg"); if (m) { m.textContent = "请选择有效的父母"; m.className = "account-form-hint error"; }
     return;
   }
 
-  const outcomes = outcomesText.split("\n")
-    .map(l => l.trim())
-    .filter(Boolean)
-    .map(l => {
-      const parts = l.split(/[\s,,]+/);
-      const pNo = Number(parts[0]);
-      const prob = parts.length > 1 ? Number(parts[1]) : 0;
-      if (!pNo || pNo <= 0) return null;
-      return { pNo, prob: Number.isFinite(prob) ? prob : 0 };
-    })
-    .filter((x): x is { pNo: number; prob: number } => x !== null);
+  // 收集产出行
+  const outcomes: { pNo: number; prob: number }[] = [];
+  document.querySelectorAll<HTMLElement>("#dbOutcomeRows .de-outcome-row").forEach(row => {
+    const pNo = Number((row.querySelector(".de-outcome-pig") as HTMLSelectElement | null)?.value || 0);
+    const probText = (row.querySelector(".de-outcome-prob") as HTMLInputElement | null)?.value || "";
+    const prob = Number(probText);
+    if (pNo > 0) outcomes.push({ pNo, prob: Number.isFinite(prob) ? prob : 0 });
+  });
 
   if (outcomes.length === 0) {
-    const m = $("#dbMsg"); if (m) { m.textContent = "请至少填写一个产出"; m.className = "account-form-hint error"; }
+    const m = $("#dbMsg"); if (m) { m.textContent = "请至少添加一个产出"; m.className = "account-form-hint error"; }
     return;
   }
+
+  const visible = ($("#dbVisible") as HTMLInputElement | null)?.checked ?? true;
 
   const result = await apiSave({ breeding: { parent1: p1, parent2: p2, outcomes, visible } });
   const m = $("#dbMsg");
@@ -526,4 +541,43 @@ function wireBreedingForm(): void {
     body.innerHTML = breedingFormHTML();
     wireBreedingForm();
   });
+
+  // 添加产出行
+  const addBtn = $("#dbAddRowBtn");
+  const rows = $("#dbOutcomeRows");
+  if (addBtn && rows) {
+    addBtn.addEventListener("click", () => {
+      const row = document.createElement("div");
+      row.className = "de-outcome-row";
+      row.innerHTML = `
+        <select class="de-outcome-pig">
+          <option value="">请选择产出猪...</option>
+          ${pigOptionsHTML()}
+        </select>
+        <input type="number" class="de-outcome-prob" placeholder="概率 %" min="0" step="any">
+        <button type="button" class="de-outcome-del" title="删除此行">✕</button>
+      `;
+      rows.appendChild(row);
+      wireOutcomeRow(row);
+    });
+  }
+
+  // 已存在的行绑定删除
+  rows?.querySelectorAll<HTMLElement>(".de-outcome-row").forEach(row => wireOutcomeRow(row));
+}
+
+function wireOutcomeRow(row: HTMLElement): void {
+  const del = row.querySelector<HTMLElement>(".de-outcome-del");
+  if (!del) return;
+  del.addEventListener("click", () => {
+    row.remove();
+  });
+}
+
+function pigOptionsHTML(): string {
+  const pigs = [...state.pigsById.values(), ...state.eventPigsById.values()]
+    .sort((a, b) => a.pNo - b.pNo);
+  return pigs.map(p =>
+    `<option value="${p.pNo}">#${p.pNo} ${esc(p.name)}</option>`
+  ).join("");
 }
