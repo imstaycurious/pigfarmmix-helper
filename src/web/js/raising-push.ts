@@ -8,9 +8,10 @@
 import { state } from "./state.js";
 import { toast } from "./utils.js";
 import { RAISING_FLOORS, VAPID_PUBLIC_KEY } from "./constants.js";
-import { loadPushEnabled, savePushEnabled, loadDeviceId } from "./storage.js";
+import { loadPushEnabled, savePushEnabled } from "./storage.js";
 import { on } from "./events.js";
 import { getPigByPNo, getRaisingDueMs } from "./raising-logic.js";
+import { getCurrentUser } from "./auth.js";
 
 // ---------- 变量 ----------
 
@@ -21,8 +22,13 @@ let raisingPushSyncPending = false;
 let serviceWorkerReadyPromise: Promise<ServiceWorkerRegistration> | null = null;
 let vapidPublicKeyPromise: Promise<string> | null = null;
 
+/**
+ * 推送标识 = 登录用户的 id (账号体系)。
+ * 未登录返回空串, 调用方应跳过同步/订阅。
+ */
 function deviceId(): string {
-  return loadDeviceId();
+  const user = getCurrentUser();
+  return user ? user.id : "";
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -95,6 +101,9 @@ function buildRaisingCloudRecords(): RaisingCloudRecord[] {
 
 async function syncRaisingRecordsToCloud({ silent = true }: { silent?: boolean } = {}): Promise<void> {
   if (!raisingPushEnabled || !state.dataLoaded) return;
+  const did = deviceId();
+  // 未登录: 不同步 (养成记录绑定账号)
+  if (!did) return;
   if (raisingPushSyncInFlight) {
     raisingPushSyncPending = true;
     return raisingPushSyncInFlight;
@@ -102,7 +111,7 @@ async function syncRaisingRecordsToCloud({ silent = true }: { silent?: boolean }
 
   raisingPushSyncPending = false;
   const payload = {
-    deviceId: deviceId(),
+    deviceId: did,
     floor: RAISING_FLOORS[state.raisingFloor] ? state.raisingFloor : "normal",
     records: buildRaisingCloudRecords(),
   };
@@ -172,6 +181,11 @@ async function subscribeRaisingPush(): Promise<PushSubscription> {
   if (!webPushSupported()) {
     throw new Error("当前浏览器不支持后台推送");
   }
+  const did = deviceId();
+  // 未登录: 推送绑定账号, 必须先登录
+  if (!did) {
+    throw new Error("请先登录后再开启后台提醒");
+  }
   const publicKey = await getVapidPublicKey();
   if (!publicKey) {
     throw new Error("还没有配置 VAPID_PUBLIC_KEY");
@@ -200,7 +214,7 @@ async function subscribeRaisingPush(): Promise<PushSubscription> {
     throw wrapped;
   }
   await apiJson("/api/push-subscribe", {
-    deviceId: deviceId(),
+    deviceId: did,
     subscription: subscription.toJSON(),
   });
   raisingPushEnabled = true;
