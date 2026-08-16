@@ -1182,7 +1182,7 @@
       .mine-menu, #mineMenuItems { grid-template-columns: repeat(4, 1fr); }
     }
     .mine-menu-card,
-    .mine-account-section {
+    .account-card {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -1203,7 +1203,7 @@
       min-height: 96px;
       position: relative;
     }
-    .mine-account-section {
+    .account-card {
       cursor: default;
     }
     .mine-menu-card::after {
