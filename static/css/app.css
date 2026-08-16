@@ -1167,7 +1167,8 @@
     }
 
     /* 我的 tab — 一级菜单 */
-    .mine-menu {
+    .mine-menu,
+    #mineMenuItems {
       display: grid;
       grid-template-columns: 1fr;
       gap: 12px;
@@ -1175,12 +1176,13 @@
       align-items: start;
     }
     @media (min-width: 600px) {
-      .mine-menu { grid-template-columns: repeat(2, 1fr); }
+      .mine-menu, #mineMenuItems { grid-template-columns: repeat(2, 1fr); }
     }
     @media (min-width: 900px) {
-      .mine-menu { grid-template-columns: repeat(4, 1fr); }
+      .mine-menu, #mineMenuItems { grid-template-columns: repeat(4, 1fr); }
     }
-    .mine-menu-card {
+    .mine-menu-card,
+    .mine-account-section {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -1200,6 +1202,9 @@
         border-color var(--dur) var(--ease);
       min-height: 96px;
       position: relative;
+    }
+    .mine-account-section {
+      cursor: default;
     }
     .mine-menu-card::after {
       content: "›";
