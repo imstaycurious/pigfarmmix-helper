@@ -43,8 +43,6 @@ function main() {
   lines.push("-- 生成时间: " + new Date().toISOString());
   lines.push("-- ============================================================");
   lines.push("");
-  lines.push("BEGIN;");
-  lines.push("");
 
   // ---------- pigs 表 ----------
   lines.push("DELETE FROM pigs;");
@@ -122,8 +120,6 @@ function main() {
     lines.push("");
   }
 
-  lines.push("COMMIT;");
-  lines.push("");
 
   writeFileSync(OUTPUT, lines.join("\n"), "utf8");
   console.log(`✅ 已生成 ${OUTPUT}`);
