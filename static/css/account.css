@@ -390,6 +390,8 @@
   display: flex;
   justify-content: center;
   padding: 40px 20px 60px;
+  /* 在 mine-menu 的 grid 中跨满整行, 避免被塞进第一格 (PC 端左上角) */
+  grid-column: 1 / -1;
 }
 
 .login-card {
