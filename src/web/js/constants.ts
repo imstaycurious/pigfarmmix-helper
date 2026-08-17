@@ -72,7 +72,7 @@ export const HUNT_SITES: Record<number, string> = {
   91: "特别活动狩猎 十一月",
   92: "特别活动狩猎 十二月",
   98: "特别活动狩猎",
-  99: "特别活动狩猎",
+  99: "传说的特别活动狩猎",
 };
 
 export const HUNT_REGION_CODES: Record<string, number[]> = {

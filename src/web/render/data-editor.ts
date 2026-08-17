@@ -3,6 +3,7 @@
  *
  * 数据写入 D1 (POST /api/atlas/update), 保存成功后重新拉取图鉴数据。
  * 表单字段友好化: JSON 字段翻译成具体字段, 高级 JSON 折叠保留。
+ * 多选下拉框支持搜索, 活动猪/普通猪区分显示, 养成指南重命名。
  */
 
 import type { Pig, PigAcquisition, PigFeeding, BreedingGuide } from "../js/types/index.js";
@@ -12,7 +13,7 @@ import { getCurrentUser } from "../js/auth.js";
 import { toast } from "../js/utils.js";
 import { loadData } from "../js/data.js";
 import { emit } from "../js/events.js";
-import { COLOR_TEXT } from "../js/constants.js";
+import { COLOR_TEXT, HUNT_SITES, FEED_LABELS } from "../js/constants.js";
 
 // ---------- 小工具 ----------
 
@@ -38,12 +39,109 @@ function textareaHTML(id: string, label: string, value: string, opts: { rows?: n
   </div>`;
 }
 
-function numListToStr(arr: number[] | undefined): string {
-  return (arr || []).join(", ");
+// ---------- 多选下拉框组件 (搜索 + 勾选) ----------
+
+function multiSelectHTML(containerId: string, label: string, options: { value: number; text: string }[], selected: number[], placeholder: string): string {
+  const optionsHTML = options.map(o => {
+    const checked = selected.includes(o.value) ? "checked" : "";
+    return `<label class="de-multi-option">
+      <input type="checkbox" value="${o.value}" ${checked}>
+      <span>${esc(o.text)}</span>
+    </label>`;
+  }).join("");
+  return `<div class="de-field">
+    <label>${label}</label>
+    <div class="de-multi-select" data-multi-id="${containerId}">
+      <input type="search" class="de-multi-search" placeholder="${esc(placeholder)}">
+      <div class="de-multi-options" id="${containerId}">${optionsHTML}</div>
+      <span class="de-multi-count">已选: ${selected.length}</span>
+    </div>
+  </div>`;
 }
 
-function strToNumList(s: string): number[] {
-  return s.split(/[,，、\s]+/).map(x => Number(x)).filter(n => Number.isFinite(n) && n > 0);
+function wireMultiSelect(container: HTMLElement): void {
+  const search = container.querySelector<HTMLInputElement>(".de-multi-search");
+  const options = container.querySelectorAll<HTMLElement>(".de-multi-option");
+  const countEl = container.querySelector<HTMLElement>(".de-multi-count");
+  if (!search || !countEl) return;
+
+  const updateCount = () => {
+    const checked = container.querySelectorAll<HTMLInputElement>('.de-multi-option input[type="checkbox"]:checked');
+    countEl.textContent = `已选: ${checked.length}`;
+  };
+
+  search.addEventListener("input", () => {
+    const q = search.value.trim().toLowerCase();
+    options.forEach(opt => {
+      const text = opt.textContent?.toLowerCase() || "";
+      opt.style.display = (!q || text.includes(q)) ? "" : "none";
+    });
+  });
+
+  container.querySelectorAll<HTMLInputElement>('.de-multi-option input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener("change", updateCount);
+  });
+
+  updateCount();
+}
+
+function getMultiSelectValues(containerId: string): number[] {
+  const container = document.getElementById(containerId);
+  if (!container) return [];
+  const values: number[] = [];
+  container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked').forEach(cb => {
+    values.push(Number(cb.value));
+  });
+  return values;
+}
+
+// ---------- 选项数据源 ----------
+
+/** 普通狩猎站点 0-16 (0/1/2 为数据中使用的旧站点编号) */
+function getHuntSiteOptions(maxSite: number): { value: number; text: string }[] {
+  const opts: { value: number; text: string }[] = [];
+  for (let i = 0; i <= maxSite; i++) {
+    if (i === 0) {
+      opts.push({ value: 0, text: "站点 0 (通用狩猎)" });
+    } else if (HUNT_SITES[i]) {
+      opts.push({ value: i, text: HUNT_SITES[i] });
+    } else {
+      opts.push({ value: i, text: `站点 ${i}` });
+    }
+  }
+  return opts;
+}
+
+/** 活动狩猎站点 81-99 */
+function getEventHuntSiteOptions(): { value: number; text: string }[] {
+  const opts: { value: number; text: string }[] = [];
+  for (let i = 81; i <= 99; i++) {
+    if (HUNT_SITES[i]) {
+      opts.push({ value: i, text: HUNT_SITES[i] });
+    } else {
+      opts.push({ value: i, text: `活动站点 ${i}` });
+    }
+  }
+  return opts;
+}
+
+/** 全部狩猎站点 (编辑模式用: 普通 0-16 + 活动 81-99) */
+function getAllHuntSiteOptions(): { value: number; text: string }[] {
+  return [...getHuntSiteOptions(16), ...getEventHuntSiteOptions()];
+}
+
+/** 食材选项 (FEED_LABELS 过滤掉 key=0) */
+function getFeedOptions(): { value: number; text: string }[] {
+  return Object.entries(FEED_LABELS)
+    .filter(([k]) => Number(k) > 0)
+    .map(([k, v]) => ({ value: Number(k), text: v }));
+}
+
+/** 所有猪 (用于养成失败来源) */
+function getPigOptions(): { value: number; text: string }[] {
+  const pigs = [...state.pigsById.values(), ...state.eventPigsById.values()]
+    .sort((a, b) => a.pNo - b.pNo);
+  return pigs.map(p => ({ value: p.pNo, text: `#${p.pNo} ${p.name}` }));
 }
 
 // ---------- JSON 字段 → 表单字段的取值 ----------
@@ -52,14 +150,6 @@ function acqShopValue(a: PigAcquisition | undefined, idx: 0 | 1 | 2): string {
   const shop = a?.shop || [0, 0, 0];
   const v = shop[idx];
   return v != null && v > 0 ? String(Math.round(v * 10000) / 100) : ""; // 转百分比
-}
-
-function acqHuntSitesValue(a: PigAcquisition | undefined): string {
-  return numListToStr(a?.hunt?.sites?.filter(s => s <= 16));
-}
-
-function acqFailValue(a: PigAcquisition | undefined): string {
-  return numListToStr(a?.fail);
 }
 
 // ---------- 猪编辑表单 ----------
@@ -79,6 +169,14 @@ function pigFormHTML(p: Pig | null): string {
   const feed = p?.feeding;
   const guide = p?.breedingGuide;
   const hints = p?.hints || [];
+
+  // 多选初始值
+  const huntSites = isNew
+    ? (acq?.hunt?.sites?.filter(s => s >= 81 && s <= 99) || [])
+    : (acq?.hunt?.sites || []);
+  const failFrom = acq?.fail || [];
+  const pickyFoods = feed?.picky || [];
+
   return `
   <div class="de-form">
     <div class="de-section-title">${isNew ? "新增猪" : `编辑猪 #${p!.pNo} ${esc(p!.name)}`}</div>
@@ -90,7 +188,7 @@ function pigFormHTML(p: Pig | null): string {
       <div class="de-field">
         <label for="deRare">星级</label>
         <select id="deRare">
-          ${[1, 2, 3, 4, 5, 6].map(n => `<option value="${n}" ${p && p.rare === n ? "selected" : ""}>${"★".repeat(n)}</option>`).join("")}
+          ${(isNew ? [3, 4, 5, 6] : [1, 2, 3, 4, 5, 6]).map(n => `<option value="${n}" ${p && p.rare === n ? "selected" : ""}>${"★".repeat(n)}</option>`).join("")}
         </select>
       </div>
     </div>
@@ -110,11 +208,15 @@ function pigFormHTML(p: Pig | null): string {
     </div>
     ${textareaHTML("deDesc", "描述", isNew ? "" : v("description"), { rows: 2, placeholder: "猪的描述" })}
 
-    <div class="de-section-sub">图鉴位置</div>
-    <div class="de-grid2">
-      ${fieldHTML("deAtlasType", "图鉴号", isNew ? "" : p?.atlas?.type ? String(p.atlas.type) : "", { type: "number", hint: "1-6 主图鉴, 7 = Events" })}
-      ${fieldHTML("deAtlasIndex", "页内序号", isNew ? "" : p?.atlas?.index ? String(p.atlas.index) : "", { type: "number", hint: "1-based, 每页 6 格" })}
+    ${isNew ? `
+    <input type="hidden" id="deAtlasType" value="7">
+    ` : `
+    <div class="de-section-sub" id="deAtlasSection" ${p!.special === true ? 'style="display:none"' : ""}>图鉴位置</div>
+    <div class="de-grid2" id="deAtlasFields" ${p!.special === true ? 'style="display:none"' : ""}>
+      ${fieldHTML("deAtlasType", "图鉴号", p?.atlas?.type ? String(p.atlas.type) : "", { type: "number", hint: "1-6 主图鉴, 7 = Events" })}
+      ${fieldHTML("deAtlasIndex", "页内序号", p?.atlas?.index ? String(p.atlas.index) : "", { type: "number", hint: "1-based, 每页 6 格" })}
     </div>
+    `}
 
     <div class="de-section-sub">成长与价格</div>
     <div class="de-grid2">
@@ -135,24 +237,31 @@ function pigFormHTML(p: Pig | null): string {
         </select>
       </div>
     </div>
+
+    ${isNew ? "" : `
     <div class="de-grid2">
       <div class="de-field">
-        <label for="deSpecial">特殊猪</label>
+        <label for="deSpecial">活动猪</label>
         <select id="deSpecial">
           <option value="0" ${p && !p.special ? "selected" : ""}>否</option>
           <option value="1" ${p && p.special ? "selected" : ""}>是</option>
         </select>
       </div>
     </div>
+    `}
 
     <div class="de-section-sub">获取途径</div>
+    ${isNew ? `
+    ${multiSelectHTML("deHuntSites", "狩猎站点", getEventHuntSiteOptions(), huntSites, "搜索站点...")}
+    ` : `
     <div class="de-grid3">
       ${fieldHTML("deShopA", "商店 A 级概率 (%)", acqShopValue(acq, 0), { type: "number", placeholder: "如 10" })}
       ${fieldHTML("deShopB", "商店 B 级概率 (%)", acqShopValue(acq, 1), { type: "number", placeholder: "如 5" })}
       ${fieldHTML("deShopC", "商店 C 级概率 (%)", acqShopValue(acq, 2), { type: "number", placeholder: "如 3" })}
     </div>
-    ${fieldHTML("deHuntSites", "狩猎站点 (逗号分隔)", acqHuntSitesValue(acq), { placeholder: "如 1, 4, 11" })}
-    ${fieldHTML("deFailFrom", "养成失败来源 (pNo, 逗号分隔)", acqFailValue(acq), { placeholder: "如 609, 543" })}
+    ${multiSelectHTML("deHuntSites", "狩猎站点", getAllHuntSiteOptions(), huntSites, "搜索站点...")}
+    ${multiSelectHTML("deFailFrom", "养成失败来源", getPigOptions(), failFrom, "搜索猪编号 / 名称...")}
+    `}
     <div class="de-field">
       <label class="de-check">
         <input type="checkbox" id="deSpecialFeeding" ${acq?.specialFeeding ? "checked" : ""}> 有超分歧 / 超出世系条件
@@ -163,10 +272,10 @@ function pigFormHTML(p: Pig | null): string {
     <div class="de-grid3">
       ${fieldHTML("deFeedInterval", "喂食间隔 (小时)", feed?.interval != null ? String(feed.interval) : "", { type: "number", placeholder: "如 8" })}
       ${fieldHTML("deFeedTimes", "最少喂食次数", feed?.times != null ? String(feed.times) : "", { type: "number", placeholder: "如 3" })}
-      ${fieldHTML("deFeedPicky", "挑食食材 (逗号分隔)", numListToStr(feed?.picky), { placeholder: "如 4, 6" })}
     </div>
+    ${multiSelectHTML("deFeedPicky", "挑食食材", getFeedOptions(), pickyFoods, "搜索食材...")}
 
-    <div class="de-section-sub">配种指南</div>
+    <div class="de-section-sub">养成指南</div>
     ${textareaHTML("deGuideReq", "要求", guide?.requirements || "", { rows: 2, placeholder: "如: 成猪前体重限制 ≥128.0 kg" })}
     ${textareaHTML("deGuideTips", "提示", guide?.tips || "", { rows: 2, placeholder: "如: 每种食物最少吃一次" })}
 
@@ -178,7 +287,7 @@ function pigFormHTML(p: Pig | null): string {
       <div class="de-advanced-body">
         ${fieldHTML("deAcquisitionJSON", "获取途径 JSON", isNew ? "" : p?.acquisition ? JSON.stringify(p.acquisition) : "", { placeholder: '{"shop": [0.1, 0, 0]}' })}
         ${fieldHTML("deFeedingJSON", "喂食 JSON", isNew ? "" : p?.feeding ? JSON.stringify(p.feeding) : "", { placeholder: '{"interval": 8, "times": 3, "picky": []}' })}
-        ${fieldHTML("deBreedingGuideJSON", "配种指南 JSON", isNew ? "" : p?.breedingGuide ? JSON.stringify(p.breedingGuide) : "", { placeholder: '{"requirements": "...", "tips": "..."}' })}
+        ${fieldHTML("deBreedingGuideJSON", "养成指南 JSON", isNew ? "" : p?.breedingGuide ? JSON.stringify(p.breedingGuide) : "", { placeholder: '{"requirements": "...", "tips": "..."}' })}
         ${fieldHTML("deHintsJSON", "提示 JSON", isNew ? "" : p?.hints ? JSON.stringify(p.hints) : "", { placeholder: '["提示1", "提示2"]' })}
       </div>
     </details>
@@ -226,12 +335,7 @@ function breedingFormHTML(): string {
         <button type="button" class="de-outcome-del" title="删除此行">✕</button>
       </div>
     </div>
-    <button type="button" class="add-btn secondary de-add-row" id="dbAddRowBtn">＋ 添加产出</button>
-    <div class="de-field">
-      <label class="de-check">
-        <input type="checkbox" id="dbVisible" checked> 公开可见
-      </label>
-    </div>
+    <button type="button" class="add-btn secondary de-add-row" id="dbAddRowBtn">+ 添加产出</button>
     <div class="de-actions">
       <button type="button" class="add-btn" id="dbSaveBtn">保存配种</button>
       <button type="button" class="add-btn secondary" id="dbCancelBtn">取消</button>
@@ -279,20 +383,32 @@ function parseJsonField(sel: string): unknown {
 }
 
 /** 从友好字段构建 acquisition 对象 */
-function buildAcquisition(): PigAcquisition {
+function buildAcquisition(isNew: boolean): PigAcquisition {
   const a: PigAcquisition = {};
-  const shopA = numOrNull(val("#deShopA"));
-  const shopB = numOrNull(val("#deShopB"));
-  const shopC = numOrNull(val("#deShopC"));
-  if (shopA != null || shopB != null || shopC != null) {
-    a.shop = [shopA != null ? shopA / 100 : 0, shopB != null ? shopB / 100 : 0, shopC != null ? shopC / 100 : 0];
+
+  // 商店 — 仅编辑模式显示
+  if (!isNew) {
+    const shopA = numOrNull(val("#deShopA"));
+    const shopB = numOrNull(val("#deShopB"));
+    const shopC = numOrNull(val("#deShopC"));
+    if (shopA != null || shopB != null || shopC != null) {
+      a.shop = [shopA != null ? shopA / 100 : 0, shopB != null ? shopB / 100 : 0, shopC != null ? shopC / 100 : 0];
+    }
   }
-  const sites = strToNumList(val("#deHuntSites"));
-  const fail = strToNumList(val("#deFailFrom"));
-  const specialFeeding = ($("#deSpecialFeeding") as HTMLInputElement | null)?.checked ?? false;
+
+  // 狩猎站点 (多选)
+  const sites = getMultiSelectValues("deHuntSites");
   if (sites.length) a.hunt = { ...(a.hunt || {}), sites };
-  if (fail.length) a.fail = fail;
+
+  // 养成失败来源 — 仅编辑模式
+  if (!isNew) {
+    const fail = getMultiSelectValues("deFailFrom");
+    if (fail.length) a.fail = fail;
+  }
+
+  const specialFeeding = ($("#deSpecialFeeding") as HTMLInputElement | null)?.checked ?? false;
   if (specialFeeding) a.specialFeeding = true;
+
   return a;
 }
 
@@ -301,7 +417,7 @@ function buildFeeding(): PigFeeding {
   const f: PigFeeding = {};
   const interval = numOrNull(val("#deFeedInterval"));
   const times = numOrNull(val("#deFeedTimes"));
-  const picky = strToNumList(val("#deFeedPicky"));
+  const picky = getMultiSelectValues("deFeedPicky");
   if (interval != null) f.interval = interval;
   if (times != null) f.times = times;
   if (picky.length) f.picky = picky;
@@ -324,13 +440,19 @@ async function savePigFromForm(isNew: boolean): Promise<void> {
     const m = $("#deMsg"); if (m) { m.textContent = "请填写名称"; m.className = "account-form-hint error"; }
     return;
   }
+
+  const rareEl = $("#deRare") as HTMLSelectElement | null;
+  const specialEl = $("#deSpecial") as HTMLSelectElement | null;
+  const isSpecial = isNew ? true : (specialEl?.value === "1");
+
   const pig: Record<string, unknown> = {
     name,
-    rare: Number(($("#deRare") as HTMLSelectElement)?.value || 1),
+    rare: Number(rareEl?.value || (isNew ? 3 : 1)),
     color: Number(($("#deColor") as HTMLSelectElement)?.value || 0),
     status: ($("#deStatus") as HTMLSelectElement)?.value || "normal",
     description: val("#deDesc") || undefined,
-    atlasType: numOrNull(val("#deAtlasType")) || undefined,
+    // 活动猪图鉴号固定为 7; 普通猪从表单读取
+    atlasType: isSpecial ? 7 : (numOrNull(val("#deAtlasType")) || undefined),
     atlasIndex: numOrNull(val("#deAtlasIndex")) || undefined,
     weightSmall: numOrNull(val("#deWeightSmall")),
     weightBig: numOrNull(val("#deWeightBig")),
@@ -338,7 +460,7 @@ async function savePigFromForm(isNew: boolean): Promise<void> {
     price: numOrNull(val("#dePrice")),
     lifespan: numOrNull(val("#deLifespan")),
     graze: ($("#deGraze") as HTMLSelectElement)?.value === "1",
-    special: ($("#deSpecial") as HTMLSelectElement)?.value === "1",
+    special: isSpecial,
   };
   if (!isNew) {
     pig.pNo = Number(($("#dePNo") as HTMLInputElement | null)?.value || 0);
@@ -350,7 +472,7 @@ async function savePigFromForm(isNew: boolean): Promise<void> {
   const guideJSON = parseJsonField("#deBreedingGuideJSON");
   const hintsJSON = parseJsonField("#deHintsJSON");
 
-  const acq = buildAcquisition();
+  const acq = buildAcquisition(isNew);
   if (Object.keys(acq).length > 0 || acqJSON === undefined) pig.acquisition = acqJSON !== undefined ? acqJSON : (Object.keys(acq).length ? acq : undefined);
   const feed = buildFeeding();
   if (Object.keys(feed).length > 0 || feedJSON === undefined) pig.feeding = feedJSON !== undefined ? feedJSON : (Object.keys(feed).length ? feed : undefined);
@@ -402,9 +524,8 @@ async function saveBreedingFromForm(): Promise<void> {
     return;
   }
 
-  const visible = ($("#dbVisible") as HTMLInputElement | null)?.checked ?? true;
-
-  const result = await apiSave({ breeding: { parent1: p1, parent2: p2, outcomes, visible } });
+  // 新增配种默认公开可见, 无勾选框
+  const result = await apiSave({ breeding: { parent1: p1, parent2: p2, outcomes, visible: true } });
   const m = $("#dbMsg");
   if (!m) return;
   if (result.ok) {
@@ -524,6 +645,24 @@ function wirePigPicker(): void {
 }
 
 function wirePigForm(isNew: boolean): void {
+  // 绑定多选组件
+  document.querySelectorAll<HTMLElement>(".de-multi-select").forEach(el => wireMultiSelect(el));
+
+  // 编辑模式: 活动猪切换时显示/隐藏图鉴位置
+  if (!isNew) {
+    const specialSel = $("#deSpecial") as HTMLSelectElement | null;
+    const atlasSection = $("#deAtlasSection") as HTMLElement | null;
+    const atlasFields = $("#deAtlasFields") as HTMLElement | null;
+    if (specialSel && atlasSection && atlasFields) {
+      const sync = () => {
+        const isEvent = specialSel.value === "1";
+        atlasSection.style.display = isEvent ? "none" : "";
+        atlasFields.style.display = isEvent ? "none" : "";
+      };
+      specialSel.addEventListener("change", sync);
+    }
+  }
+
   $("#deSaveBtn")?.addEventListener("click", () => savePigFromForm(isNew));
   $("#deCancelBtn")?.addEventListener("click", () => {
     const body = $("#deBody");

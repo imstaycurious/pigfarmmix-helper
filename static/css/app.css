@@ -3719,3 +3719,60 @@
       height: 34px;
       font-size: 12px;
     }
+
+    /* 多选下拉框 (搜索 + 勾选) */
+    .de-multi-select {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .de-multi-select .de-multi-search {
+      width: 100%;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--ink);
+      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    .de-multi-select .de-multi-search:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .de-multi-options {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      padding: 4px;
+    }
+    .de-multi-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--ink);
+    }
+    .de-multi-option:hover {
+      background: var(--accent-soft);
+    }
+    .de-multi-option input[type="checkbox"] {
+      width: auto;
+      height: auto;
+      flex-shrink: 0;
+    }
+    .de-multi-count {
+      font-size: 10px;
+      color: var(--faint);
+      padding-left: 2px;
+    }
