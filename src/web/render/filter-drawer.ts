@@ -15,6 +15,8 @@ interface DrawerSession {
   source: FilterSource;
   /** 抽屉打开时各 chip 的 active 状态快照, 用于「重置」 */
   snapshot: Record<string, string>;
+  /** 本次打开时挂载的 chip 点击监听, 下次打开前取消 */
+  _abort?: AbortController;
 }
 
 let session: DrawerSession | null = null;
@@ -204,10 +206,40 @@ export function refreshFilterBadges(): void {
 
 // ==================== 抽屉开关 ====================
 
+// 抽屉行 id → 筛选状态 key 的映射 (行 id 仅用于 DOM, 状态 key 才是筛选逻辑使用的名字)
+const ROW_KEY_MAP: Record<string, string> = {
+  // 186
+  atlasColorFilter: "color",
+  atlasRareFilter: "rare",
+  atlasGrazeFilter: "graze",
+  atlasPickyFilter: "picky",
+  atlasMethodFilter: "method",
+  atlasShopRankFilter: "shopRank",
+  atlasHuntRegionFilter: "huntRegion",
+  atlasHuntTicketFilter: "huntTicket",
+  // Events
+  eventColorFilter: "color",
+  eventRareFilter: "rare",
+  eventGrazeFilter: "graze",
+  eventPickyFilter: "picky",
+  // 拍卖场
+  auctionColorFilter: "color",
+  auctionRareFilter: "rare",
+  auctionGrazeFilter: "isExer",
+  auctionFoodFilter: "foodtype",
+  auctionSexFilter: "sex",
+  auctionSortFilter: "sort",
+  auctionOwnFilter: "own",
+};
+
+function rowKey(row: HTMLElement): string {
+  return ROW_KEY_MAP[row.id] ?? row.id;
+}
+
 function setActiveChips(root: HTMLElement, activeValues: Record<string, string>): void {
   root.querySelectorAll<HTMLElement>(".filter-row").forEach(row => {
-    const id = row.id;
-    const activeVal = activeValues[id] ?? "";
+    const key = rowKey(row);
+    const activeVal = activeValues[key] ?? "";
     row.querySelectorAll<HTMLElement>(".chip").forEach(c =>
       c.classList.toggle("active", c.dataset.value === activeVal)
     );
@@ -218,7 +250,7 @@ function collectActiveValues(root: HTMLElement): Record<string, string> {
   const out: Record<string, string> = {};
   root.querySelectorAll<HTMLElement>(".filter-row").forEach(row => {
     const chip = row.querySelector<HTMLElement>(".chip.active");
-    out[row.id] = chip ? chip.dataset.value || "" : "";
+    out[rowKey(row)] = chip ? chip.dataset.value || "" : "";
   });
   return out;
 }
@@ -236,7 +268,10 @@ function titleFor(source: FilterSource): string {
 }
 
 export function openFilterDrawer(source: FilterSource, activeValues: Record<string, string>, onApply: (values?: Record<string, string>) => void): void {
-  session = { source, snapshot: { ...activeValues } };
+  // 取消旧 chip 点击监听 (body 是静态元素, 不取消会叠加)
+  if (session?._abort) session._abort.abort();
+  const ac = new AbortController();
+  session = { source, snapshot: { ...activeValues }, _abort: ac };
   const body = $("#filterDrawerBody");
   const bg = $("#filterDrawerBg");
   const drawer = $("#filterDrawer");
@@ -285,7 +320,7 @@ export function openFilterDrawer(source: FilterSource, activeValues: Record<stri
     if (source === "auction") {
       onApply(collectActiveValues(body));
     }
-  });
+  }, { signal: ac.signal });
 
   // 拍卖场: chip 点击即时生效(写回 + 重渲染), 完成只是关闭
   // 186/Events: 完成时统一写回 state 并应用
@@ -299,10 +334,11 @@ export function openFilterDrawer(source: FilterSource, activeValues: Record<stri
       } else if (source === "events") {
         Object.assign(state.eventFilter, values);
       } else {
-        // auction: 即时生效, 无需再次写回 (onApply 已处理)
+        // auction: 完成时也写回一次 (chip 点击已即时生效, 这里保证未点 chip 直接完成时不丢筛选)
+        onApply(values);
       }
       closeFilterDrawer();
-      onApply();
+      if (source !== "auction") onApply();
     };
   }
 
@@ -318,14 +354,21 @@ export function openFilterDrawer(source: FilterSource, activeValues: Record<stri
         });
         body.querySelectorAll<HTMLElement>(".chip").forEach(c => c.classList.remove("active"));
         updateAtlasMethodSubrows(body, "");
+        closeFilterDrawer();
+        onApply();
       } else if (source === "events") {
         Object.assign(state.eventFilter, {
           color: "", rare: "", graze: "", picky: "",
         });
         body.querySelectorAll<HTMLElement>(".chip").forEach(c => c.classList.remove("active"));
+        closeFilterDrawer();
+        onApply();
+      } else {
+        // auction: 清空筛选并写回空值 (sort 恢复默认)
+        body.querySelectorAll<HTMLElement>(".chip").forEach(c => c.classList.remove("active"));
+        closeFilterDrawer();
+        onApply({ color: "", rare: "", isExer: "", foodtype: "", sex: "", sort: "1", own: "" });
       }
-      closeFilterDrawer();
-      onApply();
     };
   }
 }
@@ -354,6 +397,7 @@ function updateAtlasMethodSubrows(body: HTMLElement, method: string): void {
 }
 
 export function closeFilterDrawer(): void {
+  if (session?._abort) session._abort.abort();
   const bg = $("#filterDrawerBg");
   const drawer = $("#filterDrawer");
   if (bg) bg.classList.remove("open");
