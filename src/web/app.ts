@@ -48,7 +48,7 @@ const TABS: Record<string, { panel: string; btn: string }> = {
 const MINE_VIEW_TITLES: Record<string, string> = {
   progress: "📊 进度总览",
   add: "➕ 导入/导出",
-  about: "i️ 关于项目",
+  about: "ℹ️ 关于项目",
   data: "✏️ 数据管理",
 };
 

@@ -1175,6 +1175,17 @@
       padding: 16px 12px;
       align-items: start;
     }
+    /* PC 端: 菜单容器限宽居中, 卡片不至于拉得过宽 */
+    .mine-menu {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    /* 已登录菜单容器在父 grid (mine-menu) 中跨满整行, 避免被塞进第一格 (PC 端左上角) */
+    #mineMenuItems {
+      grid-column: 1 / -1;
+      width: 100%;
+      padding: 0; /* 外层 .mine-menu 已有 padding, 避免双重内缩 */
+    }
     @media (min-width: 600px) {
       .mine-menu, #mineMenuItems { grid-template-columns: repeat(2, 1fr); }
     }
@@ -1205,6 +1216,7 @@
     }
     .account-card {
       cursor: default;
+      grid-column: 1 / -1;
     }
     .mine-menu-card::after {
       content: "›";
@@ -1240,6 +1252,10 @@
     }
 
     /* 我的 tab — 进度面板 (menu view 下 mineMenu 之后) */
+    .mine-progress-view {
+      max-width: 920px;
+      margin: 0 auto;
+    }
     .mine-progress {
       padding: 16px 12px 24px;
       display: flex;
@@ -2936,6 +2952,11 @@
     .add-tab {
       padding: 12px;
     }
+    /* 我的 → 导入/导出 子视图: PC 端限宽居中 */
+    .mine-add-view .add-tab {
+      max-width: 920px;
+      margin: 0 auto;
+    }
 
     .add-section {
       background: var(--card);
@@ -3667,18 +3688,7 @@
       gap: 8px;
       align-items: center;
     }
-    .de-outcome-row select {
-      flex: 1;
-      min-width: 0;
-      height: 38px;
-      padding: 0 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg);
-      color: var(--ink);
-      font-size: 13px;
-    }
-    .de-outcome-row input {
+    .de-outcome-row .de-outcome-prob {
       width: 90px;
       flex-shrink: 0;
       height: 38px;
@@ -3689,8 +3699,12 @@
       color: var(--ink);
       font-size: 13px;
     }
-    .de-outcome-row select:focus,
-    .de-outcome-row input:focus {
+    .de-outcome-row .de-search-select {
+      flex: 1;
+      min-width: 0;
+    }
+    .de-outcome-row .de-ss-toggle:focus,
+    .de-outcome-row .de-outcome-prob:focus {
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-soft);
@@ -3720,11 +3734,65 @@
       font-size: 12px;
     }
 
-    /* 多选下拉框 (搜索 + 勾选) */
+    /* 多选下拉框 (折叠按钮 + 展开后搜索勾选) */
     .de-multi-select {
       display: flex;
       flex-direction: column;
       gap: 6px;
+    }
+    .de-multi-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--ink);
+      cursor: pointer;
+      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    .de-multi-toggle:hover {
+      border-color: var(--border-strong);
+    }
+    .de-multi-toggle:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .de-multi-summary {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: left;
+    }
+    .de-multi-caret {
+      flex: 0 0 auto;
+      color: var(--faint);
+      font-size: 11px;
+      transition: transform var(--dur) var(--ease);
+    }
+    .de-multi-select.open .de-multi-caret {
+      transform: rotate(180deg);
+    }
+    .de-multi-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .de-multi-panel[hidden] {
+      display: none;
     }
     .de-multi-select .de-multi-search {
       width: 100%;
@@ -3775,4 +3843,117 @@
       font-size: 10px;
       color: var(--faint);
       padding-left: 2px;
+    }
+
+    /* 可搜索单选 (配种父母 / 产出) */
+    .de-search-select {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .de-ss-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--ink);
+      cursor: pointer;
+      transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+    }
+    .de-ss-toggle:hover {
+      border-color: var(--border-strong);
+    }
+    .de-ss-toggle:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .de-ss-selected {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: left;
+    }
+    .de-ss-selected.placeholder {
+      color: var(--faint);
+    }
+    .de-search-select-panel {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    .de-search-select-panel[hidden] {
+      display: none;
+    }
+    .de-search-select-input {
+      width: 100%;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .de-search-select-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .de-search-select-options {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .de-ss-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      padding: 7px 10px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--ink);
+      font-size: 13px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .de-ss-option:hover {
+      background: var(--accent-soft);
+    }
+    .de-ss-option.selected {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .de-ss-check {
+      color: var(--accent);
+      font-size: 12px;
+    }
+    .de-outcome-select-wrap {
+      flex: 1;
+      min-width: 0;
     }

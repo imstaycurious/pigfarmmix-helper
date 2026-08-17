@@ -49,28 +49,70 @@ function multiSelectHTML(containerId: string, label: string, options: { value: n
       <span>${esc(o.text)}</span>
     </label>`;
   }).join("");
+  const pickSummary = summaryText(options, selected);
   return `<div class="de-field">
     <label>${label}</label>
     <div class="de-multi-select" data-multi-id="${containerId}">
-      <input type="search" class="de-multi-search" placeholder="${esc(placeholder)}">
-      <div class="de-multi-options" id="${containerId}">${optionsHTML}</div>
-      <span class="de-multi-count">已选: ${selected.length}</span>
+      <button type="button" class="de-multi-toggle" aria-expanded="false">
+        <span class="de-multi-summary" title="${esc(pickSummary)}">${esc(pickSummary)}</span>
+        <span class="de-multi-caret">▾</span>
+      </button>
+      <div class="de-multi-panel" hidden>
+        <input type="search" class="de-multi-search" placeholder="${esc(placeholder)}">
+        <div class="de-multi-options" id="${containerId}">${optionsHTML}</div>
+        <span class="de-multi-count">已选: ${selected.length}</span>
+      </div>
     </div>
   </div>`;
 }
 
+/** 多选摘要: 前 3 项 + 数量 */
+function summaryText(options: { value: number; text: string }[], selected: number[]): string {
+  const labels = options.filter(o => selected.includes(o.value)).map(o => o.text);
+  if (!labels.length) return "未选择";
+  return labels.length <= 3 ? labels.join("、") : `${labels.slice(0, 3).join("、")} 等 ${labels.length} 项`;
+}
+
 function wireMultiSelect(container: HTMLElement): void {
+  const select = container.classList.contains("de-multi-select")
+    ? container
+    : container.querySelector<HTMLElement>(".de-multi-select");
+  const toggle = container.querySelector<HTMLElement>(".de-multi-toggle");
+  const panel = container.querySelector<HTMLElement>(".de-multi-panel");
   const search = container.querySelector<HTMLInputElement>(".de-multi-search");
   const options = container.querySelectorAll<HTMLElement>(".de-multi-option");
   const countEl = container.querySelector<HTMLElement>(".de-multi-count");
-  if (!search || !countEl) return;
+  const summaryEl = container.querySelector<HTMLElement>(".de-multi-summary");
+  if (!select || !toggle || !panel) return;
 
   const updateCount = () => {
-    const checked = container.querySelectorAll<HTMLInputElement>('.de-multi-option input[type="checkbox"]:checked');
-    countEl.textContent = `已选: ${checked.length}`;
+    const checked = select.querySelectorAll<HTMLInputElement>('.de-multi-option input[type="checkbox"]:checked');
+    if (countEl) countEl.textContent = `已选: ${checked.length}`;
+    if (summaryEl) {
+      const labels = [...checked].map(cb =>
+        (cb.closest<HTMLElement>(".de-multi-option")?.querySelector("span")?.textContent || "").trim()
+      );
+      summaryEl.textContent = labels.length
+        ? (labels.length <= 3 ? labels.join("、") : `${labels.slice(0, 3).join("、")} 等 ${labels.length} 项`)
+        : "未选择";
+    }
   };
 
-  search.addEventListener("input", () => {
+  toggle.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const wasOpen = !panel.hidden;
+    closeAllDropdowns();
+    if (!wasOpen) {
+      panel.hidden = false;
+      select.classList.add("open");
+      toggle.setAttribute("aria-expanded", "true");
+      // 重置搜索过滤状态
+      options.forEach(opt => { opt.style.display = ""; });
+      search?.focus();
+    }
+  });
+
+  search?.addEventListener("input", () => {
     const q = search.value.trim().toLowerCase();
     options.forEach(opt => {
       const text = opt.textContent?.toLowerCase() || "";
@@ -78,11 +120,24 @@ function wireMultiSelect(container: HTMLElement): void {
     });
   });
 
-  container.querySelectorAll<HTMLInputElement>('.de-multi-option input[type="checkbox"]').forEach(cb => {
+  select.querySelectorAll<HTMLInputElement>('.de-multi-option input[type="checkbox"]').forEach(cb => {
     cb.addEventListener("change", updateCount);
   });
 
   updateCount();
+}
+
+/** 关闭所有已展开的下拉面板 (多选 + 可搜索单选共用) */
+function closeAllDropdowns(): void {
+  document.querySelectorAll<HTMLElement>(".de-multi-panel:not([hidden]), .de-search-select-panel:not([hidden])").forEach(p => {
+    p.hidden = true;
+  });
+  document.querySelectorAll<HTMLElement>(".de-multi-toggle").forEach(t => t.setAttribute("aria-expanded", "false"));
+  document.querySelectorAll<HTMLElement>(".de-multi-select, .de-search-select").forEach(s => {
+    s.classList.remove("open");
+    const input = s.querySelector<HTMLInputElement>(".de-search-select-input");
+    if (input) input.value = "";
+  });
 }
 
 function getMultiSelectValues(containerId: string): number[] {
@@ -303,34 +358,20 @@ function pigFormHTML(p: Pig | null): string {
 // ---------- 配种表单 ----------
 
 function breedingFormHTML(): string {
-  const options = pigOptionsHTML();
+  const options = pigSearchOptions();
   return `
   <div class="de-form">
     <div class="de-section-title">新增配种</div>
     <div class="de-grid2">
-      <div class="de-field">
-        <label for="dbParent1">父/母 1 *</label>
-        <select id="dbParent1">
-          <option value="">请选择...</option>
-          ${options}
-        </select>
-      </div>
-      <div class="de-field">
-        <label for="dbParent2">父/母 2</label>
-        <select id="dbParent2">
-          <option value="">请选择...</option>
-          <option value="*">* 任意</option>
-          ${options}
-        </select>
-      </div>
+      ${searchSelectHTML("dbParent1", "父/母 1 *", options, "", "搜索 pNo / 名称...")}
+      ${searchSelectHTML("dbParent2", "父/母 2", options, "", "搜索 pNo / 名称...", [{ value: "*", text: "* 任意" }])}
     </div>
     <div class="de-section-sub">产出 (选择猪 + 概率)</div>
     <div class="de-outcome-rows" id="dbOutcomeRows">
       <div class="de-outcome-row">
-        <select class="de-outcome-pig">
-          <option value="">请选择产出猪...</option>
-          ${options}
-        </select>
+        <div class="de-outcome-select-wrap">
+          ${searchSelectHTML("dbOutcome0", "", options, "", "搜索 pNo / 名称...")}
+        </div>
         <input type="number" class="de-outcome-prob" placeholder="概率 %" min="0" step="any">
         <button type="button" class="de-outcome-del" title="删除此行">✕</button>
       </div>
@@ -501,8 +542,9 @@ async function savePigFromForm(isNew: boolean): Promise<void> {
 }
 
 async function saveBreedingFromForm(): Promise<void> {
-  const p1 = Number(($("#dbParent1") as HTMLSelectElement)?.value || 0);
-  const p2raw = ($("#dbParent2") as HTMLSelectElement)?.value || "";
+  const p1raw = getSearchSelectValue("dbParent1");
+  const p2raw = getSearchSelectValue("dbParent2");
+  const p1 = Number(p1raw);
   const p2 = p2raw === "*" ? "*" : Number(p2raw);
 
   if (!p1 || p1 <= 0 || (!p2raw || (!(p2 === "*") && (!p2 || p2 <= 0)))) {
@@ -513,7 +555,8 @@ async function saveBreedingFromForm(): Promise<void> {
   // 收集产出行
   const outcomes: { pNo: number; prob: number }[] = [];
   document.querySelectorAll<HTMLElement>("#dbOutcomeRows .de-outcome-row").forEach(row => {
-    const pNo = Number((row.querySelector(".de-outcome-pig") as HTMLSelectElement | null)?.value || 0);
+    const ss = row.querySelector<HTMLElement>(".de-search-select");
+    const pNo = Number(ss?.getAttribute("data-ss-value") || 0);
     const probText = (row.querySelector(".de-outcome-prob") as HTMLInputElement | null)?.value || "";
     const prob = Number(probText);
     if (pNo > 0) outcomes.push({ pNo, prob: Number.isFinite(prob) ? prob : 0 });
@@ -556,11 +599,122 @@ async function reloadData(): Promise<void> {
   }
 }
 
+// ---------- 可搜索单选 (配种父母 / 产出) ----------
+
+function pigSearchOptions(): { value: string; text: string }[] {
+  const pigs = [...state.pigsById.values(), ...state.eventPigsById.values()]
+    .sort((a, b) => a.pNo - b.pNo);
+  return pigs.map(p => ({ value: String(p.pNo), text: `#${p.pNo} ${p.name}` }));
+}
+
+function searchSelectHTML(
+  containerId: string,
+  label: string,
+  options: { value: string; text: string }[],
+  value: string,
+  placeholder: string,
+  extraOptions: { value: string; text: string }[] = []
+): string {
+  const all = [...extraOptions, ...options];
+  const optionHTML = all.map(o => {
+    const selected = o.value === value;
+    return `<button type="button" class="de-ss-option ${selected ? "selected" : ""}" data-value="${esc(o.value)}">
+      <span>${esc(o.text)}</span>
+      ${selected ? '<span class="de-ss-check">✓</span>' : ""}
+    </button>`;
+  }).join("");
+  const shown = all.find(o => o.value === value);
+  const labelHTML = label ? `<label>${label}</label>` : "";
+  return `<div class="de-field">
+    ${labelHTML}
+    <div class="de-search-select" data-ss-id="${containerId}" data-ss-value="${esc(value)}">
+      <button type="button" class="de-ss-toggle">
+        <span class="de-ss-selected ${shown ? "" : "placeholder"}">${shown ? esc(shown.text) : "请选择..."}</span>
+        <span class="de-multi-caret">▾</span>
+      </button>
+      <div class="de-search-select-panel" hidden>
+        <input type="search" class="de-search-select-input" placeholder="${esc(placeholder)}" autocomplete="off">
+        <div class="de-search-select-options">${optionHTML}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function wireSearchSelect(ss: HTMLElement): void {
+  const toggle = ss.querySelector<HTMLElement>(".de-ss-toggle");
+  const panel = ss.querySelector<HTMLElement>(".de-search-select-panel");
+  const input = ss.querySelector<HTMLInputElement>(".de-search-select-input");
+  const options = ss.querySelectorAll<HTMLElement>(".de-ss-option");
+  const selectedEl = ss.querySelector<HTMLElement>(".de-ss-selected");
+  if (!toggle || !panel) return;
+
+  const rerenderSelected = (): void => {
+    const value = ss.getAttribute("data-ss-value") || "";
+    const hit = [...options].find(o => o.getAttribute("data-value") === value);
+    options.forEach(o => o.classList.toggle("selected", o.getAttribute("data-value") === value));
+    if (selectedEl) {
+      if (hit) {
+        selectedEl.textContent = hit.querySelector("span")?.textContent || "";
+        selectedEl.classList.remove("placeholder");
+      } else {
+        selectedEl.textContent = "请选择...";
+        selectedEl.classList.add("placeholder");
+      }
+    }
+  };
+  rerenderSelected();
+
+  toggle.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    const wasOpen = !panel.hidden;
+    closeAllDropdowns();
+    if (!wasOpen) {
+      panel.hidden = false;
+      ss.classList.add("open");
+      input?.focus();
+      // 重置搜索过滤状态
+      options.forEach(opt => { opt.style.display = ""; });
+    }
+  });
+
+  input?.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+    options.forEach(opt => {
+      const text = opt.textContent?.toLowerCase() || "";
+      opt.style.display = (!q || text.includes(q)) ? "" : "none";
+    });
+  });
+
+  options.forEach(opt => {
+    opt.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      ss.setAttribute("data-ss-value", opt.getAttribute("data-value") || "");
+      closeAllDropdowns();
+      rerenderSelected();
+    });
+  });
+}
+
+function getSearchSelectValue(containerId: string): string {
+  return document.querySelector<HTMLElement>(`[data-ss-id="${containerId}"]`)?.getAttribute("data-ss-value") || "";
+}
+
 // ---------- 视图渲染 ----------
+
+let documentClickBound = false;
 
 export function renderDataView(): void {
   const root = $("#mineDataView");
   if (!root) return;
+
+  // 全局点击关闭下拉 (仅绑定一次)
+  if (!documentClickBound) {
+    documentClickBound = true;
+    document.addEventListener("click", (ev) => {
+      const t = ev.target as HTMLElement | null;
+      if (t && !t.closest(".de-multi-select, .de-search-select")) closeAllDropdowns();
+    });
+  }
 
   if (!getCurrentUser()) {
     root.innerHTML = `<div class="empty"><div class="title">请先登录</div><div class="hint">登录后才能编辑图鉴数据</div></div>`;
@@ -673,6 +827,9 @@ function wirePigForm(isNew: boolean): void {
 }
 
 function wireBreedingForm(): void {
+  // 可搜索单选组件
+  document.querySelectorAll<HTMLElement>(".de-search-select").forEach(ss => wireSearchSelect(ss));
+
   $("#dbSaveBtn")?.addEventListener("click", () => saveBreedingFromForm());
   $("#dbCancelBtn")?.addEventListener("click", () => {
     const body = $("#deBody");
@@ -689,10 +846,9 @@ function wireBreedingForm(): void {
       const row = document.createElement("div");
       row.className = "de-outcome-row";
       row.innerHTML = `
-        <select class="de-outcome-pig">
-          <option value="">请选择产出猪...</option>
-          ${pigOptionsHTML()}
-        </select>
+        <div class="de-outcome-select-wrap">
+          ${searchSelectHTML("", "", pigSearchOptions(), "", "搜索 pNo / 名称...")}
+        </div>
         <input type="number" class="de-outcome-prob" placeholder="概率 %" min="0" step="any">
         <button type="button" class="de-outcome-del" title="删除此行">✕</button>
       `;
@@ -706,17 +862,12 @@ function wireBreedingForm(): void {
 }
 
 function wireOutcomeRow(row: HTMLElement): void {
+  // 行内可搜索选择 (新增行也要绑定)
+  const ss = row.querySelector<HTMLElement>(".de-search-select");
+  if (ss) wireSearchSelect(ss);
   const del = row.querySelector<HTMLElement>(".de-outcome-del");
   if (!del) return;
   del.addEventListener("click", () => {
     row.remove();
   });
-}
-
-function pigOptionsHTML(): string {
-  const pigs = [...state.pigsById.values(), ...state.eventPigsById.values()]
-    .sort((a, b) => a.pNo - b.pNo);
-  return pigs.map(p =>
-    `<option value="${p.pNo}">#${p.pNo} ${esc(p.name)}</option>`
-  ).join("");
 }
