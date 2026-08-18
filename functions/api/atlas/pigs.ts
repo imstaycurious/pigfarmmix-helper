@@ -6,6 +6,8 @@
  * 类型: D1 相关类型使用 @cloudflare/workers-types。
  */
 
+import { jsonResponse } from "../_utils.js";
+
 export interface Pig {
   pNo: number;
   name: string;
@@ -30,17 +32,6 @@ export interface BreedingRecord {
   parents: (number | "*")[];
   outcomes: { pNo: number; prob: number }[];
   visible: boolean;
-}
-
-function jsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=3600",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
 }
 
 function parseJsonField(value: unknown): unknown {
@@ -129,3 +120,7 @@ export async function onRequestGet(context: { env: { DB: D1Database } }): Promis
     return jsonResponse({ ok: false, error: "服务器内部错误" }, 500);
   }
 }
+
+// 说明: Cache-Control 已统一走 _utils.ts 的 no-store。
+// 之前这里写过 "public, max-age=3600, s-maxage=3600",导致编辑设备拿到 1 小时前的 CDN 缓存,
+// 看不到自己刚做的修改,其他设备反而能看到。200 行数据 D1 读一次才 1-2ms,无需缓存。
