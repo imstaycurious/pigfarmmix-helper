@@ -319,23 +319,42 @@ export function pigMatchesHunt(pig: Pig, region: string, ticket: string): boolea
   return false;
 }
 
+/** loadData 选项 */
+export interface LoadDataOptions {
+  /**
+   * 强制只走 API,失败抛错。
+   * 用于编辑保存后的刷新 — 避免拿到 IndexedDB 里的旧缓存。
+   * 默认 false: API → IndexedDB → JSON 兜底,失败静默降级。
+   */
+  force?: boolean;
+}
+
 /** 主加载入口: API → IndexedDB → JSON 兜底 */
-export async function loadData(): Promise<void> {
+export async function loadData(opts: LoadDataOptions = {}): Promise<void> {
   let bundle: PigDataBundle | null = null;
+  let apiOk = false;
 
-  // 1) 尝试从 IndexedDB 缓存加载 (快速离线)
-  bundle = await loadCachedBundle();
-
-  // 2) 尝试从 API 加载 (最新的 D1 数据)
+  // 1) API 优先 (最新的 D1 数据)
   try {
     const apiBundle = await loadFromApi();
     if (apiBundle) {
       bundle = apiBundle;
       cacheBundle(apiBundle).catch(() => {});
+      apiOk = true;
     }
   } catch { /* fall through */ }
 
-  // 3) JSON 兜底
+  // 强制模式: API 拿不到就直接抛错,不让旧缓存蒙混过关
+  if (opts.force && !apiOk) {
+    throw new Error("无法从服务器获取最新数据,请检查网络后重试");
+  }
+
+  // 2) IndexedDB 缓存兜底 (离线 / API 失败)
+  if (!bundle) {
+    bundle = await loadCachedBundle();
+  }
+
+  // 3) JSON 兜底 (首次加载且无缓存)
   if (!bundle) {
     bundle = await loadFromJson();
     cacheBundle(bundle).catch(() => {});
@@ -370,6 +389,40 @@ export async function loadData(): Promise<void> {
   buildBreedingIndex(state.breedingTable);
 
   state.dataLoaded = true;
+}
+
+/**
+ * 从服务器强制刷新图鉴数据 — 编辑保存后 / 手动刷新按钮共用。
+ * 流程: 清除 state → 强制走 API → 失败则降级到本地缓存。
+ * 不调用 emit/ui-refresh, 由调用方决定何时 re-render。
+ */
+export async function refreshDataFromServer(): Promise<{ ok: boolean; error?: string }> {
+  // 清除当前 state,准备接受新数据
+  state.dataLoaded = false;
+  state.pigsById = new Map();
+  state.eventPigsById = new Map();
+  state.hiddenPigsById = new Map();
+  state.pigsByListKey = new Map();
+  state.breedingTable = [];
+  state.breedByParent = new Map();
+
+  // 1) 强制从 API 拿最新数据
+  let apiErr = "";
+  try {
+    await loadData({ force: true });
+    return { ok: true };
+  } catch (err) {
+    apiErr = err instanceof Error ? err.message : "无法从服务器刷新";
+    console.warn("[refresh] force reload from API failed:", err);
+  }
+
+  // 2) API 拿不到 → 用本地缓存兜底
+  try {
+    await loadData();
+    return { ok: false, error: `服务器刷新失败 · 当前显示本地数据 (${apiErr})` };
+  } catch {
+    return { ok: false, error: "数据刷新失败,请手动刷新页面" };
+  }
 }
 
 // ---- 拥有/徽章操作 ----

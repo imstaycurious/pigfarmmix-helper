@@ -11,7 +11,7 @@ import { state } from "../js/state.js";
 import { $ } from "../js/utils.js";
 import { getCurrentUser } from "../js/auth.js";
 import { toast } from "../js/utils.js";
-import { loadData } from "../js/data.js";
+import { refreshDataFromServer } from "../js/data.js";
 import { emit } from "../js/events.js";
 import { COLOR_TEXT, HUNT_SITES, FEED_LABELS } from "../js/constants.js";
 
@@ -581,21 +581,16 @@ async function saveBreedingFromForm(): Promise<void> {
   }
 }
 
-/** 保存成功后重新加载图鉴数据 (本地状态 + 索引重建) */
+/** 保存成功后重新加载图鉴数据 (本地状态 + 索引重建)
+ *  强制走 API 拿最新 D1 数据;API 失败时降级到本地缓存并明确提示,
+ *  不让用户误以为已成功刷新。 */
 async function reloadData(): Promise<void> {
-  state.dataLoaded = false;
-  state.pigsById = new Map();
-  state.eventPigsById = new Map();
-  state.hiddenPigsById = new Map();
-  state.pigsByListKey = new Map();
-  state.breedingTable = [];
-  state.breedByParent = new Map();
-  try {
-    await loadData();
-    emit("ui-refresh", undefined);
+  const result = await refreshDataFromServer();
+  emit("ui-refresh", undefined);
+  if (result.ok) {
     toast("数据已更新");
-  } catch {
-    toast("数据刷新失败,请刷新页面");
+  } else {
+    toast(result.error || "数据刷新失败", 3200);
   }
 }
 

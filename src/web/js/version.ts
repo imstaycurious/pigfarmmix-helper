@@ -61,7 +61,7 @@ export async function checkAndShowUpdateNotice(): Promise<void> {
 /** 显示更新内容 */
 async function showUpdateNotice(_version: string): Promise<void> {
   const updateContent = `
-
+  又是一轮更新
   `.trim();
 
   await customAlert(updateContent, "更新提示");

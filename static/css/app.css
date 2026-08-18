@@ -453,6 +453,47 @@
       font-size: 11px;
       color: var(--muted);
       letter-spacing: 0.01em;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    /* 图标按钮 (筛选行最右的刷新按钮等) */
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      background: var(--card);
+      color: var(--ink);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+        transform var(--dur) var(--ease);
+    }
+    .icon-btn:hover {
+      border-color: var(--border-strong);
+      background: var(--accent-soft);
+    }
+    .icon-btn:active {
+      transform: scale(0.94);
+    }
+    .icon-btn[disabled],
+    .icon-btn.is-loading {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .icon-btn .icon-btn-svg {
+      width: 18px;
+      height: 18px;
+    }
+    .icon-btn.is-loading .icon-btn-svg {
+      animation: icon-btn-spin 0.8s linear infinite;
+    }
+    @keyframes icon-btn-spin {
+      to { transform: rotate(360deg); }
     }
 
     /* ===== 筛选工具栏 (每个 tab 顶部: 筛选按钮 + 统计) ===== */

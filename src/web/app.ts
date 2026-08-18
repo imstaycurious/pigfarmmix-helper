@@ -8,12 +8,12 @@
 
 import { state } from "./js/state.js";
 import { $, toast, escHtml } from "./js/utils.js";
-import { loadData, checkAndUnlockHidden, resetAllRecords } from "./js/data.js";
+import { loadData, checkAndUnlockHidden, resetAllRecords, refreshDataFromServer } from "./js/data.js";
 import { saveHiddenUnlocked } from "./js/storage.js";
 import { customConfirm } from "./js/modal.js";
 import { checkAndShowUpdateNotice, showUpdateManually } from "./js/version.js";
 import { initAccountUI } from "./js/account-ui.js";
-import { on } from "./js/events.js";
+import { on, emit } from "./js/events.js";
 import {
   renderAtlasBody, renderEventsBody, renderMineBody,
   renderAtlasStats, renderEventsStats,
@@ -113,6 +113,28 @@ function render(): void {
   renderActiveTab();
   updateGlobalCounts();
   refreshFilterBadges();
+}
+
+/** 手动刷新按钮 — 从服务器拉取最新图鉴数据 */
+function wireRefreshButton(btnId: string): void {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    if (btn.classList.contains("is-loading")) return; // 防重复点击
+    btn.classList.add("is-loading");
+    try {
+      const result = await refreshDataFromServer();
+      if (result.ok) {
+        emit("ui-refresh", undefined);
+        toast("已从服务器刷新");
+      } else {
+        emit("ui-refresh", undefined); // 失败也重渲染,显示本地数据
+        toast(result.error || "刷新失败", 3200);
+      }
+    } finally {
+      btn.classList.remove("is-loading");
+    }
+  });
 }
 
 function updateOwnedUI(pNo: number): void {
@@ -251,6 +273,10 @@ function init(): void {
   $("#tabBtnRaising")?.addEventListener("click", () => activateTab("raising"));
   $("#tabBtnAuction")?.addEventListener("click", () => activateTab("auction"));
   $("#tabBtnMine")?.addEventListener("click", () => activateTab("mine"));
+
+  // 186 / Events 筛选行 — 手动刷新按钮
+  wireRefreshButton("atlasRefreshBtn");
+  wireRefreshButton("eventRefreshBtn");
 
   // SW 消息 → 打开指定 tab
   onServiceWorkerMessage((tab) => activateTab(tab));
